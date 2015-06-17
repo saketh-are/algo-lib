@@ -30,7 +30,7 @@ struct mat{
         for(int i=0; i<N; i++)
             for(int j=0; j<N; j++)
                 for(int k=0; k<N; k++)
-                    add(*r[i][j], prod(dat[i][k], b[k][j]));
+                    add((*r)[i][j], prod(dat[i][k], b[k][j]));
         return r;
     }
 
