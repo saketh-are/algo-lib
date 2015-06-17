@@ -23,6 +23,17 @@ struct mat{
         ::free(dat);
     }
 
+    void operator <=(mat o){
+        this->free();
+        this->dat = o.dat;
+    }
+
+    ll ret(int i, int j){
+        ll res = dat[i][j];
+        this->free();
+        return res;
+    }
+
     ll *&operator [](int i){
         return dat[i];
     }
