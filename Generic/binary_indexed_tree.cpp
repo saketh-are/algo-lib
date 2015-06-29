@@ -11,15 +11,15 @@ struct binary_indexed_tree{
         int sum = 0;
         for(i++; i > 0; ){
             sum += v[i];
-            i -= (i & -i);
+            i -= i & -i;
         }
         return sum;
     }
 
     void update(int i, int k){
         for(i++; i<v.size(); ){
-            v[i]+=k;
-            i += (i & -i);
+            v[i] += k;
+            i += i & -i;
         }
     }
 
