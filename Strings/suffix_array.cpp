@@ -1,5 +1,5 @@
 struct suffix_array{
-    const int INF = 0x7f7f7f7f;
+    const int INF = 0x7fffffff;
 
     int L, D;
     string str;
@@ -38,17 +38,17 @@ struct suffix_array{
         }
     }
 
-    // check if the substring at [i, i+len) is equal the one at [j, j+len)
-    bool check_eq(int i, int j, int len){
-        if(max(i,j) + len > L) return false;
-        
+    // compare the string at [i, i+l1) to the string at [j, j+l2) 
+    int comp(int i, int l1, int j, int l2){
+        int cl = min(l1, l2);
         for(int l=0; l<D; l++)
-            if((len>>l)&1){
-                if(suff[l][i] != suff[l][j]) return false; 
+            if((cl>>l)&1){
+                if(suff[l][i] != suff[l][j]) 
+                    return suff[l][i] < suff[l][j] ? -1 : 1;
                 i += 1<<l, j += 1<<l;
             }
-        
-        return true;
+
+        return (l1!=l2) ? (l1<l2) ? -1 : 1 : 0;
     }
 
     // find the interval of suffix ranks corresponding to instances of the substring at [i, i+len)
@@ -56,7 +56,7 @@ struct suffix_array{
         int left = rank_of[i]; 
         for(int lo=0, hi=left; lo<=hi; ){
             int mi = (lo + hi)/2;
-            if(check_eq(i, at_rank[mi], len)){
+            if(comp(i, len, at_rank[mi], len) == 0){
                 left = mi;
                 hi = mi-1;
             }
@@ -66,7 +66,7 @@ struct suffix_array{
         int right = rank_of[i];
         for(int lo=right, hi=L-1; lo<=hi; ){
             int mi = (lo + hi)/2;
-            if(check_eq(i, at_rank[mi], len)){
+            if(comp(i, len, at_rank[mi], len) == 0){
                 right = mi;
                 lo = mi+1;
             }
