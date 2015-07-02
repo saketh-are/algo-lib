@@ -18,7 +18,7 @@ struct seg_tree{
     }
 
     void upd(int i, node v){
-        i += S+1;
+        i += S;
         arr[i] = v;
         while(i>1){
             i/=2;
@@ -28,7 +28,7 @@ struct seg_tree{
 
     node query(int i, int j){
         node res; 
-        for(i += S+1, j += S+1; i <= j; i /= 2, j /= 2){
+        for(i += S, j += S; i <= j; i /= 2, j /= 2){
             if((i&1) == 1) res = res + arr[i++];
             if((j&1) == 0) res = res + arr[j--];
         }
