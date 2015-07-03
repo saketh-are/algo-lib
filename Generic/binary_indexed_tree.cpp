@@ -1,29 +1,25 @@
-struct binary_indexed_tree{
+template<typename T> struct binary_indexed_tree{
     int S;
-    vector<int> v;
-    
-    binary_indexed_tree(int _S){
+    vector<T> v;
+    binary_indexed_tree<T>(int _S){
         S = _S;
         v.resize(S+1);
     }
+    
+    void update(int i, T k){
+        for(i++; i<=S; i+=i&-i)
+            v[i] = v[i] + k;
+    }
 
-    int read(int i){
-        int sum = 0;
-        for(i++; i > 0; ){
-            sum += v[i];
-            i -= i & -i;
-        }
+    T read(int i){
+        T sum = 0;
+        for(i++; i; i-=i&-i)
+            sum = sum + v[i];
         return sum;
     }
 
-    void update(int i, int k){
-        for(i++; i<v.size(); ){
-            v[i] += k;
-            i += i & -i;
-        }
-    }
-
-    int read_range(int l, int r){
+    T read(int l, int r){
         return read(r) - read(l-1);
     }
 };
+
