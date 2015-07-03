@@ -1,23 +1,13 @@
-struct seg_tree{
-    struct node{
-        int val;
-        node(int _val = 0x7f7f7f7f){ 
-            val = _val; 
-        }
-        node operator +(const node &y){
-            return min(val, y.val);
-        }
-    };
-
+template<typename T> struct seg_tree{
     int S;
-    vector<node> arr;
-    seg_tree(int _S){
+    vector<T> arr;
+    seg_tree<T>(int _S){
         assert(__builtin_popcount(_S) == 1);
         S = _S;
         arr.resize(2*S+1);
     }
 
-    void upd(int i, node v){
+    void upd(int i, T v){
         i += S;
         arr[i] = v;
         while(i>1){
@@ -26,13 +16,13 @@ struct seg_tree{
         }
     }
 
-    node query(int i, int j){
-        node res; 
+    T query(int i, int j){
+        T sum; 
         for(i += S, j += S; i <= j; i /= 2, j /= 2){
-            if((i&1) == 1) res = res + arr[i++];
-            if((j&1) == 0) res = res + arr[j--];
+            if((i&1) == 1) sum = sum + arr[i++];
+            if((j&1) == 0) sum = sum + arr[j--];
         }
-        return res;
+        return sum;
     }
 };
 
