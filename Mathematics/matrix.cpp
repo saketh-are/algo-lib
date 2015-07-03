@@ -16,10 +16,6 @@ struct mat{
         }
     }
 
-    vector<ll>& operator[](int i){
-        return dat[i];
-    }
-
     mat operator *(mat b){
         mat r(N);
         for(int i=0; i<N; i++)
@@ -35,6 +31,10 @@ struct mat{
         return E&1 ? r * *this : r;
     }
     
+    vector<ll>& operator[](int i){
+        return dat[i];
+    }
+
     friend ostream& operator<<(ostream &os, mat &m){
         os << "{";
         for(int i=0; i<m.N; i++){
@@ -48,3 +48,4 @@ struct mat{
         return os << "}}";
     }
 };
+
