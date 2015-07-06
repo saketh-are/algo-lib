@@ -1,4 +1,4 @@
-template<typename T> struct binary_indexed_tree{
+template<typename T> struct BIT{
     int S;
     vector<T> v;
     binary_indexed_tree<T>(int _S){

@@ -2,7 +2,6 @@ template<typename T> struct seg_tree{
     int S;
     vector<T> arr;
     seg_tree<T>(int _S){
-        assert(__builtin_popcount(_S) == 1);
         S = _S;
         arr.resize(2*S+1);
     }
