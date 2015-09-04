@@ -16,7 +16,7 @@ template<typename T> struct seg_tree{
     }
 
     T query(int i, int j){
-        T sum; 
+        T sum = 0;
         for(i += S, j += S; i <= j; i /= 2, j /= 2){
             if((i&1) == 1) sum = sum + arr[i++];
             if((j&1) == 0) sum = sum + arr[j--];
