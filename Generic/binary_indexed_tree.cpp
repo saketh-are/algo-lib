@@ -1,7 +1,8 @@
 template<typename T> struct BIT{
     int S;
     vector<T> v;
-    binary_indexed_tree<T>(int _S){
+
+    BIT<T>(int _S){
         S = _S;
         v.resize(S+1);
     }
