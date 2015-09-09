@@ -1,51 +1,69 @@
-void add(ll &a, ll b){ a = (a+b) % MOD; }
-ll sum(ll a, ll b){ return (a+b) % MOD; }
-void mul(ll &a, ll b){ a = (a*b) % MOD; }
-ll prod(ll a, ll b){ return (a*b) % MOD; }
-
-struct mat{
+template<typename T> struct matrix {
     int N;
-    vector<vector<ll> > dat;
+    vector<T> dat;
 
-    mat(int _N, ll diag = 0){
+    matrix<T> (int _N, T fill = T(0), T diag = T(0)) {
         N = _N;
-        dat.resize(N);
-        for(int i=0; i<N; i++){
-            dat[i].resize(N);
-            dat[i][i] = diag;
-        }
+        dat.resize(N * N, fill);
+
+        for (int i = 0; i < N; i++)
+            (*this)(i, i) = diag;
     }
 
-    mat operator *(mat &b){
-        mat r(N);
+    T& operator()(int i, int j) {
+        return dat[N * i + j];
+    }
+
+    matrix<T> operator *(matrix<T> &b){
+        matrix<T> r(N);
+
         for(int i=0; i<N; i++)
             for(int j=0; j<N; j++)
                 for(int k=0; k<N; k++)
-                    add(r[i][j], prod(dat[i][k], b[k][j]));
+                    r(i, j) = r(i, j) + (*this)(i, k) * b(k, j);
+
         return r;
     }
-    
-    mat pow(ll E){
-        if(!E) return mat(N, 1);
-        mat r = (*this * *this).pow(E/2);
-        return E&1 ? r * *this : r;
-    }
-    
-    vector<ll>& operator[](int i){
-        return dat[i];
+
+    matrix<T> pow(ll expo){
+        if(!expo) return matrix<T>(N, T(0), T(1));
+        matrix<T> r = (*this * *this).pow(expo/2);
+        return expo&1 ? r * *this : r;
     }
 
-    friend ostream& operator<<(ostream &os, mat &m){
+    friend ostream& operator<<(ostream &os, matrix<T> &m){
         os << "{";
         for(int i=0; i<m.N; i++){
             if(i) os << "},\n ";
             os << "{";
             for(int j=0; j<m.N; j++){
                 if(j) os << ", ";
-                os << setw(10) << m[i][j] << setw(0);
+                os << setw(10) << m(i, j) << setw(0);
             }
         }
         return os << "}}";
+    }
+};
+
+struct mll {
+    const int MOD;
+
+    ll val;
+    mll(ll _val = 0) {
+        val = _val % MOD;
+        if (val < 0) val += MOD;
+    }
+
+    mll operator+(const mll &o) {
+        return mll((val + o.val) % MOD);
+    }
+
+    mll operator*(const mll &o) {
+        return mll((val * o.val) % MOD);
+    }
+
+    friend ostream& operator<<(ostream &os, mll &m) {
+        return os << m.val;
     }
 };
 
