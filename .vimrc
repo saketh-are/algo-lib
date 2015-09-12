@@ -12,7 +12,7 @@ inoremap <C-Space> <C-x><C-o>
 inoremap <C-@> <C-Space>
 nmap <C-@> :2,99bd<CR>
 
-"c++ <filename>.cpp -o <filename>
+"g++ <filename>.cpp -o <filename>
 command DM w<bar>Dispatch! g++ -std=c++11 %:r.cpp -o %:r
 nnoremap <C-C> :DM<CR>
 
