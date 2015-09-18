@@ -21,7 +21,7 @@ command FF :Copen|cw
 nnoremap <C-F> :FF<CR>
 
 "run on inp, write to out, open out
-command DR Dispatch ./%:r < inp > out
+command DR Dispatch! ./%:r < inp > out
 command OO bot sp out
 map <C-V> :DR<CR>:OO<CR>
 
