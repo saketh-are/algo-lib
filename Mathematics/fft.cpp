@@ -29,6 +29,8 @@ namespace fft {
     }
 
     void transform(vector<cnum> &poly, bool invert) {
+        if(deg != poly.size()) set_degree(poly.size());
+
         for (int i = 1; i < deg; i++)
             if(rev[i] > i)
                 swap(poly[i], poly[rev[i]]);
