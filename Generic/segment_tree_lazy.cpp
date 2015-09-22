@@ -7,13 +7,25 @@ template<typename T, typename U> struct seg_tree_lazy {
     U noop;
     vector<U> prop;
 
-    seg_tree_lazy<T, U>(int _S, T _def = T(), U _noop = U()) {
-        S = _S, def = _def, noop = _noop;
-        assert(__builtin_popcount(S) == 1);
-        H = 32 - __builtin_clz(S);
+    void init(int _S) {
+        for (S = 1, H = 1; S < _S; ) S *= 2, H++;
+        value.resize(2*S, def);
+        prop.resize(2*S, noop);
+    }
 
-        value.resize(2 * S + 1, def);
-        prop.resize(2 * S + 1, noop);
+    seg_tree_lazy<T, U>(int _S, T _def = T(), U _noop = U()) {
+        def = _def, noop = _noop;
+        init(_S);
+    }
+
+    seg_tree_lazy<T, U>(vector<T> &leaves, T _def = T(), U _noop = U()) {
+        def = _def, noop = _noop;
+
+        init(leaves.size());
+        copy(leaves.begin(), leaves.end(), value.begin() + S);
+
+        for (int i = S - 1; i > 0; i--) 
+            value[i] = value[2 * i] + value[2 * i + 1];
     }
 
     void apply(int i, U update) {
@@ -31,7 +43,7 @@ template<typename T, typename U> struct seg_tree_lazy {
     void propagate(int i) {
         for (int h = H; h > 0; h--) {
             int l = i >> h;
-            if (prop[l] != noop) {
+            if (memcmp(&prop[l], &noop, sizeof(U))) {
                 apply(2*l, prop[l]);
                 apply(2*l+1, prop[l]);
                 prop[l] = noop;
