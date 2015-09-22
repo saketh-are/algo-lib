@@ -1,13 +1,12 @@
-struct cnum {
-    double a, b;
-
-    cnum operator+(const cnum &c) { return { a + c.a, b + c.b }; }
-    cnum operator-(const cnum &c) { return { a - c.a, b - c.b }; }
-    cnum operator*(const cnum &c) { return { a*c.a - b*c.b, a*c.b + b*c.a }; }
-    cnum operator/(double d) { return { a / d, b / d }; }
-};
-
 namespace fft {
+    struct cnum {
+        double a, b;
+        cnum operator+(const cnum &c) { return { a + c.a, b + c.b }; }
+        cnum operator-(const cnum &c) { return { a - c.a, b - c.b }; }
+        cnum operator*(const cnum &c) { return { a*c.a - b*c.b, a*c.b + b*c.a }; }
+        cnum operator/(double d) { return { a / d, b / d }; }
+    };
+
     const double PI = 2 * atan2(1, 0);
 
     int deg;
