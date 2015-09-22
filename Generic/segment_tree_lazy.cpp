@@ -55,12 +55,12 @@ template<typename T, typename U> struct seg_tree_lazy {
         i += S, j += S;
         propagate(i), propagate(j);
 
-        T res = def;
+        T res_left = def, res_right = def;
         for(; i <= j; i /= 2, j /= 2){
-            if((i&1) == 1) res = res + value[i++];
-            if((j&1) == 0) res = res + value[j--];
+            if((i&1) == 1) res_left = res_left + value[i++];
+            if((j&1) == 0) res_right = value[j--] + res_right;
         }
-        return res;
+        return res_left + res_right;
     }
 };
 
