@@ -1,31 +1,35 @@
 template<typename T, typename U> struct seg_tree_lazy {
     int S, H;
 
-    T def;
+    T def, zero;
     vector<T> value;
 
     U noop;
     vector<U> prop;
 
-    void init(int _S) {
-        for (S = 1, H = 1; S < _S; ) S *= 2, H++;
-        value.resize(2*S, def);
-        prop.resize(2*S, noop);
+    void build() {
+        for (int i = S - 1; i > 0; i--) 
+            value[i] = value[2 * i] + value[2 * i + 1];
     }
 
-    seg_tree_lazy<T, U>(int _S, T _def = T(), U _noop = U()) {
-        def = _def, noop = _noop;
+    void init(int _S) {
+        for (S = 1, H = 1; S < _S; ) S *= 2, H++;
+        value.resize(2*S, zero);
+        prop.resize(2*S, noop);
+
+        fill(value.begin() + S, value.begin() + S + _S, def);
+        build();
+    }
+
+    seg_tree_lazy<T, U>(int _S, T _def = T(), T _zero = T(), U _noop = U()) {
+        def = _def, zero = _zero, noop = _noop;
         init(_S);
     }
 
-    seg_tree_lazy<T, U>(vector<T> &leaves, T _def = T(), U _noop = U()) {
-        def = _def, noop = _noop;
-
-        init(leaves.size());
+    void set_leaves(vector<T> &leaves) {
         copy(leaves.begin(), leaves.end(), value.begin() + S);
-
-        for (int i = S - 1; i > 0; i--) 
-            value[i] = value[2 * i] + value[2 * i + 1];
+        fill(value.begin() + S + leaves.size(), value.end(), zero);
+        build();
     }
 
     void apply(int i, U update) {
@@ -67,7 +71,7 @@ template<typename T, typename U> struct seg_tree_lazy {
         i += S, j += S;
         propagate(i), propagate(j);
 
-        T res_left = def, res_right = def;
+        T res_left = zero, res_right = zero;
         for(; i <= j; i /= 2, j /= 2){
             if((i&1) == 1) res_left = res_left + value[i++];
             if((j&1) == 0) res_right = value[j--] + res_right;
