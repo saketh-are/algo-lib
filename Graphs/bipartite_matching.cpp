@@ -37,5 +37,30 @@ struct bipartite_graph {
             ans += augment(i, i);
         return ans;
     }
+
+    vector<bool> vertex_cover() {
+        vector<bool> res(A + B, false);
+        queue<int> bfs;
+
+        for (int i = 0; i < A; i++) {
+            if (match[i] == -1) bfs.push(i);
+            else res[i] = true;
+        }
+
+        while (!bfs.empty()) {
+            int loc = bfs.front();
+            bfs.pop();
+            for (int nbr : adj[loc]) {
+                if (res[nbr]) continue;
+                res[nbr] = true;
+                int loc2 = match[nbr];
+                if (loc2 == -1) continue;
+                res[loc2] = false;
+                bfs.push(loc2);
+            }
+        }
+
+        return res;
+    }
 };
 
