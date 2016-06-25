@@ -3,7 +3,7 @@ struct union_find {
     
     union_find (int N) {
         P.resize(N), R.resize(N, 0), S.resize(N, 1);
-        for (int i = 0; i < N; i++){
+        for (int i = 0; i < N; i++)
             P[i] = i;
     }
     
