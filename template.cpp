@@ -5,7 +5,7 @@ using namespace std;
 
 #define TRACE(x) x
 #define WATCH(x) TRACE(cout << #x" = " << x << endl)
-#define WATCHR(a, b) TRACE(for (auto c=a; c!=b;) cout << *(c++) << " "; cout << endl)
+#define WATCHR(a, b) TRACE(for (auto it=a; it!=b;) cout << *(it++) << " "; cout << endl)
 #define WATCHC(V) TRACE({cout << #V" = "; WATCHR(V.begin(), V.end());})
 
 typedef long long ll;
