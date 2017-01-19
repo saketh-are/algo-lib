@@ -26,7 +26,7 @@ template<typename T, typename U> struct seg_tree_lazy {
  
     void apply(int i, U &update) {
         value[i] = update(value[i]);
-        if(i < S) {
+        if (i < S) {
             prop[i] = prop[i] + update;
             dirty[i] = true;
         }
@@ -58,21 +58,21 @@ template<typename T, typename U> struct seg_tree_lazy {
         propagate(i), propagate(j);
  
         for (int l = i, r = j; l <= r; l /= 2, r /= 2) {
-            if((l&1) == 1) apply(l++, update);
-            if((r&1) == 0) apply(r--, update);
+            if ((l&1) == 1) apply(l++, update);
+            if ((r&1) == 0) apply(r--, update);
         }
  
         rebuild(i), rebuild(j);
     }
  
-    T query(int i, int j){
+    T query(int i, int j) {
         i += S, j += S;
         propagate(i), propagate(j);
  
         T res_left = zero, res_right = zero;
-        for(; i <= j; i /= 2, j /= 2){
-            if((i&1) == 1) res_left = res_left + value[i++];
-            if((j&1) == 0) res_right = value[j--] + res_right;
+        for (; i <= j; i /= 2, j /= 2) {
+            if ((i&1) == 1) res_left = res_left + value[i++];
+            if ((j&1) == 0) res_right = value[j--] + res_right;
         }
         return res_left + res_right;
     }

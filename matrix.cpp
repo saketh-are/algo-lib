@@ -14,29 +14,29 @@ template<typename T> struct matrix {
         return dat[N * i + j];
     }
 
-    matrix<T> operator *(matrix<T> &b){
+    matrix<T> operator *(matrix<T> &b) {
         matrix<T> r(N);
 
-        for(int i=0; i<N; i++)
-            for(int j=0; j<N; j++)
-                for(int k=0; k<N; k++)
+        for (int i = 0; i < N; i++)
+            for (int j = 0; j < N; j++)
+                for (int k = 0; k < N; k++)
                     r(i, j) = r(i, j) + (*this)(i, k) * b(k, j);
 
         return r;
     }
 
-    matrix<T> pow(ll expo){
+    matrix<T> pow(ll expo) {
         if(!expo) return matrix<T>(N, T(0), T(1));
         matrix<T> r = (*this * *this).pow(expo/2);
-        return expo&1 ? r * *this : r;
+        return (expo&1) ? (r * *this) : r;
     }
 
-    friend ostream& operator<<(ostream &os, matrix<T> &m){
+    friend ostream& operator<<(ostream &os, matrix<T> &m) {
         os << "{";
-        for(int i=0; i<m.N; i++){
+        for (int i = 0; i < m.N; i++) {
             if(i) os << "},\n ";
             os << "{";
-            for(int j=0; j<m.N; j++){
+            for (int j = 0; j < m.N; j++) {
                 if(j) os << ", ";
                 os << setw(10) << m(i, j) << setw(0);
             }
