@@ -3,9 +3,7 @@ set shell=/bin/bash
 "install plugins
 execute pathogen#infect()
 
-nnoremap <C-X> :wq<CR>
 nnoremap <C-B> :Dispatch 
-inoremap jk <Esc>
 
 "quit all buffers except first with ctrl-space
 inoremap <C-Space> <C-x><C-o>
@@ -35,23 +33,11 @@ set expandtab
 "pretty colors
 syntax on
 hi comment ctermfg=blue
-let g:solarized_termcolors=256
-let g:solarized_termtrans=1
-set background=light
+set background=dark
 colorscheme solarized
 
 "load template
 autocmd BufNewFile  *.cpp   0r ~/.vim/templates/skeleton.cpp
-
-"break arrow key addiction
-noremap <Up> <NOP>
-noremap <Down> <NOP>
-noremap <Left> <NOP>
-noremap <Right> <NOP>
-inoremap <Up> <NOP>
-inoremap <Down> <NOP>
-inoremap <Left> <NOP>
-inoremap <Right> <NOP>
 
 "automatically toggle paste mode before and after pasting
 function! WrapForTmux(s)
