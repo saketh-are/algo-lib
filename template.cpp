@@ -9,11 +9,11 @@ using namespace std;
 #define all(x) (x).begin(), (x).end()
 
 typedef long long ll;
-typedef vector<bool> vb;
 typedef vector<int> vi;
 typedef vector<vi> vvi;
 typedef vector<ll> vll;
-typedef vector<vll> vvll;
+typedef vector<bool> vb;
+typedef vector<string> vs;
 
 int main() {
     ios_base::sync_with_stdio(false);

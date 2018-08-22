@@ -1,6 +1,6 @@
 template<typename T> struct FFT {
     int deg;
-    vector<int> rev;
+    vi rev;
 
     T deg_inv;
 

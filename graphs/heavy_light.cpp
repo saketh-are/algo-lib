@@ -1,7 +1,7 @@
 template<typename T> struct heavy_light {
     lca links;
     seg_tree<T> st;
-    vector<int> preorder, index, jump;
+    vi preorder, index, jump;
 
     heavy_light(const vvi &graph, int root) {
         links = lca(graph, 0);
@@ -16,7 +16,7 @@ template<typename T> struct heavy_light {
         index[loc] = preorder.size();
         preorder.push_back(loc);
 
-        vector<int> ch = graph[loc];
+        vi ch = graph[loc];
         sort(ch.begin(), ch.end(), [&](int i, int j) {
             return links.size[i] > links.size[j]; });
         if (loc != par) ch.erase(ch.begin());

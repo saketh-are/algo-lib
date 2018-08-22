@@ -1,4 +1,4 @@
-vector<int> width(vector<vector<int>> poset) {
+vi width(vector<vi> poset) {
     int N = poset.size();
     bipartite_graph g(N, N);
 
@@ -9,7 +9,7 @@ vector<int> width(vector<vector<int>> poset) {
 
     g.matching();
 
-    vector<bool> vis[2];
+    vb vis[2];
     vis[false].resize(2 * N, false);
     vis[true].resize(2 * N, false);
 
@@ -36,21 +36,21 @@ vector<int> width(vector<vector<int>> poset) {
         }
     }
 
-    vector<bool> inz(2 * N, false);
+    vb inz(2 * N, false);
     for (int i = 0; i < 2 * N; i++)
         inz[i] = vis[true][i] || vis[false][i];
 
-    vector<bool> ink(N, false);
+    vb ink(N, false);
 
     for (int i = 0; i < N; i++)
         if (!inz[i])
             ink[i]= true;
 
-    for (int i = N; i < 2 * N; i++) 
+    for (int i = N; i < 2 * N; i++)
         if (inz[i])
             ink[i - N] = true;
 
-    vector<int> res;
+    vi res;
     for (int i = 0; i < N; i++) {
         if (!ink[i])
             res.push_back(i);

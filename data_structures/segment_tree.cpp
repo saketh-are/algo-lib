@@ -12,7 +12,7 @@ template<typename T> struct seg_tree {
     void set_leaves(vector<T> &leaves) {
         copy(leaves.begin(), leaves.end(), value.begin() + S);
 
-        for (int i = S - 1; i > 0; i--) 
+        for (int i = S - 1; i > 0; i--)
             value[i] = value[2 * i] + value[2 * i + 1];
     }
 

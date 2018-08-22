@@ -1,7 +1,7 @@
 template<typename T> struct kmp {
     int M;
     vector<T> needle;
-    vector<int> succ;
+    vi succ;
 
     kmp(vector<T> _needle) {
         needle = _needle;
@@ -18,9 +18,9 @@ template<typename T> struct kmp {
         }
     }
 
-    vector<bool> find(vector<T> &haystack) {
+    vb find(vector<T> &haystack) {
         int N = haystack.size(), i = 0;
-        vector<bool> res(N);
+        vb res(N);
 
         for (int m = 0; m + i < N; ) {
             if (i < M && needle[i] == haystack[m + i]) {

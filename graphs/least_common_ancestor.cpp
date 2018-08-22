@@ -1,6 +1,6 @@
 struct lca {
     int L, N;
-    vector<int> depth, size, link;
+    vi depth, size, link;
 
     lca(){}
     lca(const vvi &graph, int root = 0) {

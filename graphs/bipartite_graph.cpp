@@ -1,10 +1,10 @@
 struct bipartite_graph {
     int A, B;
-    vector<vector<int>> adj;
+    vvi adj;
 
     bipartite_graph(int _A, int _B) {
         A = _A, B = _B;
-        adj.resize(A + B); 
+        adj.resize(A + B);
     }
 
     void edge(int i, int j) {
@@ -12,7 +12,7 @@ struct bipartite_graph {
         adj[A+j].push_back(i);
     }
 
-    vector<int> visit, match;
+    vi visit, match;
 
     bool augment(int loc, int run) {
         if(visit[loc] == run) return false;
@@ -29,11 +29,11 @@ struct bipartite_graph {
     }
 
     int matching() {
-        visit = vector<int>(A+B, -1);
-        match = vector<int>(A+B, -1); 
+        visit = vi(A+B, -1);
+        match = vi(A+B, -1);
 
         int ans = 0;
-        for (int i = 0; i < A; i++) 
+        for (int i = 0; i < A; i++)
             ans += augment(i, i);
         return ans;
     }

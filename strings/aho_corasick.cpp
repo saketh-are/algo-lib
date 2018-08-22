@@ -5,7 +5,7 @@ namespace aho_corasick {
     struct node {
         int link[SIGMA];
         int suff, dict, patt;
-        node() { 
+        node() {
             suff = 0, dict = 0, patt = -1;
             memset(link, 0, sizeof(link));
         }
@@ -17,7 +17,7 @@ namespace aho_corasick {
 
     int tail = 1;
     vector<node> trie(TOTL);
-    vector<string> patterns;
+    vs patterns;
 
     void add_pattern(string &s) {
         int loc = 0;
@@ -39,7 +39,7 @@ namespace aho_corasick {
             int loc = bfs.front(); bfs.pop();
             int fail = trie[loc].suff;
 
-            if (!trie[loc].dict) 
+            if (!trie[loc].dict)
                 trie[loc].dict = trie[fail].dict;
 
             for (int c = 0; c < SIGMA; c++) {
@@ -52,7 +52,7 @@ namespace aho_corasick {
         }
     }
 
-    void match(string &s, vector<bool> &matches) {
+    void match(string &s, vb &matches) {
         int loc = 0;
 
         for (char c : s) {
