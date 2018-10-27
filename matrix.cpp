@@ -44,26 +44,3 @@ template<typename T> struct matrix {
         return os << "}}";
     }
 };
-
-struct mll {
-    const int MOD;
-
-    ll val;
-    mll(ll _val = 0) {
-        val = _val % MOD;
-        if (val < 0) val += MOD;
-    }
-
-    mll operator+(const mll &o) {
-        return mll((val + o.val) % MOD);
-    }
-
-    mll operator*(const mll &o) {
-        return mll((val * o.val) % MOD);
-    }
-
-    friend ostream& operator<<(ostream &os, mll &m) {
-        return os << m.val;
-    }
-};
-
