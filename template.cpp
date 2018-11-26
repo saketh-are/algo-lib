@@ -8,20 +8,19 @@ using namespace std;
 
 #define all(x) (x).begin(), (x).end()
 
-typedef long long ll;
-typedef vector<int> vi;
-typedef vector<vi> vvi;
-typedef vector<ll> vll;
-typedef vector<vll> vvll;
-typedef vector<bool> vb;
-typedef vector<string> vs;
+using ll = long long;
+using vi = vector<int>;
+using vvi = vector<vi>;
+using vll = vector<ll>;
+using vvll = vector<vll>;
+using vb = vector<bool>;
+using vs = vector<string>;
 
 mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
 
 int main() {
     ios_base::sync_with_stdio(false);
     cin.tie(0), cout.tie(0);
-    cout << fixed << setprecision(15);
 
     return 0;
 }
