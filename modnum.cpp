@@ -17,9 +17,13 @@ template<int MOD> struct modnum {
     friend modnum operator - (const modnum& a, const modnum& b) { return modnum(a) -= b; }
     friend modnum operator * (const modnum& a, const modnum& b) { return modnum(a) *= b; }
 
-    modnum pow(int e) {
+    modnum pow(int e) const {
         if (e == 0) return 1;
         if (e & 1) return *this * this->pow(e-1);
         return (*this * *this).pow(e/2);
     }
+
+    /* requires prime MOD */
+    modnum& operator /= (const modnum& o) { return (*this) *= o.pow(MOD - 2); }
+    friend modnum operator / (const modnum& a, const modnum& b) { return modnum(a) /= modnum(b); }
 };
