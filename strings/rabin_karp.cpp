@@ -1,53 +1,36 @@
-namespace rabin_karp {
-    const int NPRIME = 3;
-    const int P1 = 1e9+7, P2 = 1e9+9, P3 = 1e9+21;
-    const int primes[3] = { P1, P2, P3 };
+template<typename H, int B, typename V> struct rabin_karp {
+    array<H, B> bases;
+    vector<H> pows;
 
-    struct strong_mod {
-        int vals[NPRIME];
+    rabin_karp(int maxv) {
+        for (int i = 0; i < B; i++)
+            bases[i] = H(maxv + rng() % maxv);
+        pows.resize(B, H(1));
+    }
+    H pow(int i, int e) {
+        while (pows.size() <= B * e + i)
+            pows.push_back(pows[pows.size() - B] * bases[pows.size() % B]);
+        return pows[B * e + i];
+    }
 
-        strong_mod(ll value = 0) {
-            for (int i = 0; i < NPRIME; i++) {
-                vals[i] = value % primes[i];
-                if(vals[i] < 0) vals[i] += primes[i];
-            }
+    struct polyhash {
+        rabin_karp<H, B, V>& rk;
+        vector<H> pref;
+
+        polyhash(const vector<V>& e, auto& _rk) : rk(_rk) {
+            pref.resize(B * (e.size() + 1));
+            for (int i = 0; i < pref.size(); i++)
+                if (i < B) pref[i] = H(0);
+                else pref[i] = pref[i - B] * rk.bases[i % B] + H(e[i/B - 1]);
         }
 
-        #define combine(h, op) \
-            strong_mod res; \
-            for (int i = 0; i < NPRIME; i++) \
-                res.vals[i] = (vals[i] op h.vals[i]) % primes[i]; \
+        array<H, B> operator () (int i, int j) const {
+            array<H, B> res;
+            for (int b = 0; b < B; b++)
+                res[b] = pref[j * B + b] - rk.pow(b, j - i) * pref[i * B + b];
             return res;
-
-        bool operator==(const strong_mod &h) { return !memcmp(this, &h, sizeof(strong_mod)); }
-        strong_mod operator*(const strong_mod &h) { combine(h, * 1ll *); }
-        strong_mod operator+(const strong_mod &h) { combine(h, +); }
-
-        strong_mod operator*(ll m) { return (*this) * strong_mod(m); }
-        strong_mod operator+(ll a) { return (*this) + strong_mod(a); }
+        }
     };
-
-    const int MAXL = 2e5 + 200;
-    const int BASE = 3001;
-
-    vector<strong_mod> powers;
-
-    void init() {
-        powers.resize(MAXL);
-        powers[0] = strong_mod(1);
-        for(int i=1; i<MAXL; i++)
-            powers[i] = powers[i-1] * BASE;
-    }
-
-    void compute(vector<strong_mod> &hashes, string str) {
-        hashes.resize(str.size() + 1);
-        for(int i=1; i<=str.size(); i++)
-            hashes[i] = hashes[i-1] * BASE + int(str[i-1]);
-    }
-
-    strong_mod read(vector<strong_mod> &hashes, int i, int l) {
-        strong_mod sub = hashes[i] * powers[l];
-        return hashes[i+l] + (sub * -1);
-    }
+    polyhash hash(const vector<V>& e) { return polyhash(e, *this); }
 };
 
