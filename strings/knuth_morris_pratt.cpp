@@ -1,41 +1,30 @@
 template<typename T> struct kmp {
-    int M;
-    vector<T> needle;
-    vi succ;
+    int P;
+    vector<T> word;
+    vi fail;
 
-    kmp(vector<T> _needle) {
-        needle = _needle;
-        M = needle.size();
-
-        succ.resize(M + 1);
-        succ[0] = -1, succ[1] = 0;
-
-        int cur = 0;
-        for (int i = 2; i <= M; ) {
-            if (needle[i-1] == needle[cur]) succ[i++] = ++cur;
-            else if (cur) cur = succ[cur];
-            else succ[i++] = 0;
-        }
+    int adv(int len, const T& nxt) const {
+        while (len > 0 && word[len] != nxt)
+            len = fail[len];
+        return len + int(word[len] == nxt);
     }
 
-    vb find(vector<T> &haystack) {
-        int N = haystack.size(), i = 0;
-        vb res(N);
+    kmp(const vector<T>& word) : P(word.size()), word(word) {
+        fail.resize(P + 1);
+        for (int i = 2; i <= P; i++)
+            fail[i] = adv(fail[i - 1], word[i - 1]);
+    }
 
-        for (int m = 0; m + i < N; ) {
-            if (i < M && needle[i] == haystack[m + i]) {
-                if (i == M - 1) res[m] = true;
-                i++;
-            } else if (succ[i] != -1) {
-                m = m + i - succ[i];
-                i = succ[i];
-            } else {
-                i = 0;
-                m++;
+    vb find(const vector<T>& text) const {
+        vb match(text.size());
+        for (int i = 0, len = 0; i < text.size(); i++) {
+            len = adv(len, text[i]);
+            if (len == P) {
+                match[i - len + 1] = true;
+                len = fail[len];
             }
         }
-
-        return res;
+        return match;
     }
 };
 
