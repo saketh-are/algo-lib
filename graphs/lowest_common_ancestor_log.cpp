@@ -1,16 +1,15 @@
-struct lca {
+struct lowest_common_ancestor_log {
     int L, N;
     vi depth, size, link;
 
-    lca(){}
-    lca(const vvi &graph, int root = 0) {
+    lowest_common_ancestor_log(const vvi &graph = {}, int root = 0) {
         N = graph.size();
         for (L = 0; (1 << L) <= N; L++);
 
         depth.resize(N);
         size.resize(N);
         link.resize(L*N);
-        init(root, root, graph);
+        if (graph.size()) init(root, root, graph);
     }
 
     void init(int loc, int par, const vvi &graph) {
