@@ -45,7 +45,7 @@ template<typename T> struct full_seg_tree : seg_tree<T> {
     /*
      * Returns in O(logS) the first index i such that pred(query(0, i)) evaluates to true.
      * Returns S if no such i exists.
-     * pred(query(0, i)) should be monotonic in i.
+     * Requires that pred(query(0, i)) is non-decreasing in i.
      */
     int lower_bound(function<bool(T)> pred) {
         if (!pred(this->value[1])) return this->_S;
