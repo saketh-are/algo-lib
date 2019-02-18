@@ -2,13 +2,16 @@ template<typename T> struct matrix {
     int N;
     vector<T> dat;
 
-    matrix<T> (int _N, T fill = T(0), T diag = T(1)) : N(_N) {
+    matrix<T> (int _N, T fill = T(0), T diag = T(0)) : N(_N) {
         dat.resize(N * N, fill);
         for (int i = 0; i < N; i++)
             (*this)(i, i) = diag;
     }
 
     T& operator()(int i, int j) {
+        return dat[N * i + j];
+    }
+    T operator()(int i, int j) const {
         return dat[N * i + j];
     }
 
@@ -21,9 +24,9 @@ template<typename T> struct matrix {
         return r;
     }
 
-    matrix<T> pow(ll e) {
-        if(!e) return matrix<T>(N);
-        if (e&1) return *this * *this.pow(e - 1);
+    matrix<T> pow(ll e) const {
+        if(!e) return matrix<T>(N, 0, 1);
+        if (e&1) return *this * this->pow(e - 1);
         return (*this * *this).pow(e/2);
     }
 
