@@ -42,8 +42,8 @@ struct lowest_common_ancestor {
         return depth[u] + depth[v] - 2 * depth[lca(u, v)];
     }
 
-    bool on_path(int u, int v, int w) {
-        return dist(u, v) == (dist(u, w) + dist(w, v));
+    bool on_path(int u, int v, int inx) {
+        return dist(u, v) == (dist(u, inx) + dist(inx, v));
     }
 };
 
