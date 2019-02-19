@@ -1,32 +1,35 @@
+/*
+ * Supports O(logN) lowest common ancestor queries on an immutable tree.
+ */
 struct lowest_common_ancestor_log {
     int L, N;
-    vi depth, size, link;
+    vi depth, link;
 
-    lowest_common_ancestor_log(const vvi &graph = {}, int root = 0) {
-        N = graph.size();
-        for (L = 0; (1 << L) <= N; L++);
+    lowest_common_ancestor_log() { }
 
+    lowest_common_ancestor_log(const vvi &graph, int root = 0) : N(graph.size()) {
+        L = 31 - __builtin_clz(N);
         depth.resize(N);
-        size.resize(N);
         link.resize(L*N);
-        if (graph.size()) init(root, root, graph);
+        init(root, root, graph);
     }
 
+    /*
+     * Initializes the link table in O(NlogN). link[l * N + i] contains the index
+     * of the (2 ** l)th ancestor of vertex i.
+     */
     void init(int loc, int par, const vvi &graph) {
         link[loc] = par;
         for (int l = 1; l < L; l++)
             link[l*N + loc] = link[(l-1)*N + link[(l-1)*N + loc]];
 
-        for (int nbr : graph[loc]) {
-            if (nbr == par) continue;
+        for (int nbr : graph[loc]) if (nbr != par) {
             depth[nbr] = depth[loc] + 1;
             init(nbr, loc, graph);
-            size[loc] += size[nbr];
         }
-
-        size[loc]++;
     }
 
+    // Returns the index of the dist-th ancestor of vertex loc in O(logN).
     int above(int loc, int dist) {
         for (int l = 0; l < L; l++)
             if ((dist >> l)&1)
@@ -34,7 +37,8 @@ struct lowest_common_ancestor_log {
         return loc;
     }
 
-    int find(int u, int v) {
+    // Returns the least common ancestor of vertices u and v in O(logN).
+    int lca(int u, int v) {
         if (depth[u] > depth[v]) swap(u, v);
         v = above(v, depth[v] - depth[u]);
         if (u == v) return u;
@@ -43,8 +47,15 @@ struct lowest_common_ancestor_log {
             if (link[l*N + u] != link[l*N + v])
                 u = link[l*N + u], v = link[l*N + v];
         }
-
         return link[u];
+    }
+
+    int dist(int u, int v) {
+        return depth[u] + depth[v] - 2 * depth[lca(u, v)];
+    }
+
+    bool on_path(int u, int v, int inx) {
+        return dist(u, v) == dist(u, inx) + dist(inx, v);
     }
 };
 
