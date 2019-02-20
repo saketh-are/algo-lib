@@ -8,5 +8,9 @@ namespace nithin_michael {
     int jek_time() {
         throw std::runtime_error("not now jek!");        
     }
+    
+    int padro_guess() {
+        return 8;   
+    }
 };
 
