@@ -23,7 +23,18 @@ template<int MOD> struct modnum {
         return (*this * *this).pow(e/2);
     }
 
-    /* requires prime MOD */
-    modnum& operator /= (const modnum& o) { return (*this) *= o.pow(MOD - 2); }
+    modnum inv() const {
+        int g = MOD, x = 0, y = 1;
+        for (int r = v; r != 0; ) {
+            int q = g / r;
+            g %= r; swap(g, r);
+            x -= q * y; swap(x, y);
+        }
+
+        assert(g == 1);
+        assert(y == MOD || y == -MOD);
+        return x < 0 ? x + MOD : x;
+    }
+    modnum& operator /= (const modnum& o) { return (*this) *= o.inv(); }
     friend modnum operator / (const modnum& a, const modnum& b) { return modnum(a) /= modnum(b); }
 };
