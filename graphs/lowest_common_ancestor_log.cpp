@@ -8,7 +8,7 @@ struct lowest_common_ancestor_log {
     lowest_common_ancestor_log() { }
 
     lowest_common_ancestor_log(const vvi &graph, int root = 0) : N(graph.size()) {
-        L = 31 - __builtin_clz(N);
+        L = 32 - __builtin_clz(N);
         depth.resize(N);
         link.resize(L*N);
         init(root, root, graph);
@@ -31,8 +31,9 @@ struct lowest_common_ancestor_log {
 
     // Returns the index of the dist-th ancestor of vertex loc in O(logN).
     int above(int loc, int dist) {
+        dist = min(dist, N - 1);
         for (int l = 0; l < L; l++)
-            if ((dist >> l)&1)
+            if (dist & (1 << l))
                 loc = link[l*N + loc];
         return loc;
     }
@@ -58,4 +59,3 @@ struct lowest_common_ancestor_log {
         return dist(u, v) == dist(u, inx) + dist(inx, v);
     }
 };
-
