@@ -3,8 +3,8 @@ template<int MOD> struct modnum {
     modnum() : v(0) {}
     modnum(ll _v) : v(_v % MOD) { if (v < 0) v += MOD; }
     explicit operator int() const { return v; }
+    friend istream& operator >> (istream& i, modnum& n) { ll v; i >> v; n = modnum(v); return i; }
     friend ostream& operator << (ostream& o, const modnum& n) { return o << n.v; }
-    friend istream& operator << (istream& i, modnum& n) { ll v; i >> v; n = modnum(v); return i; }
 
     friend bool operator == (const modnum& a, const modnum& b) { return a.v == b.v; }
     friend bool operator != (const modnum& a, const modnum& b) { return a.v != b.v; }
