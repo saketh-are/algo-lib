@@ -37,4 +37,15 @@ template<int MOD> struct modnum {
     }
     modnum& operator /= (const modnum& o) { return (*this) *= o.inv(); }
     friend modnum operator / (const modnum& a, const modnum& b) { return modnum(a) /= modnum(b); }
+
+    static modnum fact(int n) {
+        static vector<modnum<MOD>> fact = { 1 };
+        while (fact.size() <= n)
+            fact.push_back(fact.back() * fact.size());
+        return fact[n];
+    }
+    static modnum ncr(int n, int r) {
+        if (r < 0 || n < r) return 0;
+        return fact(n) / (fact(r) * fact(n - r));
+    }
 };
