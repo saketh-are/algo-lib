@@ -1,6 +1,6 @@
 template<typename T> struct line {
-    const T a, b;
-    const bool q;
+    T a, b;
+    bool q;
     mutable T l;
     T eval(T x) const { return a * x + b; }
 
@@ -10,6 +10,7 @@ template<typename T> struct line {
 
     static constexpr T inf = numeric_limits<T>::has_infinity ?
         numeric_limits<T>::infinity() : numeric_limits<T>::max();
+
     template<typename _T = T> static
     typename enable_if<is_integral<_T>::value, _T>::type div(const _T a, const _T b) {
         return a / b - ((a ^ b) < 0 && (a % b));
@@ -18,6 +19,7 @@ template<typename T> struct line {
     typename enable_if<!is_integral<_T>::value, _T>::type div(const _T a, const _T b) {
         return a / b;
     }
+
     T boundary(const line<T>& o) const {
         if (a == o.a) return b > o.b ? inf : -inf;
         return div(o.b - b, a - o.a);
@@ -87,3 +89,26 @@ template<typename T> struct line_container_monotonic : deque<line<T>> {
     }
 };
 
+/*
+ * Better constant-time performance for when all lines are inserted before all queries.
+ */
+template<typename T> struct line_container_static {
+    vector<line<T>> hull;
+
+    line_container_static() {}
+    line_container_static(auto begin, auto end) {
+        vector<line<T>> lines(begin, end);
+        sort(all(lines));
+        for (auto elt : lines) {
+            while (hull.size() >= 2 && (hull.end() - 2)->l >= (hull.end() - 2)->boundary(elt))
+                hull.pop_back();
+            if (hull.size()) hull.back().l = hull.back().boundary(elt);
+            hull.push_back({ elt.a, elt.b, false, line<T>::inf });
+        }
+    }
+
+    // binary search in log(container size)
+    T maximum(T x0) const {
+        return lower_bound(all(hull), line<T>({ 0, 0, true, x0 }))->eval(x0);
+    }
+};
