@@ -16,8 +16,9 @@ def err(message):
     print colors.BOLD + colors.FAIL + "ERROR" + colors.ENDC + ": " + message
     exit(1)
 
-NUMBER = "-?[0-9]+([.][0-9]+)?(e[0-9]+)?"
 VAR_NAME = "[a-zA-Z0-9_]+"
+NUMBER = "-?[0-9]+([.][0-9]+)?(e[0-9]+)?"
+INTERVAL = "\s*([\[\(][^,]+),([^,]+[\]\)])\s*";
 
 class Scope:
     def __init__(self):
@@ -69,6 +70,7 @@ class Scope:
 
 class Number:
     TYPES = [ "int", "ll", "double" ]
+    SPEC = "#([\w\s]+)(int|ll|double)" + INTERVAL
 
     def __init__(self, scope, name, num_type, lower_bound, upper_bound):
         assert num_type in self.TYPES
@@ -100,12 +102,33 @@ class Number:
                 ub -= 1
             self.assigned_value = random.randint(math.ceil(lb), math.floor(ub))
 
+        return self.assigned_value
+
     def value(self):
         return self.assigned_value
 
+class NumberVector:
+    TYPES = [ "ints", "lls", "doubles" ]
+    SPEC = "#([\w\s]+)(ints|lls|doubles)(.+)" + INTERVAL
 
-INTERVAL = "\s*([\[\(][^,]+),([^,]+[\]\)])\s*";
-NUMBER_SPEC = "^#([\w\s]+)(int|ll|double)" + INTERVAL + "$"
+    def __init__(self, scope, name, vec_type, length, lower_bound, upper_bound):
+        assert vec_type in self.TYPES
+
+        self.name = name
+        self.scope = scope
+        self.vec_type = vec_type
+        self.numbers = Number(scope, "__" + name, vec_type[:-1], lower_bound, upper_bound)
+        self.length = length
+
+    def dependencies(self):
+        return self.numbers.dependencies() + self.scope.dependencies(self.length)
+
+    def assign(self):
+        self.assigned_length = self.scope.evaluate(self.length)
+        self.assigned_value = [self.numbers.assign() for i in range(0, self.assigned_length)]
+
+    def value(self):
+        return self.assigned_value
 
 def main():
     if len(sys.argv) < 2:
@@ -114,41 +137,62 @@ def main():
     scope = Scope()
     layout = []
 
-    spec = open(sys.argv[1]).readlines()
+    spec = [x.strip() for x in open(sys.argv[1]).readlines() if x.strip()]
     for line in spec:
         if line[0] != "#":
             layout.append(line)
             continue
 
-        ns = re.search(NUMBER_SPEC, line)
+        ns = re.match(Number.SPEC, line)
         if ns:
             names, vtype, lower, upper = ns.groups()
             for vname in filter(None, names.split(" ")):
                 if vname in scope.vars:
-                    err("Variable \"{}\" was already defined.".format(vname))
+                    err("Variable \"{}\" was already defined".format(vname))
                 scope.vars[vname] = Number(scope, vname, vtype, lower, upper)
+            continue
+
+        nv = re.match(NumberVector.SPEC, line)
+        if nv:
+            names, vtype, length, lower, upper = nv.groups()
+            for vname in filter(None, names.split(" ")):
+                if vname in scope.vars:
+                    err("Variable \"{}\" was already defined".format(vname))
+                scope.vars[vname] = NumberVector(scope, vname, vtype, length, lower, upper)
+            continue
+
+        err("Could not parse variable spec \"{}\"".format(line))
 
     eval_order = scope.toposort()
     for vname in eval_order:
         scope.vars[vname].assign()
-        print vname, scope.vars[vname].value()
 
-"""
-    tmp = scope.vars["x"] = Number(scope, "x", "double", "[2", "4]")
-    tmp.assign()
-    tmp2 = scope.vars["y"] = Number(scope, "y", "int", "[x", "x^3]")
-    print tmp2.dependencies()
-    tmp2.assign()
+    output = []
+    for line in layout:
+        vnames = re.findall(VAR_NAME, line)
 
-    print scope.evaluate("-42.0123 + 22     + 101.3 * x^2")
-    print scope.evaluate("-42.0123 + 22     + 101.3 * y^2")
-    print scope.evaluate("x")
-    print scope.evaluate("-42.0123 + 22     + 101.3 * y^2")
-    print scope.evaluate("y")
-    print scope.evaluate("y^2^3")
-    print scope.evaluate("6^2")
-    print scope.evaluate("2^2^3")
-    print scope.evaluate("6^2 + 2^3^2")
-"""
+        nospec = filter(lambda vn: vn not in scope.vars, vnames)
+        if nospec:
+            err("No spec provided for variables {}".format(nospec))
+
+        elts = [scope.vars[vn] for vn in vnames]
+        vectors = filter(lambda e : isinstance(e, NumberVector), elts)
+        if vectors:
+            if vectors != elts:
+                err("Line \"{}\" mixes vectors and primitives".format(line))
+
+            lengths = set([e.assigned_length for e in elts])
+            if len(lengths) > 1:
+                err("Line \"{}\" contains columns with differing lengths".format(line))
+            length = next(iter(lengths))
+
+            rows = [" ".join([str(v.value()[i]) for v in vectors]) for i in range(0, length)]
+            delim = "\n" if len(vectors) > 1 else " "
+            output.append(delim.join(rows))
+        else:
+            output.append(" ".join([str(scope.vars[vn].value()) for vn in vnames]))
+
+    for line in output:
+        print line
 
 if __name__ == "__main__": main()
