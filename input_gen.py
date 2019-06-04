@@ -70,7 +70,7 @@ class Scope:
 
 class Number:
     TYPES = [ "int", "ll", "double" ]
-    SPEC = "#([\w\s]+)(int|ll|double)" + INTERVAL
+    SPEC = "([\w\s]+)(int|ll|double)" + INTERVAL
 
     def __init__(self, scope, name, num_type, lower_bound, upper_bound):
         assert num_type in self.TYPES
@@ -117,7 +117,7 @@ class Number:
 
 class NumberVector:
     TYPES = [ "ints", "lls", "doubles" ]
-    SPEC = "#([\w\s]+)(ints|lls|doubles)(.+)" + INTERVAL
+    SPEC = "([\w\s]+)(ints|lls|doubles)(.+)" + INTERVAL
 
     def __init__(self, scope, name, vec_type, length, lower_bound, upper_bound):
         assert vec_type in self.TYPES
@@ -125,7 +125,7 @@ class NumberVector:
         self.name = name
         self.scope = scope
         self.vec_type = vec_type
-        self.numbers = Number(scope, "__" + name, vec_type[:-1], lower_bound, upper_bound)
+        self.numbers = Number(scope, "elements of " + name, vec_type[:-1], lower_bound, upper_bound)
         self.length = length
 
     def dependencies(self):
@@ -147,9 +147,14 @@ def main():
 
     spec = [x.strip() for x in open(sys.argv[1]).readlines() if x.strip()]
     for line in spec:
-        if line[0] != "#":
+        if "#" not in line:
             layout.append(line)
             continue
+
+        cloc = line.index("#")
+        if cloc > 0:
+            layout.append(line[0:cloc])
+        line = line.replace("#", "")
 
         ns = re.match(Number.SPEC, line)
         if ns:
@@ -198,7 +203,7 @@ def main():
             delim = "\n" if len(vectors) > 1 else " "
             output.append(delim.join(rows))
         else:
-            output.append(" ".join([str(scope.vars[vn].value()) for vn in vnames]))
+            output.append(" ".join([str(e.value()) for e in elts]))
 
     for line in output:
         print line
