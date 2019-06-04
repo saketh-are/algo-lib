@@ -69,8 +69,8 @@ class Scope:
         return order
 
 class Number:
-    TYPES = [ "int", "ll", "double" ]
-    SPEC = "([\w\s]+)(int|ll|double)" + INTERVAL
+    TYPES = [ "int", "double" ]
+    SPEC = "([\w\s]+)(int|double)" + INTERVAL
 
     def __init__(self, scope, name, num_type, lower_bound, upper_bound):
         assert num_type in self.TYPES
@@ -139,8 +139,8 @@ class String:
         return self.assigned_value
 
 class NumberVector:
-    TYPES = [ "ints", "lls", "doubles" ]
-    SPEC = "([\w\s]+)(ints|lls|doubles)(.+)" + INTERVAL
+    TYPES = [ "ints", "doubles" ]
+    SPEC = "([\w\s]+)(ints|doubles)(.+)" + INTERVAL
 
     def __init__(self, scope, name, vec_type, length, lower_bound, upper_bound):
         assert vec_type in self.TYPES
@@ -162,9 +162,33 @@ class NumberVector:
     def value(self):
         return self.assigned_value
 
+class NumberGrid:
+    TYPES = [ "intss", "doubless" ]
+    SPEC = "([\w\s]+)(intss|doubless)(.+)%(.+)" + INTERVAL
+
+    def __init__(self, scope, name, grid_type, rows, cols, lower_bound, upper_bound):
+        assert grid_type in self.TYPES
+
+        self.name = name
+        self.scope = scope
+        self.grid_type = grid_type
+        self.row_vectors = NumberVector(scope, "rows of " + name, grid_type[:-1], cols, lower_bound, upper_bound)
+        self.length = rows
+
+    def dependencies(self):
+        return self.row_vectors.dependencies() + self.scope.dependencies(self.length)
+
+    def assign(self):
+        self.assigned_length = self.scope.evaluate(self.length)
+        self.assigned_value = [self.row_vectors.assign() for i in xrange(0, self.assigned_length)]
+        return self.assigned_value
+
+    def value(self):
+        return self.assigned_value
+
 class StringVector:
     TYPES = [ "strings" ]
-    SPEC = "([\w\s]+)(strings)(.+) (.+)(\[.*\])"
+    SPEC = "([\w\s]+)(strings)(.+)%(.+)(\[.*\])"
 
     def __init__(self, scope, name, vec_type, length, str_length, alphabet):
         assert vec_type in self.TYPES
@@ -211,13 +235,19 @@ def main():
             layout.append(line[0:cloc])
         line = line.replace("#", "", 1)
 
+        ng = re.match(NumberGrid.SPEC, line)
+        if ng:
+            names, vtype, rows, cols, lower, upper = ng.groups()
+            for vname in parse_vnames(names):
+                scope.vars[vname] = NumberGrid(scope, vname, vtype, rows, cols, lower, upper)
+            continue
+
         nv = re.match(NumberVector.SPEC, line)
         if nv:
             names, vtype, length, lower, upper = nv.groups()
             for vname in parse_vnames(names):
                 scope.vars[vname] = NumberVector(scope, vname, vtype, length, lower, upper)
             continue
-
 
         ns = re.match(Number.SPEC, line)
         if ns:
@@ -255,6 +285,14 @@ def main():
             err("No spec provided for variables {}".format(nospec))
 
         elts = [scope.vars[vn] for vn in vnames]
+
+        grids = filter(lambda e : isinstance(e, NumberGrid), elts)
+        if grids:
+            if len(elts) > 1:
+                err("2-D vectors must appear on their own line: \"{}\"".format(line))
+            output.append("\n".join([" ".join([str(v) for v in row]) for row in elts[0].value()]))
+            continue
+
         vectors = filter(lambda e : isinstance(e, NumberVector) or isinstance(e, StringVector), elts)
         if vectors:
             if vectors != elts:
