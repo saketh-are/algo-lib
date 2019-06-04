@@ -78,7 +78,6 @@ class Number:
         self.name = name
         self.scope = scope
         self.num_type = num_type
-        self.deps = []
 
         self.lb_type = lower_bound[0]
         self.lb_value = lower_bound[1:]
@@ -115,6 +114,29 @@ class Number:
     def value(self):
         return self.assigned_value
 
+class String:
+    TYPES = [ "string" ]
+    SPEC = "([\w\s]+)(string)(.+)(\[.*\])"
+
+    def __init__(self, scope, name, str_type, length, alphabet):
+        assert str_type in self.TYPES
+
+        self.name = name
+        self.scope = scope
+        self.str_type = str_type
+        self.length = length
+        self.charset = [chr(ch) for ch in xrange(0, 256) if re.match(alphabet, chr(ch))]
+
+    def dependencies(self):
+        return self.scope.dependencies(self.length)
+
+    def assign(self):
+        self.assigned_length = self.scope.evaluate(self.length)
+        self.assigned_value = "".join([random.choice(self. charset) for i in xrange(0, self.assigned_length)])
+
+    def value(self):
+        return self.assigned_value
+
 class NumberVector:
     TYPES = [ "ints", "lls", "doubles" ]
     SPEC = "([\w\s]+)(ints|lls|doubles)(.+)" + INTERVAL
@@ -133,7 +155,7 @@ class NumberVector:
 
     def assign(self):
         self.assigned_length = self.scope.evaluate(self.length)
-        self.assigned_value = [self.numbers.assign() for i in range(0, self.assigned_length)]
+        self.assigned_value = [self.numbers.assign() for i in xrange(0, self.assigned_length)]
 
     def value(self):
         return self.assigned_value
@@ -145,6 +167,13 @@ def main():
     scope = Scope()
     layout = []
 
+    def parse_vnames(names):
+        vnames = filter(None, names.split(" "))
+        for vname in vnames:
+            if vname in scope.vars:
+                err("Variable \"{}\" was already defined".format(vname))
+        return vnames
+
     spec = [x.strip() for x in open(sys.argv[1]).readlines() if x.strip()]
     for line in spec:
         if "#" not in line:
@@ -154,23 +183,26 @@ def main():
         cloc = line.index("#")
         if cloc > 0:
             layout.append(line[0:cloc])
-        line = line.replace("#", "")
+        line = line.replace("#", "", 1)
 
         ns = re.match(Number.SPEC, line)
         if ns:
             names, vtype, lower, upper = ns.groups()
-            for vname in filter(None, names.split(" ")):
-                if vname in scope.vars:
-                    err("Variable \"{}\" was already defined".format(vname))
+            for vname in parse_vnames(names):
                 scope.vars[vname] = Number(scope, vname, vtype, lower, upper)
+            continue
+
+        ss = re.match(String.SPEC, line)
+        if ss:
+            names, str_type, length, alphabet = ss.groups()
+            for vname in parse_vnames(names):
+                scope.vars[vname] = String(scope, vname, str_type, length, alphabet)
             continue
 
         nv = re.match(NumberVector.SPEC, line)
         if nv:
             names, vtype, length, lower, upper = nv.groups()
-            for vname in filter(None, names.split(" ")):
-                if vname in scope.vars:
-                    err("Variable \"{}\" was already defined".format(vname))
+            for vname in parse_vnames(names):
                 scope.vars[vname] = NumberVector(scope, vname, vtype, length, lower, upper)
             continue
 
@@ -199,7 +231,7 @@ def main():
                 err("Line \"{}\" contains columns with differing lengths".format(line))
             length = next(iter(lengths))
 
-            rows = [" ".join([str(v.value()[i]) for v in vectors]) for i in range(0, length)]
+            rows = [" ".join([str(v.value()[i]) for v in vectors]) for i in xrange(0, length)]
             delim = "\n" if len(vectors) > 1 else " "
             output.append(delim.join(rows))
         else:
