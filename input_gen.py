@@ -69,8 +69,8 @@ class Scope:
         return order
 
 class Number:
-    TYPES = [ "int", "double" ]
-    SPEC = "([\w\s]+)(int|double)" + INTERVAL
+    TYPES = [ "int", "float" ]
+    SPEC = "([\w\s]+)(int|float)" + INTERVAL
 
     def __init__(self, scope, name, num_type, lower_bound, upper_bound):
         assert num_type in self.TYPES
@@ -93,9 +93,9 @@ class Number:
         ub = self.scope.evaluate(self.ub_value)
         pretty_bounds = self.lb_type + str(lb) + ", " + str(ub) + self.ub_type
 
-        if self.num_type == "double":
+        if self.num_type == "float":
             if lb > ub:
-                err("Double \"{}\" bounded by empty range {}".format(self.name, pretty_bounds))
+                err("Float \"{}\" bounded by empty range {}".format(self.name, pretty_bounds))
             self.assigned_value = random.uniform(lb, ub)
         else:
             if self.lb_type == '(':
@@ -139,8 +139,8 @@ class String:
         return self.assigned_value
 
 class NumberVector:
-    TYPES = [ "ints", "doubles" ]
-    SPEC = "([\w\s]+)(ints|doubles)(.+)" + INTERVAL
+    TYPES = [ "ints", "floats" ]
+    SPEC = "([\w\s]+)(ints|floats)(.+)" + INTERVAL
 
     def __init__(self, scope, name, vec_type, length, lower_bound, upper_bound):
         assert vec_type in self.TYPES
@@ -163,8 +163,8 @@ class NumberVector:
         return self.assigned_value
 
 class NumberGrid:
-    TYPES = [ "intss", "doubless" ]
-    SPEC = "([\w\s]+)(intss|doubless)(.+)%(.+)" + INTERVAL
+    TYPES = [ "intss", "floatss" ]
+    SPEC = "([\w\s]+)(intss|floatss)(.+)%(.+)" + INTERVAL
 
     def __init__(self, scope, name, grid_type, rows, cols, lower_bound, upper_bound):
         assert grid_type in self.TYPES
