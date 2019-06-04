@@ -16,19 +16,19 @@ def err(message):
     print colors.BOLD + colors.FAIL + "ERROR" + colors.ENDC + ": " + message
     exit(1)
 
-VAR_NAME = "[a-zA-Z0-9_]+"
-NUMBER = "-?[0-9]+([.][0-9]+)?(e[0-9]+)?"
-INTERVAL = "\s*([\[\(][^,]+),([^,]+[\]\)])\s*";
+VAR_NAME_RE = re.compile("[a-zA-Z0-9_]+")
+NUMBER_RE = re.compile("-?[0-9]+([.][0-9]+)?(e[0-9]+)?")
+INTERVAL = "\s*([\[\(][^,]+),([^,]+[\]\)])\s*"
 
 class Scope:
     def __init__(self):
         self.vars = {}
 
     def is_number(self, expr):
-        return re.match(NUMBER, expr)
+        return NUMBER_RE.match(expr)
 
     def dependencies(self, expr):
-        return [x for x in re.findall(VAR_NAME, expr) if not self.is_number(x)]
+        return [x for x in VAR_NAME_RE.findall(expr) if not self.is_number(x)]
 
     def evaluate(self, expr):
         deps = self.dependencies(expr)
@@ -58,11 +58,14 @@ class Scope:
             if degree[vname] == 0:
                 order.append(vname)
 
-        for vname in order:
+        inx = 0
+        while inx < len(order):
+            vname = order[inx]
             for dep in rev_deps[vname]:
                 degree[dep] -= 1
                 if not degree[dep]:
                     order.append(dep)
+            inx += 1
 
         if len(order) != len(self.vars):
             err("Variable dependencies are cyclic")
@@ -70,7 +73,7 @@ class Scope:
 
 class Number:
     TYPES = [ "int", "ll", "double" ]
-    SPEC = "#([\w\s]+)(int|ll|double)" + INTERVAL
+    SPEC_RE = re.compile("#([\w\s]+)(int|ll|double)" + INTERVAL)
 
     def __init__(self, scope, name, num_type, lower_bound, upper_bound):
         assert num_type in self.TYPES
@@ -117,7 +120,7 @@ class Number:
 
 class NumberVector:
     TYPES = [ "ints", "lls", "doubles" ]
-    SPEC = "#([\w\s]+)(ints|lls|doubles)(.+)" + INTERVAL
+    SPEC_RE = re.compile("#([\w\s]+)(ints|lls|doubles)(.+)" + INTERVAL)
 
     def __init__(self, scope, name, vec_type, length, lower_bound, upper_bound):
         assert vec_type in self.TYPES
@@ -151,7 +154,7 @@ def main():
             layout.append(line)
             continue
 
-        ns = re.match(Number.SPEC, line)
+        ns = Number.SPEC_RE.match(line)
         if ns:
             names, vtype, lower, upper = ns.groups()
             for vname in filter(None, names.split(" ")):
@@ -160,7 +163,7 @@ def main():
                 scope.vars[vname] = Number(scope, vname, vtype, lower, upper)
             continue
 
-        nv = re.match(NumberVector.SPEC, line)
+        nv = NumberVector.SPEC_RE.match(line)
         if nv:
             names, vtype, length, lower, upper = nv.groups()
             for vname in filter(None, names.split(" ")):
@@ -177,7 +180,7 @@ def main():
 
     output = []
     for line in layout:
-        vnames = re.findall(VAR_NAME, line)
+        vnames = VAR_NAME_RE.findall(line)
 
         nospec = filter(lambda vn: vn not in scope.vars, vnames)
         if nospec:
