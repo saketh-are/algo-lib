@@ -133,6 +133,7 @@ class String:
     def assign(self):
         self.assigned_length = self.scope.evaluate(self.length)
         self.assigned_value = "".join([random.choice(self. charset) for i in xrange(0, self.assigned_length)])
+        return self.assigned_value
 
     def value(self):
         return self.assigned_value
@@ -156,6 +157,31 @@ class NumberVector:
     def assign(self):
         self.assigned_length = self.scope.evaluate(self.length)
         self.assigned_value = [self.numbers.assign() for i in xrange(0, self.assigned_length)]
+        return self.assigned_value
+
+    def value(self):
+        return self.assigned_value
+
+class StringVector:
+    TYPES = [ "strings" ]
+    SPEC = "([\w\s]+)(strings)(.+) (.+)(\[.*\])"
+
+    def __init__(self, scope, name, vec_type, length, str_length, alphabet):
+        assert vec_type in self.TYPES
+
+        self.name = name
+        self.scope = scope
+        self.vec_type = vec_type
+        self.strings = String(scope, "elements of " + name, "string", str_length, alphabet)
+        self.length = length
+
+    def dependencies(self):
+        return self.strings.dependencies() + self.scope.dependencies(self.length)
+
+    def assign(self):
+        self.assigned_length = self.scope.evaluate(self.length)
+        self.assigned_value = [self.strings.assign() for i in xrange(0, self.assigned_length)]
+        return self.assigned_value
 
     def value(self):
         return self.assigned_value
@@ -185,6 +211,14 @@ def main():
             layout.append(line[0:cloc])
         line = line.replace("#", "", 1)
 
+        nv = re.match(NumberVector.SPEC, line)
+        if nv:
+            names, vtype, length, lower, upper = nv.groups()
+            for vname in parse_vnames(names):
+                scope.vars[vname] = NumberVector(scope, vname, vtype, length, lower, upper)
+            continue
+
+
         ns = re.match(Number.SPEC, line)
         if ns:
             names, vtype, lower, upper = ns.groups()
@@ -192,18 +226,18 @@ def main():
                 scope.vars[vname] = Number(scope, vname, vtype, lower, upper)
             continue
 
-        ss = re.match(String.SPEC, line)
-        if ss:
-            names, str_type, length, alphabet = ss.groups()
+        sv = re.match(StringVector.SPEC, line)
+        if sv:
+            names, vtype, length, str_length, alphabet = sv.groups()
             for vname in parse_vnames(names):
-                scope.vars[vname] = String(scope, vname, str_type, length, alphabet)
+                scope.vars[vname] = StringVector(scope, vname, vtype, length, str_length, alphabet)
             continue
 
-        nv = re.match(NumberVector.SPEC, line)
-        if nv:
-            names, vtype, length, lower, upper = nv.groups()
+        ss = re.match(String.SPEC, line)
+        if ss:
+            names, vtype, length, alphabet = ss.groups()
             for vname in parse_vnames(names):
-                scope.vars[vname] = NumberVector(scope, vname, vtype, length, lower, upper)
+                scope.vars[vname] = String(scope, vname, vtype, length, alphabet)
             continue
 
         err("Could not parse variable spec \"{}\"".format(line))
@@ -221,7 +255,7 @@ def main():
             err("No spec provided for variables {}".format(nospec))
 
         elts = [scope.vars[vn] for vn in vnames]
-        vectors = filter(lambda e : isinstance(e, NumberVector), elts)
+        vectors = filter(lambda e : isinstance(e, NumberVector) or isinstance(e, StringVector), elts)
         if vectors:
             if vectors != elts:
                 err("Line \"{}\" mixes vectors and primitives".format(line))
