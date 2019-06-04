@@ -58,11 +58,14 @@ class Scope:
             if degree[vname] == 0:
                 order.append(vname)
 
-        for vname in order:
+        inx = 0
+        while inx < len(order):
+            vname = order[inx]
             for dep in rev_deps[vname]:
                 degree[dep] -= 1
                 if not degree[dep]:
                     order.append(dep)
+            inx += 1
 
         if len(order) != len(self.vars):
             err("Variable dependencies are cyclic")
