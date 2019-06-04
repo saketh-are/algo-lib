@@ -92,15 +92,23 @@ class Number:
     def assign(self):
         lb = self.scope.evaluate(self.lb_value)
         ub = self.scope.evaluate(self.ub_value)
+        pretty_bounds = self.lb_type + str(lb) + ", " + str(ub) + self.ub_type
 
         if self.num_type == "double":
+            if lb > ub:
+                err("Double \"{}\" bounded by empty range {}".format(self.name, pretty_bounds))
             self.assigned_value = random.uniform(lb, ub)
         else:
             if self.lb_type == '(':
-                lb += 1
+                lb += 1e-9
+            lb = math.ceil(lb)
             if self.ub_type == ')':
-                ub -= 1
-            self.assigned_value = random.randint(math.ceil(lb), math.floor(ub))
+                ub -= 1e-9
+            ub = math.floor(ub)
+
+            if lb > ub:
+                err("Integer \"{}\" bounded by empty range {}".format(self.name, pretty_bounds))
+            self.assigned_value = random.randint(lb, ub)
 
         return self.assigned_value
 
