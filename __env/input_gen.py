@@ -5,7 +5,7 @@ import random
 import operator
 from collections import defaultdict
 
-class fmt:
+class colors:
     HEADER = '\033[95m'
     FAIL = '\033[91m'
     ENDC = '\033[0m'
@@ -13,45 +13,33 @@ class fmt:
     UNDERLINE = '\033[4m'
 
 def err(message):
-    print fmt.BOLD + fmt.FAIL + "ERROR" + fmt.ENDC + ": " + message
+    print colors.BOLD + colors.FAIL + "ERROR" + colors.ENDC + ": " + message
     exit(1)
 
-def is_number(expr):
-    expr = expr.replace('.', '', 1)
-    expr = expr.replace('e', '', 1)
-    return expr.isdigit() or len(expr) > 1 and expr[1:].isdigit()
+NUMBER = "-?[0-9]+([.][0-9]+)?(e[0-9]+)?"
+VAR_NAME = "[a-zA-Z0-9_]+"
 
 class Scope:
     def __init__(self):
         self.vars = {}
 
-    def evaluate(self, expr):
-        expr = expr.strip()
-        if len(expr) == 0:
-            raise Exception("Cannot evaluate empty string")
-
-        # Parses X+Y, X*Y, X^Y.
-        if "+" in expr:
-            return sum([self.evaluate(x) for x in expr.split("+")])
-        if "*" in expr:
-            return reduce(operator.mul, [self.evaluate(x) for x in expr.split("*")])
-        if "^" in expr:
-            terms = [self.evaluate(x) for x in expr.split("^")]
-            terms.reverse()
-            return reduce(lambda x, y : y ** x, terms)
-
-        # Parses ints and floats.
-        if is_number(expr):
-            return float(expr) if "." in expr else int(expr)
-
-        # Is it a variable name?
-        if expr in self.vars:
-            return self.vars[expr].value()
-
-        raise Exception("Could not understand expression", expr)
+    def is_number(self, expr):
+        return re.match(NUMBER, expr)
 
     def dependencies(self, expr):
-        return [x for x in re.split("\W+", expr) if not is_number(x)]
+        return [x for x in re.findall(VAR_NAME, expr) if not self.is_number(x)]
+
+    def evaluate(self, expr):
+        deps = self.dependencies(expr)
+        deps.sort(lambda x, y : len(x) > len(y))
+
+        for vname in deps:
+            expr = expr.replace(vname, str(self.vars[vname].value()))
+
+        try:
+            return eval(expr)
+        except Exception:
+            err("Could not evaluate " + expr)
 
     def toposort(self):
         degree = defaultdict(int)
@@ -60,7 +48,7 @@ class Scope:
         for vname, var in self.vars.iteritems():
             for dep in var.dependencies():
                 if not dep in self.vars:
-                    err("{} has undefined dependency {}.".format(vname, dep))
+                    err("Variable {} has undefined dependency {}".format(vname, dep))
                 degree[vname] += 1
                 rev_deps[dep].append(vname)
 
@@ -76,7 +64,7 @@ class Scope:
                     order.append(dep)
 
         if len(order) != len(self.vars):
-            err("Variable dependencies are cyclic.")
+            err("Variable dependencies are cyclic")
         return order
 
 class Number:
@@ -116,11 +104,7 @@ class Number:
         return self.assigned_value
 
 
-TYPES = { "int"    : Number,
-          "ll"     : Number,
-          "double" : Number }
-
-INTERVAL = "\s*([\[\(][\w+*^]+)[,]\s+([\w+*^]+[\]\)])\s*";
+INTERVAL = "\s*([\[\(][^,]+),([^,]+[\]\)])\s*";
 NUMBER_SPEC = "^#([\w\s]+)(int|ll|double)" + INTERVAL + "$"
 
 def main():
@@ -143,10 +127,8 @@ def main():
                 if vname in scope.vars:
                     err("Variable \"{}\" was already defined.".format(vname))
                 scope.vars[vname] = Number(scope, vname, vtype, lower, upper)
-                print vname, scope.vars[vname].dependencies()
 
     eval_order = scope.toposort()
-    print eval_order
     for vname in eval_order:
         scope.vars[vname].assign()
         print vname, scope.vars[vname].value()
