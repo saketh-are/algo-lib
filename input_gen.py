@@ -2,8 +2,8 @@ import sys
 import re
 import math
 import random
-
 import operator
+import itertools
 from collections import defaultdict
 
 class colors:
@@ -16,6 +16,9 @@ class colors:
 def err(message):
     print colors.BOLD + colors.FAIL + "ERROR" + colors.ENDC + ": " + message
     exit(1)
+
+def warn(message):
+    print colors.BOLD + colors.HEADER + "WARN" + colors.ENDC + ": " + message
 
 VAR_NAME = "[a-zA-Z0-9_]+"
 NUMBER = "-?[0-9]+([.][0-9]+)?(e[0-9]+)?"
@@ -51,7 +54,7 @@ class Scope:
         for vname, var in self.vars.iteritems():
             for dep in var.dependencies():
                 if not dep in self.vars:
-                    err("Variable {} has undefined dependency {}".format(vname, dep))
+                    err("Variable {} has undefined dependency \"{}\"".format(vname, dep))
                 degree[vname] += 1
                 rev_deps[dep].append(vname)
 
@@ -237,6 +240,78 @@ class StringVector:
 
 SPEC_CLASSES[ "strings" ] = StringVector
 
+class UndirectedGraph:
+    TYPES = [ "graph", "connected_graph", "tree" ]
+    SPEC = "(.*)%(.*)"
+
+    def __init__(self, scope, uname, vname, graph_type, spec):
+        assert graph_type in self.TYPES
+        self.scope, self.uname, self.vname, self.graph_type = scope, uname, vname, graph_type
+        if self.graph_type is "tree":
+            self.graph_type = "connected_graph"
+            spec += "%" + spec + " -1"
+        elif self.graph_type is "graph":
+            warn("Graph on \"{} {}\" isn't specified as connected".format(uname, vname))
+        self.vertices, self.edges = re.match(self.SPEC, spec).groups()
+
+    def dependencies(self):
+        return self.scope.dependencies(self.vertices) + self.scope.dependencies(self.edges)
+
+    def assign(self):
+        self.assigned_vertices = self.scope.evaluate(self.vertices)
+        self.assigned_edges = self.scope.evaluate(self.edges)
+
+        V, E = self.assigned_vertices, self.assigned_edges
+        self.assigned_edgelist = []
+
+        if "connected" in self.graph_type:
+            if E < V - 1:
+                err("Connected graph \"{} {}\" on {} vertices cannot contain {} edges".format(uname, vname, V, E))
+            for i in xrange(2, V + 1):
+                self.assigned_edgelist.append((random.randint(1, i - 1), i))
+
+        EMAX = V * (V - 1) / 2
+        if E > EMAX:
+            err("Simple graph \"{} {}\" on {} vertices cannot contain {} edges".format(uname, vname, V, E))
+
+        used = set(self.assigned_edgelist)
+        if 2 * E > EMAX:
+            unused = []
+            for j in xrange(2, V + 1):
+                unused += [(i, j) for i in xrange(1, j) if (i, j) not in used]
+            random.shuffle(unused)
+            self.assigned_edgelist += unused[0:E-V+1]
+        while len(self.assigned_edgelist) < E:
+            i, j = random.randint(1, V + 1), random.randint(1, V + 1)
+            if i == j:
+                continue
+            if i > j:
+                i,j = j,i
+            if (i, j) not in used:
+                used.add((i, j))
+                self.assigned_edgelist.append((i, j))
+
+    def value(self):
+        assert False
+
+class DerivedVector:
+    def __init__(self, scope, name, dependencies, construct):
+        self.scope, self.name, self.deps, self.construct = scope, name, dependencies, construct
+
+    def dependencies(self):
+        return self.deps
+
+    def assign(self):
+        self.assigned_value = self.construct(self.scope)
+        self.assigned_length = len(self.assigned_value)
+
+    def value(self):
+        return self.assigned_value
+
+SPEC_CLASSES[ "graph" ] = UndirectedGraph
+SPEC_CLASSES[ "connected_graph" ] = UndirectedGraph
+SPEC_CLASSES[ "tree" ] = UndirectedGraph
+
 
 SPEC_TYPES = sorted(SPEC_CLASSES.keys(), key=len, reverse=True)
 
@@ -248,12 +323,28 @@ def parse_spec(scope, spec):
             vnames = filter(None, vnames.split(" "))
             if not vnames:
                 err("No variables associated with spec \"{}\"".format(spec))
-
             for vname in vnames:
                 if vname in scope.vars:
                     err("Variable \"{}\" was already defined".format(vname))
+
+            SpecClass = SPEC_CLASSES[spec_type]
+
+            if SpecClass is UndirectedGraph:
+                if len(vnames) is not 2:
+                    err("Graph spec \"{}\" should be associated with exactly two variables".format(spec))
+
+                u_name, v_name = vnames
+                graph_name = u_name + " " + v_name
+                scope.vars[graph_name] = SpecClass(scope, u_name, v_name, spec_type, var_spec)
+                scope.vars[u_name] = DerivedVector(scope, u_name, [graph_name],\
+                        lambda s : [edge[0] for edge in s.vars[graph_name].assigned_edgelist])
+                scope.vars[v_name] = DerivedVector(scope, v_name, [graph_name],\
+                        lambda s : [edge[1] for edge in s.vars[graph_name].assigned_edgelist])
+                return
+
+            for vname in vnames:
                 try:
-                    scope.vars[vname] = SPEC_CLASSES[spec_type](scope, vname, spec_type, var_spec)
+                    scope.vars[vname] = SpecClass(scope, vname, spec_type, var_spec)
                 except Exception as e:
                     err("Invalid spec \"{}\" of type {}: {}".format(var_spec, spec_type, e))
             return
@@ -280,7 +371,7 @@ def print_case(scope, layout):
             output.append("\n".join([" ".join([str(v) for v in row]) for row in elts[0].value()]))
             continue
 
-        vectors = filter(lambda e : isinstance(e, NumberVector) or isinstance(e, StringVector), elts)
+        vectors = filter(lambda e : isinstance(e, (NumberVector, StringVector, DerivedVector)), elts)
         if vectors:
             if vectors != elts:
                 err("Line \"{}\" mixes vectors and primitives".format(line))
