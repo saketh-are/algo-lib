@@ -2,6 +2,7 @@ import sys
 import re
 import math
 import random
+
 import operator
 from collections import defaultdict
 
@@ -18,7 +19,8 @@ def err(message):
 
 VAR_NAME = "[a-zA-Z0-9_]+"
 NUMBER = "-?[0-9]+([.][0-9]+)?(e[0-9]+)?"
-INTERVAL = "\s*([\[\(][^,]+),([^,]+[\]\)])\s*";
+INTERVAL = "\s*([\[\(])([^,]+),([^,]+)([\]\)])\s*";
+SIMPLE_INTERVAL = "([\[\(].*[\]\)])"
 
 class Scope:
     def __init__(self):
@@ -68,22 +70,16 @@ class Scope:
             err("Variable dependencies are cyclic")
         return order
 
+SPEC_CLASSES = {}
+
 class Number:
     TYPES = [ "int", "float" ]
-    SPEC = "([\w\s]+)(int|float)" + INTERVAL
+    SPEC = INTERVAL
 
-    def __init__(self, scope, name, num_type, lower_bound, upper_bound):
+    def __init__(self, scope, name, num_type, spec):
         assert num_type in self.TYPES
-
-        self.name = name
-        self.scope = scope
-        self.num_type = num_type
-
-        self.lb_type = lower_bound[0]
-        self.lb_value = lower_bound[1:]
-
-        self.ub_type = upper_bound[-1]
-        self.ub_value = upper_bound[:-1]
+        self.scope, self.name, self.num_type = scope, name, num_type
+        self.lb_type, self.lb_value, self.ub_value, self.ub_type = re.match(self.SPEC, spec).groups()
 
     def dependencies(self):
         return self.scope.dependencies(self.lb_value) + self.scope.dependencies(self.ub_value)
@@ -114,18 +110,18 @@ class Number:
     def value(self):
         return self.assigned_value
 
+SPEC_CLASSES[ "int" ] = Number
+SPEC_CLASSES[ "float" ] = Number
+
 class String:
     TYPES = [ "string" ]
-    SPEC = "([\w\s]+)(string)(.+)(\[.*\])"
+    SPEC = "(.+)(\[.*\])"
 
-    def __init__(self, scope, name, str_type, length, alphabet):
+    def __init__(self, scope, name, str_type, spec):
         assert str_type in self.TYPES
-
-        self.name = name
-        self.scope = scope
-        self.str_type = str_type
-        self.length = length
-        self.charset = [chr(ch) for ch in xrange(0, 256) if re.match(alphabet, chr(ch))]
+        self.scope, self.name, self.str_type = scope, name, str_type
+        self.length, self.alphabet = re.match(self.SPEC, spec).groups()
+        self.charset = [chr(ch) for ch in xrange(0, 256) if re.match(self.alphabet, chr(ch))]
 
     def dependencies(self):
         return self.scope.dependencies(self.length)
@@ -138,18 +134,17 @@ class String:
     def value(self):
         return self.assigned_value
 
+SPEC_CLASSES[ "string" ] = String
+
 class NumberVector:
     TYPES = [ "ints", "floats" ]
-    SPEC = "([\w\s]+)(ints|floats)(.+)" + INTERVAL
+    SPEC = "(.+)" + SIMPLE_INTERVAL
 
-    def __init__(self, scope, name, vec_type, length, lower_bound, upper_bound):
+    def __init__(self, scope, name, vec_type, spec):
         assert vec_type in self.TYPES
-
-        self.name = name
-        self.scope = scope
-        self.vec_type = vec_type
-        self.numbers = Number(scope, "elements of " + name, vec_type[:-1], lower_bound, upper_bound)
-        self.length = length
+        self.scope, self.name, self.vec_type = scope, name, vec_type
+        self.length, self.element_spec = re.match(self.SPEC, spec).groups()
+        self.numbers = Number(scope, "element of " + name, vec_type[:-1], self.element_spec)
 
     def dependencies(self):
         return self.numbers.dependencies() + self.scope.dependencies(self.length)
@@ -162,18 +157,18 @@ class NumberVector:
     def value(self):
         return self.assigned_value
 
+SPEC_CLASSES[ "ints" ] = NumberVector
+SPEC_CLASSES[ "floats" ] = NumberVector
+
 class NumberGrid:
     TYPES = [ "intss", "floatss" ]
-    SPEC = "([\w\s]+)(intss|floatss)(.+)%(.+)" + INTERVAL
+    SPEC = "(.+)%(.+)"
 
-    def __init__(self, scope, name, grid_type, rows, cols, lower_bound, upper_bound):
+    def __init__(self, scope, name, grid_type, spec):
         assert grid_type in self.TYPES
-
-        self.name = name
-        self.scope = scope
-        self.grid_type = grid_type
-        self.row_vectors = NumberVector(scope, "rows of " + name, grid_type[:-1], cols, lower_bound, upper_bound)
-        self.length = rows
+        self.scope, self.name, self.grid_type = scope, name, grid_type
+        self.length, self.element_spec = re.match(self.SPEC, spec).groups()
+        self.row_vectors = NumberVector(scope, "rows of " + name, grid_type[:-1], self.element_spec)
 
     def dependencies(self):
         return self.row_vectors.dependencies() + self.scope.dependencies(self.length)
@@ -186,18 +181,18 @@ class NumberGrid:
     def value(self):
         return self.assigned_value
 
+SPEC_CLASSES[ "intss" ] = NumberGrid
+SPEC_CLASSES[ "floatss" ] = NumberGrid
+
 class StringVector:
     TYPES = [ "strings" ]
-    SPEC = "([\w\s]+)(strings)(.+)%(.+)(\[.*\])"
+    SPEC = "(.+)%(.+)"
 
-    def __init__(self, scope, name, vec_type, length, str_length, alphabet):
+    def __init__(self, scope, name, vec_type, spec):
         assert vec_type in self.TYPES
-
-        self.name = name
-        self.scope = scope
-        self.vec_type = vec_type
-        self.strings = String(scope, "elements of " + name, "string", str_length, alphabet)
-        self.length = length
+        self.scope, self.name, self.vec_type = scope, name, vec_type
+        self.length, self.element_spec = re.match(self.SPEC, spec).groups()
+        self.strings = String(scope, "elements of " + name, "string", self.element_spec)
 
     def dependencies(self):
         return self.strings.dependencies() + self.scope.dependencies(self.length)
@@ -209,6 +204,27 @@ class StringVector:
 
     def value(self):
         return self.assigned_value
+
+SPEC_CLASSES[ "strings" ] = StringVector
+
+SPEC_TYPES = sorted(SPEC_CLASSES.keys(), key=len, reverse=True)
+def parse_spec(scope, spec):
+    for spec_type in SPEC_TYPES:
+        if spec_type in spec:
+            vnames, var_spec = spec.split(spec_type)
+
+            vnames = filter(None, vnames.split(" "))
+            if not vnames:
+                err("No variables associated with spec \"{}\"".format(spec))
+
+            for vname in vnames:
+                try:
+                    scope.vars[vname] = SPEC_CLASSES[spec_type](scope, vname, spec_type, var_spec)
+                except Exception as e:
+                    err("Invalid spec \"{}\" of type {}: {}".format(spec, spec_type, e))
+            return
+
+    err("Spec \"{}\" does not match any recognized type ({})".format(spec, ", ".join(SPEC_TYPES)))
 
 def main():
     if len(sys.argv) < 2:
@@ -233,44 +249,8 @@ def main():
         cloc = line.index("#")
         if cloc > 0:
             layout.append(line[0:cloc])
-        line = line.replace("#", "", 1)
 
-        ng = re.match(NumberGrid.SPEC, line)
-        if ng:
-            names, vtype, rows, cols, lower, upper = ng.groups()
-            for vname in parse_vnames(names):
-                scope.vars[vname] = NumberGrid(scope, vname, vtype, rows, cols, lower, upper)
-            continue
-
-        nv = re.match(NumberVector.SPEC, line)
-        if nv:
-            names, vtype, length, lower, upper = nv.groups()
-            for vname in parse_vnames(names):
-                scope.vars[vname] = NumberVector(scope, vname, vtype, length, lower, upper)
-            continue
-
-        ns = re.match(Number.SPEC, line)
-        if ns:
-            names, vtype, lower, upper = ns.groups()
-            for vname in parse_vnames(names):
-                scope.vars[vname] = Number(scope, vname, vtype, lower, upper)
-            continue
-
-        sv = re.match(StringVector.SPEC, line)
-        if sv:
-            names, vtype, length, str_length, alphabet = sv.groups()
-            for vname in parse_vnames(names):
-                scope.vars[vname] = StringVector(scope, vname, vtype, length, str_length, alphabet)
-            continue
-
-        ss = re.match(String.SPEC, line)
-        if ss:
-            names, vtype, length, alphabet = ss.groups()
-            for vname in parse_vnames(names):
-                scope.vars[vname] = String(scope, vname, vtype, length, alphabet)
-            continue
-
-        err("Could not parse variable spec \"{}\"".format(line))
+        parse_spec(scope, line.replace("#", "", 1))
 
     eval_order = scope.toposort()
     for vname in eval_order:
