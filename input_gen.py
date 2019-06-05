@@ -70,6 +70,10 @@ class Scope:
             err("Variable dependencies are cyclic")
         return order
 
+    def assign_all(self):
+        for vname in self.toposort():
+            self.vars[vname].assign()
+
 SPEC_CLASSES = {}
 
 class Number:
@@ -207,7 +211,9 @@ class StringVector:
 
 SPEC_CLASSES[ "strings" ] = StringVector
 
+
 SPEC_TYPES = sorted(SPEC_CLASSES.keys(), key=len, reverse=True)
+
 def parse_spec(scope, spec):
     for spec_type in SPEC_TYPES:
         if spec_type in spec:
@@ -218,6 +224,8 @@ def parse_spec(scope, spec):
                 err("No variables associated with spec \"{}\"".format(spec))
 
             for vname in vnames:
+                if vname in scope.vars:
+                    err("Variable \"{}\" was already defined".format(vname))
                 try:
                     scope.vars[vname] = SPEC_CLASSES[spec_type](scope, vname, spec_type, var_spec)
                 except Exception as e:
@@ -226,35 +234,8 @@ def parse_spec(scope, spec):
 
     err("Spec \"{}\" does not match any recognized type ({})".format(spec, ", ".join(SPEC_TYPES)))
 
-def main():
-    if len(sys.argv) < 2:
-        err("No input spec provided.")
-
-    scope = Scope()
-    layout = []
-
-    def parse_vnames(names):
-        vnames = filter(None, names.split(" "))
-        for vname in vnames:
-            if vname in scope.vars:
-                err("Variable \"{}\" was already defined".format(vname))
-        return vnames
-
-    spec = [x.strip() for x in open(sys.argv[1]).readlines() if x.strip()]
-    for line in spec:
-        if "#" not in line:
-            layout.append(line)
-            continue
-
-        cloc = line.index("#")
-        if cloc > 0:
-            layout.append(line[0:cloc])
-
-        parse_spec(scope, line.replace("#", "", 1))
-
-    eval_order = scope.toposort()
-    for vname in eval_order:
-        scope.vars[vname].assign()
+def print_case(scope, layout):
+    scope.assign_all()
 
     output = []
     for line in layout:
@@ -291,5 +272,23 @@ def main():
 
     for line in output:
         print line
+
+def main():
+    if len(sys.argv) < 2:
+        err("No input spec provided.")
+
+    scope = Scope()
+    layout = []
+
+    spec = [x.strip() for x in open(sys.argv[1]).readlines() if x.strip()]
+    for line in spec:
+        if "#" in line:
+            parse_spec(scope, line.replace("#", "", 1))
+            layout.append(line[0:line.find("#")])
+        else:
+            layout.append(line)
+
+    print_case(scope, filter(None, layout))
+
 
 if __name__ == "__main__": main()
