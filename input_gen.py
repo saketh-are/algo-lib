@@ -146,15 +146,15 @@ SPEC_CLASSES[ "string" ] = String
 
 class NumberVector:
     TYPES = [ "ints", "floats", "permutation" ]
-    SPEC = "(.*)" + SIMPLE_INTERVAL
+    SPEC = "(.*)" + SIMPLE_INTERVAL + "(.*)"
 
     def __init__(self, scope, name, vec_type, spec):
         assert vec_type in self.TYPES
         self.scope, self.name, self.vec_type = scope, name, vec_type
-        self.length, self.element_spec = re.match(self.SPEC, spec).groups()
+        self.length, self.element_spec, self.flags = re.match(self.SPEC, spec).groups()
 
-        element_type = "float" if vec_type is "floats" else "int"
-        self.numbers = Number(scope, "element of " + name, element_type, self.element_spec)
+        self.element_type = "float" if vec_type is "floats" else "int"
+        self.numbers = Number(scope, "element of " + name, self.element_type, self.element_spec)
 
     def dependencies(self):
         return self.numbers.dependencies() + self.scope.dependencies(self.length)
@@ -167,7 +167,20 @@ class NumberVector:
             self.assigned_length = len(self.assigned_value)
         else:
             self.assigned_length = self.scope.evaluate(self.length)
-            self.assigned_value = [self.numbers.assign() for i in xrange(0, self.assigned_length)]
+            lb, ub = self.numbers.range()
+
+            if "distinct" in self.flags and self.element_type is "int" and self.assigned_length * 2 > ub - lb:
+                include = [1] * self.assigned_length + [0] * (ub - lb + 1 - self.assigned_length)
+                random.shuffle(include)
+                self.assigned_value = [x for x in xrange(lb, ub + 1) if include[x - lb]]
+                random.shuffle(self.assigned_value)
+            else:
+                self.assigned_value = [self.numbers.assign() for i in xrange(0, self.assigned_length)]
+
+            if "asc" in self.flags:
+                self.assigned_value = sorted(self.assigned_value)
+            if "desc" in self.flags:
+                self.assigned_value = sorted(self.assigned_value, reverse=True)
         return self.assigned_value
 
     def value(self):
