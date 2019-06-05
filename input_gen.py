@@ -41,8 +41,8 @@ class Scope:
 
         try:
             return eval(expr)
-        except Exception:
-            err("Could not evaluate " + expr)
+        except Exception as e:
+            err("Could not evaluate \"{}\": {}".format(expr, e))
 
     def toposort(self):
         degree = defaultdict(int)
@@ -88,27 +88,31 @@ class Number:
     def dependencies(self):
         return self.scope.dependencies(self.lb_value) + self.scope.dependencies(self.ub_value)
 
-    def assign(self):
+    def range(self):
         lb = self.scope.evaluate(self.lb_value)
         ub = self.scope.evaluate(self.ub_value)
         pretty_bounds = self.lb_type + str(lb) + ", " + str(ub) + self.ub_type
 
-        if self.num_type == "float":
-            if lb > ub:
-                err("Float \"{}\" bounded by empty range {}".format(self.name, pretty_bounds))
-            self.assigned_value = random.uniform(lb, ub)
-        else:
+        if self.num_type == "int":
             if self.lb_type == '(':
                 lb += 1e-9
-            lb = math.ceil(lb)
+            lb = int(math.ceil(lb))
+
             if self.ub_type == ')':
                 ub -= 1e-9
-            ub = math.floor(ub)
+            ub = int(math.floor(ub))
 
-            if lb > ub:
-                err("Integer \"{}\" bounded by empty range {}".format(self.name, pretty_bounds))
+        if lb > ub:
+            err("{} \"{}\" bounded by empty range {}".format(self.num_type, self.name, pretty_bounds))
+
+        return (lb, ub)
+
+    def assign(self):
+        lb, ub = self.range()
+        if self.num_type == "float":
+            self.assigned_value = random.uniform(lb, ub)
+        else:
             self.assigned_value = random.randint(lb, ub)
-
         return self.assigned_value
 
     def value(self):
@@ -141,21 +145,29 @@ class String:
 SPEC_CLASSES[ "string" ] = String
 
 class NumberVector:
-    TYPES = [ "ints", "floats" ]
-    SPEC = "(.+)" + SIMPLE_INTERVAL
+    TYPES = [ "ints", "floats", "permutation" ]
+    SPEC = "(.*)" + SIMPLE_INTERVAL
 
     def __init__(self, scope, name, vec_type, spec):
         assert vec_type in self.TYPES
         self.scope, self.name, self.vec_type = scope, name, vec_type
         self.length, self.element_spec = re.match(self.SPEC, spec).groups()
-        self.numbers = Number(scope, "element of " + name, vec_type[:-1], self.element_spec)
+
+        element_type = "float" if vec_type is "floats" else "int"
+        self.numbers = Number(scope, "element of " + name, element_type, self.element_spec)
 
     def dependencies(self):
         return self.numbers.dependencies() + self.scope.dependencies(self.length)
 
     def assign(self):
-        self.assigned_length = self.scope.evaluate(self.length)
-        self.assigned_value = [self.numbers.assign() for i in xrange(0, self.assigned_length)]
+        if self.vec_type is "permutation":
+            lb, ub = self.numbers.range()
+            self.assigned_value = range(lb, ub + 1)
+            random.shuffle(self.assigned_value)
+            self.assigned_length = len(self.assigned_value)
+        else:
+            self.assigned_length = self.scope.evaluate(self.length)
+            self.assigned_value = [self.numbers.assign() for i in xrange(0, self.assigned_length)]
         return self.assigned_value
 
     def value(self):
@@ -163,6 +175,7 @@ class NumberVector:
 
 SPEC_CLASSES[ "ints" ] = NumberVector
 SPEC_CLASSES[ "floats" ] = NumberVector
+SPEC_CLASSES[ "permutation" ] = NumberVector
 
 class NumberGrid:
     TYPES = [ "intss", "floatss" ]
@@ -229,7 +242,7 @@ def parse_spec(scope, spec):
                 try:
                     scope.vars[vname] = SPEC_CLASSES[spec_type](scope, vname, spec_type, var_spec)
                 except Exception as e:
-                    err("Invalid spec \"{}\" of type {}: {}".format(spec, spec_type, e))
+                    err("Invalid spec \"{}\" of type {}: {}".format(var_spec, spec_type, e))
             return
 
     err("Spec \"{}\" does not match any recognized type ({})".format(spec, ", ".join(SPEC_TYPES)))
