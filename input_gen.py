@@ -22,18 +22,18 @@ def warn(message):
 
 VAR_NAME = "[a-zA-Z0-9_]+"
 NUMBER = "-?[0-9]+([.][0-9]+)?(e[0-9]+)?"
-INTERVAL = "\s*([\[\(])([^,]+),([^,]+)([\]\)])\s*";
-SIMPLE_INTERVAL = "([\[\(].*[\]\)])"
+INTERVAL = "([\[\(].*[\]\)])"
 
 class Scope:
     def __init__(self):
         self.vars = {}
+        self.locals = {}
 
-    def is_number(self, expr):
-        return re.match(NUMBER, expr)
+    def is_builtin(self, expr):
+        return re.match(NUMBER, expr) or expr in ["min", "max", "abs"]
 
     def dependencies(self, expr):
-        return [x for x in re.findall(VAR_NAME, expr) if not self.is_number(x)]
+        return [x for x in re.findall(VAR_NAME, expr) if not self.is_builtin(x)]
 
     def evaluate(self, expr):
         deps = self.dependencies(expr)
@@ -86,14 +86,13 @@ class Number:
     def __init__(self, scope, name, num_type, spec):
         assert num_type in self.TYPES
         self.scope, self.name, self.num_type = scope, name, num_type
-        self.lb_type, self.lb_value, self.ub_value, self.ub_type = re.match(self.SPEC, spec).groups()
+        self.lb_type, self.boundaries, self.ub_type = spec[0], spec[1:-1], spec[-1]
 
     def dependencies(self):
-        return self.scope.dependencies(self.lb_value) + self.scope.dependencies(self.ub_value)
+        return self.scope.dependencies(self.boundaries)
 
     def range(self):
-        lb = self.scope.evaluate(self.lb_value)
-        ub = self.scope.evaluate(self.ub_value)
+        lb, ub = self.scope.evaluate(self.boundaries)
         pretty_bounds = self.lb_type + str(lb) + ", " + str(ub) + self.ub_type
 
         if self.num_type == "int":
@@ -149,7 +148,7 @@ SPEC_CLASSES[ "string" ] = String
 
 class NumberVector:
     TYPES = [ "ints", "floats", "permutation" ]
-    SPEC = "(.*)" + SIMPLE_INTERVAL + "(.*)"
+    SPEC = "(.*)" + INTERVAL + "(.*)"
 
     def __init__(self, scope, name, vec_type, spec):
         assert vec_type in self.TYPES
@@ -335,7 +334,7 @@ def parse_spec(scope, spec):
 
                 u_name, v_name = vnames
                 graph_name = u_name + " " + v_name
-                scope.vars[graph_name] = SpecClass(scope, u_name, v_name, spec_type, var_spec)
+                scope.vars[graph_name] = SpecClass(scope, u_name, v_name, spec_type, strip(var_spec))
                 scope.vars[u_name] = DerivedVector(scope, u_name, [graph_name],\
                         lambda s : [edge[0] for edge in s.vars[graph_name].assigned_edgelist])
                 scope.vars[v_name] = DerivedVector(scope, v_name, [graph_name],\
@@ -344,7 +343,7 @@ def parse_spec(scope, spec):
 
             for vname in vnames:
                 try:
-                    scope.vars[vname] = SpecClass(scope, vname, spec_type, var_spec)
+                    scope.vars[vname] = SpecClass(scope, vname, spec_type, var_spec.strip())
                 except Exception as e:
                     err("Invalid spec \"{}\" of type {}: {}".format(var_spec, spec_type, e))
             return
