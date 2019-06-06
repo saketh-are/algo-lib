@@ -36,13 +36,9 @@ class Scope:
         return [x for x in re.findall(VAR_NAME, expr) if not self.is_builtin(x)]
 
     def evaluate(self, expr):
-        deps = self.dependencies(expr)
-        deps.sort(lambda x, y : len(x) > len(y))
-
-        for vname in deps:
-            expr = expr.replace(vname, str(self.vars[vname].value()))
-
         try:
+            for assignment in self.assigned:
+                exec(assignment)
             return eval(expr)
         except Exception as e:
             err("Could not evaluate \"{}\": {}".format(expr, e))
@@ -74,8 +70,12 @@ class Scope:
         return order
 
     def assign_all(self):
+        self.assigned = []
         for vname in self.toposort():
-            self.vars[vname].assign()
+            vobj = self.vars[vname]
+            vobj.assign()
+            if isinstance(vobj, Number):
+                self.assigned += [ "{}={}".format(vname, vobj.value()) ]
 
 SPEC_CLASSES = {}
 
