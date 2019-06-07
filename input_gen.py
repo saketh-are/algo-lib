@@ -268,13 +268,13 @@ class UndirectedGraph:
 
         if "connected" in self.graph_type:
             if E < V - 1:
-                err("Connected graph \"{} {}\" on {} vertices cannot contain {} edges".format(uname, vname, V, E))
+                err("Connected graph \"{} {}\" on {} vertices cannot contain {} edges".format(self.uname, self.vname, V, E))
             for i in xrange(2, V + 1):
                 self.assigned_edgelist.append((random.randint(1, i - 1), i))
 
         EMAX = V * (V - 1) / 2
         if E > EMAX:
-            err("Simple graph \"{} {}\" on {} vertices cannot contain {} edges".format(uname, vname, V, E))
+            err("Simple graph \"{} {}\" on {} vertices cannot contain {} edges".format(self.uname, self.vname, V, E))
 
         used = set(self.assigned_edgelist)
         if 2 * E > EMAX:
@@ -284,7 +284,7 @@ class UndirectedGraph:
             random.shuffle(unused)
             self.assigned_edgelist += unused[0:E-V+1]
         while len(self.assigned_edgelist) < E:
-            i, j = random.randint(1, V + 1), random.randint(1, V + 1)
+            i, j = random.randint(1, V), random.randint(1, V)
             if i == j:
                 continue
             if i > j:
@@ -292,6 +292,13 @@ class UndirectedGraph:
             if (i, j) not in used:
                 used.add((i, j))
                 self.assigned_edgelist.append((i, j))
+
+        permutation = range(1, V + 1)
+        random.shuffle(permutation)
+        relabeled_edges = []
+        for (i, j) in self.assigned_edgelist:
+            relabeled_edges.append((permutation[i-1]+1, permutation[j-1]+1))
+        self.assigned_edgelist = relabeled_edges
 
     def value(self):
         assert False
