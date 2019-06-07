@@ -20,20 +20,21 @@ def err(message):
 def warn(message):
     print colors.BOLD + colors.HEADER + "WARN" + colors.ENDC + ": " + message
 
-VAR_NAME = "[a-zA-Z0-9_]+"
-NUMBER = "-?[0-9]+([.][0-9]+)?(e[0-9]+)?"
+VAR_NAME_RE = re.compile("[a-zA-Z0-9_]+")
 INTERVAL = "([\[\(].*[\]\)])"
 
 class Scope:
+    NUMBER_RE = re.compile("-?[0-9]+([.][0-9]+)?(e[0-9]+)?")
+
     def __init__(self):
         self.vars = {}
         self.locals = {}
 
     def is_builtin(self, expr):
-        return re.match(NUMBER, expr) or expr in ["min", "max", "abs"]
+        return self.NUMBER_RE.match(expr) or expr in ["min", "max", "abs"]
 
     def dependencies(self, expr):
-        return [x for x in re.findall(VAR_NAME, expr) if not self.is_builtin(x)]
+        return [x for x in VAR_NAME_RE.findall(expr) if not self.is_builtin(x)]
 
     def evaluate(self, expr):
         try:
@@ -81,7 +82,7 @@ SPEC_CLASSES = {}
 
 class Number:
     TYPES = [ "int", "float" ]
-    SPEC = INTERVAL
+    SPEC = re.compile(INTERVAL)
 
     def __init__(self, scope, name, num_type, spec):
         assert num_type in self.TYPES
@@ -125,12 +126,12 @@ SPEC_CLASSES[ "float" ] = Number
 
 class String:
     TYPES = [ "string" ]
-    SPEC = "(.+)(\[.*\])"
+    SPEC = re.compile("(.+)(\[.*\])")
 
     def __init__(self, scope, name, str_type, spec):
         assert str_type in self.TYPES
         self.scope, self.name, self.str_type = scope, name, str_type
-        self.length, self.alphabet = re.match(self.SPEC, spec).groups()
+        self.length, self.alphabet = self.SPEC.match(spec).groups()
         self.charset = [chr(ch) for ch in xrange(0, 256) if re.match(self.alphabet, chr(ch))]
 
     def dependencies(self):
@@ -148,12 +149,12 @@ SPEC_CLASSES[ "string" ] = String
 
 class NumberVector:
     TYPES = [ "ints", "floats", "permutation" ]
-    SPEC = "(.*)" + INTERVAL + "(.*)"
+    SPEC = re.compile("(.*)" + INTERVAL + "(.*)")
 
     def __init__(self, scope, name, vec_type, spec):
         assert vec_type in self.TYPES
         self.scope, self.name, self.vec_type = scope, name, vec_type
-        self.length, self.element_spec, self.flags = re.match(self.SPEC, spec).groups()
+        self.length, self.element_spec, self.flags = self.SPEC.match(spec).groups()
 
         self.element_type = "float" if vec_type is "floats" else "int"
         self.numbers = Number(scope, "element of " + name, self.element_type, self.element_spec)
@@ -194,12 +195,12 @@ SPEC_CLASSES[ "permutation" ] = NumberVector
 
 class NumberGrid:
     TYPES = [ "intss", "floatss" ]
-    SPEC = "(.+)%(.+)"
+    SPEC = re.compile("(.+)%(.+)")
 
     def __init__(self, scope, name, grid_type, spec):
         assert grid_type in self.TYPES
         self.scope, self.name, self.grid_type = scope, name, grid_type
-        self.length, self.element_spec = re.match(self.SPEC, spec).groups()
+        self.length, self.element_spec = self.SPEC.match(spec).groups()
         self.row_vectors = NumberVector(scope, "rows of " + name, grid_type[:-1], self.element_spec)
 
     def dependencies(self):
@@ -218,12 +219,12 @@ SPEC_CLASSES[ "floatss" ] = NumberGrid
 
 class StringVector:
     TYPES = [ "strings" ]
-    SPEC = "(.+)%(.+)"
+    SPEC = re.compile("(.+)%(.+)")
 
     def __init__(self, scope, name, vec_type, spec):
         assert vec_type in self.TYPES
         self.scope, self.name, self.vec_type = scope, name, vec_type
-        self.length, self.element_spec = re.match(self.SPEC, spec).groups()
+        self.length, self.element_spec = self.SPEC.match(spec).groups()
         self.strings = String(scope, "elements of " + name, "string", self.element_spec)
 
     def dependencies(self):
@@ -241,7 +242,7 @@ SPEC_CLASSES[ "strings" ] = StringVector
 
 class UndirectedGraph:
     TYPES = [ "graph", "connected_graph", "tree" ]
-    SPEC = "(.*)%(.*)"
+    SPEC = re.compile("(.*)%(.*)")
 
     def __init__(self, scope, uname, vname, graph_type, spec):
         assert graph_type in self.TYPES
@@ -251,7 +252,7 @@ class UndirectedGraph:
             spec += "%" + spec + " -1"
         elif self.graph_type is "graph":
             warn("Graph on \"{} {}\" isn't specified as connected".format(uname, vname))
-        self.vertices, self.edges = re.match(self.SPEC, spec).groups()
+        self.vertices, self.edges = self.SPEC.match(spec).groups()
 
     def dependencies(self):
         return self.scope.dependencies(self.vertices) + self.scope.dependencies(self.edges)
@@ -334,7 +335,7 @@ def parse_spec(scope, spec):
 
                 u_name, v_name = vnames
                 graph_name = u_name + " " + v_name
-                scope.vars[graph_name] = SpecClass(scope, u_name, v_name, spec_type, strip(var_spec))
+                scope.vars[graph_name] = SpecClass(scope, u_name, v_name, spec_type, var_spec.strip())
                 scope.vars[u_name] = DerivedVector(scope, u_name, [graph_name],\
                         lambda s : [edge[0] for edge in s.vars[graph_name].assigned_edgelist])
                 scope.vars[v_name] = DerivedVector(scope, v_name, [graph_name],\
@@ -355,7 +356,7 @@ def print_case(scope, layout):
 
     output = []
     for line in layout:
-        vnames = re.findall(VAR_NAME, line)
+        vnames = VAR_NAME_RE.findall(line)
 
         nospec = filter(lambda vn: vn not in scope.vars, vnames)
         if nospec:
