@@ -246,15 +246,21 @@ class UndirectedGraph:
     TYPES = [ "graph", "connected_graph", "tree" ]
     SPEC = re.compile("(.*)%(.*)")
 
-    def __init__(self, scope, uname, vname, graph_type, spec):
+    def __init__(self, scope, gname, uname, vname, graph_type, spec):
         assert graph_type in self.TYPES
-        self.scope, self.uname, self.vname, self.graph_type = scope, uname, vname, graph_type
+        self.scope, self.gname, self.uname, self.vname, self.graph_type = scope, gname, uname, vname, graph_type
+
         if self.graph_type is "tree":
             self.graph_type = "connected_graph"
             spec += "%" + spec + " -1"
         elif self.graph_type is "graph":
             warn("Graph on \"{} {}\" isn't specified as connected".format(uname, vname))
+
         self.vertices, self.edges = self.SPEC.match(spec).groups()
+        scope.vars[uname] = DerivedVector(scope, uname, [gname],\
+                lambda s : [edge[0] for edge in s.vars[gname].assigned_edgelist])
+        scope.vars[vname] = DerivedVector(scope, vname, [gname],\
+                lambda s : [edge[1] for edge in s.vars[gname].assigned_edgelist])
 
     def dependencies(self):
         return self.scope.dependencies(self.vertices) + self.scope.dependencies(self.edges)
@@ -344,11 +350,7 @@ def parse_spec(scope, spec):
 
                 u_name, v_name = vnames
                 graph_name = u_name + " " + v_name
-                scope.vars[graph_name] = SpecClass(scope, u_name, v_name, spec_type, var_spec.strip())
-                scope.vars[u_name] = DerivedVector(scope, u_name, [graph_name],\
-                        lambda s : [edge[0] for edge in s.vars[graph_name].assigned_edgelist])
-                scope.vars[v_name] = DerivedVector(scope, v_name, [graph_name],\
-                        lambda s : [edge[1] for edge in s.vars[graph_name].assigned_edgelist])
+                scope.vars[graph_name] = SpecClass(scope, graph_name, u_name, v_name, spec_type, var_spec.strip())
                 return
 
             for vname in vnames:
