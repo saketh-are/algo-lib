@@ -29,6 +29,7 @@ class Scope:
     def __init__(self):
         self.vars = {}
         self.locals = {}
+        self.assigned = []
 
     def is_builtin(self, expr):
         return self.NUMBER_RE.match(expr) or expr in ["min", "max", "abs"]
@@ -409,6 +410,14 @@ def main():
     layout = []
 
     spec = [x.strip() for x in open(sys.argv[1]).readlines() if x.strip()]
+
+    if "cases" in spec[0]:
+        interval = spec[0].split("cases")[-1].strip()
+        num_cases = Number(scope, "cases", "int", interval).assign()
+        spec = spec[1:]
+    else:
+        num_cases = None
+
     for line in spec:
         if "#" in line:
             parse_spec(scope, line.replace("#", "", 1))
@@ -416,7 +425,12 @@ def main():
         else:
             layout.append(line)
 
-    print_case(scope, filter(None, layout))
+    if num_cases:
+        print num_cases
+        for i in xrange(0, num_cases):
+            print_case(scope, filter(None, layout))
+    else:
+        print_case(scope, filter(None, layout))
 
 
 if __name__ == "__main__": main()
