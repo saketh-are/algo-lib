@@ -1,68 +1,93 @@
 template<typename T> struct matrix {
-    int N;
-    vector<T> dat;
+    int N, M;
+    T* data;
 
-    matrix<T> (int _N, T fill = T(0), T diag = T(0)) : N(_N) {
-        dat.resize(N * N, fill);
-        for (int i = 0; i < N; i++)
-            (*this)(i, i) = diag;
+    matrix<T> (int _N, int _M, T f = 0, T d = 0) : N(_N), M(_M) {
+        data = (T*) malloc(N * M * sizeof(T));
+        fill(data, data + N * M, f);
+        for (int i = 0; i < min(N, M); i++)
+            (*this)[i][i] = d;
     }
 
-    T& operator()(int i, int j) {
-        return dat[N * i + j];
-    }
-    T operator()(int i, int j) const {
-        return dat[N * i + j];
-    }
-
-    matrix<T> operator *(const matrix<T>& b) const {
-        matrix<T> r(N);
-        for (int i = 0; i < N; i++)
-            for (int j = 0; j < N; j++)
-                for (int k = 0; k < N; k++)
-                    r(i, j) += (*this)(i, k) * b(k, j);
-        return r;
+    matrix<T> (int _N, int _M, const initializer_list<T>& init) : N(_N), M(_M) {
+        assert(sz(init) == N * M);
+        data = (T*) malloc(N * M * sizeof(T));
+        copy(all(init), data);
     }
 
-    matrix<T> pow(ll e) const {
-        if(!e) return matrix<T>(N, 0, 1);
-        if (e&1) return *this * this->pow(e - 1);
-        return (*this * *this).pow(e/2);
+    matrix<T> (const matrix<T>& m) : N(m.N), M(m.M) {
+        data = (T*) malloc(N * M * sizeof(T));
+        copy(m.data, m.data + N * M, data);
+    }
+
+    ~matrix<T> () { free(data); }
+
+    explicit operator T() const { assert(N == 1 && M == 1); return data[0]; }
+    T* operator[](int i) { return data + i * M; }
+    const T* operator[](int i) const { return data + i * M; }
+
+    friend matrix<T> operator *(const matrix<T>& a, const matrix<T>& b) {
+        assert(a.M == b.N);
+        matrix<T> res(a.N, b.M);
+        for (int i = 0; i < a.N; i++)
+            for (int j = 0; j < b.M; j++)
+                for (int k = 0; k < a.M; k++)
+                    res[i][j] += a[i][k] * b[k][j];
+        return res;
+    }
+
+    friend vector<T> operator *(const vector<T>& v, const matrix<T>& m) {
+        assert(sz(v) == m.N);
+        vector<T> res(m.M);
+        for (int j = 0; j < m.M; j++)
+            for (int i = 0; i < m.N; i++)
+                res[j] += v[i] * m[i][j];
+        return res;
+    }
+
+    friend vector<T> operator *(const matrix<T>& m, const vector<T>& v) {
+        assert(m.M == sz(v));
+        vector<T> res(m.N);
+        for (int i = 0; i < m.N; i++)
+            for (int j = 0; j < m.M; j++)
+                res[i] += m[i][j] * v[j];
+        return res;
+    }
+
+    matrix pow(ll e) const {
+        assert(N == M);
+        if (e == 0) return matrix<T>(N, M, 0, 1);
+        if (e&1) return *this * pow(e - 1);
+        return (*this * *this).pow(e / 2);
     }
 
     int rank() const {
         matrix<T> m = *this;
         int r = 0;
-        for (int i = 0; i < N; i++) {
-            for (int j = r; j < N; j++) {
-                if (m(j, i) != T(0)) {
-                    for (int k = 0; k < N; k++)
-                        swap(m(r, k), m(j, k));
-                    break;
-                }
+        for (int j = 0; j < M; j++) {
+            for (int i = r; i < N; i++) if (m[i][j] != 0) {
+                swap_ranges(m[r], m[r] + M, m[i]);
+                break;
             }
-            if (m(r, i) == T(0)) continue;
-            for (int j = 0; j < N; j++) {
-                if (j == r) continue;
-                T c = m(j, i) / m(r, i);
-                for (int k = 0; k < N; k++)
-                    m(j, k) -= c * m(r, k);
+            if (m[r][j] == 0) continue;
+
+            for (int i = 0; i < N; i++) if (i != r) {
+                T c = m[i][j] / m[r][j];
+                for (int k = 0; k < M; k++)
+                    m[i][k] -= c * m[r][k];
             }
             r++;
         }
         return r;
     }
 
-    friend ostream& operator<<(ostream& os, const matrix<T>& m) {
-        os << "{";
+    friend ostream& operator <<(ostream& os, const matrix<T>& m) {
         for (int i = 0; i < m.N; i++) {
-            if(i) os << "},\n ";
-            os << "{";
-            for (int j = 0; j < m.N; j++) {
-                if(j) os << ", ";
-                os << setw(10) << m(i, j) << setw(0);
-            }
+            os << (i ? i < m.N - 1 ? "\u2503" : "\u2517" : "\n\u250F");
+            for (int j = 0; j < m.M; j++)
+                os << setw(12) << m[i][j];
+            os << "  " << (i ? i < m.N - 1 ? "\u2503" : "\u251B" : "\u2512") << "\n";
         }
-        return os << "}}";
+        return os;
     }
 };
