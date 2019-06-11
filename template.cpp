@@ -6,6 +6,7 @@ using namespace std;
 #define WATCHR(a, b) TRACE(for (auto it=a; it!=b;) cout << *(it++) << " "; cout << endl)
 #define WATCHC(V) TRACE({cout << #V" = "; WATCHR(V.begin(), V.end());})
 
+#define sz(x) int((x).size())
 #define all(x) (x).begin(), (x).end()
 
 using ll = long long;
