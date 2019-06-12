@@ -38,12 +38,60 @@ template<int MOD> struct modnum {
     modnum& operator /= (const modnum& o) { return (*this) *= o.inv(); }
     friend modnum operator / (const modnum& a, const modnum& b) { return modnum(a) /= modnum(b); }
 
+    static int totient() {
+        int tot = MOD, tmp = MOD;
+        for (int p = 2; p * p <= tmp; p++) if (tmp % p == 0) {
+            tot = tot / p * (p - 1);
+            while (tmp % p == 0) tmp /= p;
+        }
+        if (tmp > 1) tot = tot / tmp * (tmp - 1);
+        return tot;
+    }
+
+    static int primitive_root() {
+        if (MOD == 1) return 0;
+        if (MOD == 2) return 1;
+
+        int tot = totient(), tmp = tot;
+        vi tot_pr;
+        for (int p = 2; p * p <= tmp; p++) if (tot % p == 0) {
+            tot_pr.push_back(p);
+            while (tmp % p == 0) tmp /= p;
+        }
+        if (tmp > 1) tot_pr.push_back(tmp);
+
+        for (int r = 2; r < MOD; r++) if (__gcd(r, MOD) == 1) {
+            bool root = true;
+            for (int p : tot_pr) root &= modnum(r).pow(tot / p) != 1;
+            if (root) return r;
+        }
+        assert(false);
+    }
+
+    static modnum generator() { static modnum g = primitive_root(); return g; }
+    static int discrete_log(modnum v) {
+        static const int M = ceil(sqrt(MOD));
+        static unordered_map<int, int> table;
+        if (table.empty()) {
+            modnum e = 1;
+            for (int i = 0; i < M; i++) { table[e.v] = i; e *= generator(); }
+        }
+        static modnum f = generator().pow(totient() - M);
+
+        for (int i = 0; i < M; i++) {
+            if (table.count(v.v)) return table[v.v] + i * M;
+            v *= f;
+        }
+        assert(false);
+    }
+
     static modnum fact(int n) {
         static vector<modnum<MOD>> fact = { 1 };
         while (fact.size() <= n)
             fact.push_back(fact.back() * fact.size());
         return fact[n];
     }
+
     static modnum ncr(int n, int r) {
         if (r < 0 || n < r) return 0;
         return fact(n) / (fact(r) * fact(n - r));
