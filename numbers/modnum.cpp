@@ -87,13 +87,20 @@ template<int MOD> struct modnum {
 
     static modnum fact(int n) {
         static vector<modnum<MOD>> fact = { 1 };
-        while (fact.size() <= n)
+        for (assert(n >= 0); fact.size() <= n; )
             fact.push_back(fact.back() * fact.size());
         return fact[n];
     }
 
+    static modnum finv(int n) {
+        static vector<modnum<MOD>> finv = { 1 };
+        for (assert(n >= 0); finv.size() <= n; )
+            finv.push_back(finv.back() / finv.size());
+        return finv[n];
+    }
+
     static modnum ncr(int n, int r) {
         if (r < 0 || n < r) return 0;
-        return fact(n) / (fact(r) * fact(n - r));
+        return fact(n) * finv(r) * finv(n - r);
     }
 };
