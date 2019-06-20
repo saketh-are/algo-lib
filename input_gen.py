@@ -304,7 +304,7 @@ class UndirectedGraph:
         random.shuffle(permutation)
         relabeled_edges = []
         for (i, j) in self.assigned_edgelist:
-            relabeled_edges.append((permutation[i-1]+1, permutation[j-1]+1))
+            relabeled_edges.append((permutation[i-1], permutation[j-1]))
         self.assigned_edgelist = relabeled_edges
 
     def value(self):
