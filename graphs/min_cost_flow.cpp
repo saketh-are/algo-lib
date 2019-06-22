@@ -48,7 +48,8 @@ template<typename F, typename C> struct min_cost_flow {
         }
 
         for (int v = 0; v < V; v++) if (ent[v] != -2 && imb[v] <= -delta) {
-            for (int u = 0; u < V; u++) pot[u] += dist[u];
+            for (int u = 0; u < V; u++)
+                if (ent[u] != -2) pot[u] += dist[u];
             for (int e = ent[v]; ~e; e = ent[dest[e^1]]) {
                 flow[e] += delta;
                 flow[e^1] -= delta;
