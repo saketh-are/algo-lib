@@ -90,7 +90,7 @@ template<typename T> struct line_container_monotonic : deque<line<T>> {
 };
 
 /*
- * Better constant-time performance for when all lines are inserted before all queries.
+ * Better performance constant for when all lines are inserted before all queries.
  */
 template<typename T> struct line_container_static {
     vector<line<T>> hull;
