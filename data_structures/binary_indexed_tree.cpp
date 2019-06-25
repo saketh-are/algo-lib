@@ -1,43 +1,54 @@
-template<typename T> struct BIT {
+template<typename T> struct binary_indexed_tree {
     int S;
-    vector<T> v;
+    vector<T> table;
 
-    BIT<T>(int _S) {
-        S = _S;
-        v.resize(S+1);
+    binary_indexed_tree<T>(int _S = 0) : S(_S) {
+        table.resize(S+1);
     }
 
-    void update(int i, T k) {
-        for(i++; i <= S; i += i&-i)
-            v[i] = v[i] + k;
+    // Adds v to the element at index i
+    void add(int i, T v) {
+        for (i++; i <= S; i += i&-i)
+            table[i] = table[i] + v;
     }
 
-    T read(int i) {
-        T sum = 0;
-        for(i++; i; i -= i&-i)
-            sum = sum + v[i];
-        return sum;
+    // Replaces the element at index i with v
+    void replace(int i, T v) {
+        add(i, v - sum(i, i+1));
     }
 
-    T read(int l, int r) {
-        return read(r) - read(l-1);
+    // Returns the sum of the elements at indices in [0, i)
+    T sum(int i) const {
+        T res = T();
+        for (; i; i -= i&-i)
+            res = res + table[i];
+        return res;
+    }
+
+    // Returns the sum of the elements at indices in [l, r)
+    T sum(int l, int r) const {
+        return sum(r) - sum(l);
     }
 
     /*
-     * Returns in O(logS) the first index i such that read(i) >= sum.
-     * Returns S if no such i exists.
-     * Requires that read(i) is non-decreasing in i.
+     * Returns the first i in [0, S] such that comp(sum(i)) is true.
+     * Returns -1 if no such i exists.
+     * Requires that comp(sum(i)) is non-decreasing in i.
+     * The empty prefix is considered to have sum equal to T().
      */
-    int lower_bound(T sum) {
-        T res = 0;
+    int lower_bound(const auto& comp) const {
+        T cur = T();
+        if (comp(cur)) return 0;
+
         int inx = 0;
         for (int i = 31 - __builtin_clz(S); i >= 0; i--) {
-            if ((inx + (1 << i) <= S) && res + v[inx + (1 << i)] < sum) {
-                inx += 1 << i;
-                res += v[inx];
+            int nxt = inx + (1 << i);
+            if (nxt <= S && !comp(cur + table[nxt])) {
+                inx = nxt;
+                cur = cur + table[nxt];
             }
         }
-        return inx;
+
+        return inx < S ? inx + 1 : -1;
     }
 };
-
