@@ -1,68 +1,67 @@
 /*
- * Supports O(logS) range queries and updates on an array of items.
- * Requires that type T's combine operator is associative and
- * that T() + t = t + T() = t for all T t.
+ * Supports range sum queries on a mutable array of Ts.
+ * Requires that T's + operator is associative and that T() is the
+ * additive identity: T() + t = t = t + T() for any T t.
  */
-template<typename T> struct seg_tree {
+template<typename T> struct segment_tree {
     int S;
-    vector<T> value;
+    vector<T> table;
 
-    seg_tree<T>(int S) : S(S) {
-        value.resize(2 * S);
+    segment_tree<T>(int _S) : S(_S) {
+        table.resize(2 * S);
     }
 
-    // Rebuilds all non-leaf layers of the tree in O(S)
-    void rebuild() {
+    segment_tree<T>(auto begin, auto end) : segment_tree(distance(begin, end)) {
+        copy(begin, end, table.begin() + S);
         for (int i = S - 1; i > 0; i--)
-            value[i] = value[2 * i] + value[2 * i + 1];
+            table[i] = table[2 * i] + table[2 * i + 1];
     }
 
-    // Replaces the value at index i with v in O(logS)
-    void upd(int i, T v) {
-        i += S;
-        value[i] = v;
-        while (i > 1) {
-            i /= 2;
-            value[i] = value[2 * i] + value[2 * i + 1];
+    // Replaces the element at index i with v
+    void replace(int i, T v) {
+        table[i += S] = v;
+        for (i /= 2; i > 0; i /= 2) {
+            table[i] = table[2 * i] + table[2 * i + 1];
         }
     }
 
-    // Returns the sum of the values at indices [i, j] in O(logS)
-    T query(int i, int j) {
-        T res_left, res_right;
-        for (i += S, j += S; i <= j; i /= 2, j /= 2) {
-            if ((i&1) == 1) res_left = res_left + value[i++];
-            if ((j&1) == 0) res_right = value[j--] + res_right;
+    // Returns the value of the element at index i
+    const T& operator()(int i) const { return table[S + i]; }
+
+    // Returns the sum of the elements at indices in [i, j)
+    T operator()(int i, int j) const {
+        T left{}, right{};
+        for (i += S, j += S; i < j; i /= 2, j /= 2) {
+            if (i&1) left = left + table[i++];
+            if (j&1) right = table[--j] + right;
         }
-        return res_left + res_right;
+        return left + right;
     }
 };
 
-template<typename T> struct full_seg_tree : seg_tree<T> {
-    int _S;
-    full_seg_tree<T>(int _S) : _S(_S), seg_tree<T>(1 << (32 - __builtin_clz(_S - 1))) { }
+template<typename T> struct full_segment_tree : segment_tree<T> {
+    // Internal size is rounded up so that all layers are full
+    full_segment_tree<T>(int _S) : segment_tree<T>(1 << (32 - __builtin_clz(_S - 1))) {}
 
     /*
-     * Returns in O(logS) the first index i such that pred(query(0, i)) evaluates to true.
-     * Returns S if no such i exists.
-     * Requires that pred(query(0, i)) is non-decreasing in i.
+     * Returns the first i in [0, S] such that comp(this(0, i))
+     * evaluates to true. Returns -1 if no such i exists.
+     * Requires that comp(this(0, i)) is non-decreasing in i.
      */
-    int lower_bound(function<bool(T)> pred) {
-        if (!pred(this->value[1])) return this->_S;
-        T pref;
-        int v = 1;
-        for (int i = 0, j = this->S - 1; v < this->S; ) {
-            int m = (j + i) / 2;
-            if (pred(pref + this->value[2 * v])) {
-                j = m;
-                v = 2 * v;
+    int lower_bound(const auto& comp) const {
+        if (!comp(this->table[1])) return -1;
+        if (comp(T{})) return 0;
+
+        int loc = 1;
+        for (T cur{}; loc < this->S; ) {
+            T mid = cur + this->table[2 * loc];
+            if (comp(mid)) {
+                loc = 2 * loc;
             } else {
-                pref = pref + this->value[2 * v];
-                i = m + 1;
-                v = 2 * v + 1;
+                cur = mid;
+                loc = 2 * loc + 1;
             }
         }
-        return v - this->S;
+        return loc - this->S + 1;
     }
 };
-
