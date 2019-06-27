@@ -14,11 +14,11 @@ class colors:
     UNDERLINE = '\033[4m'
 
 def err(message):
-    print colors.BOLD + colors.FAIL + "ERROR" + colors.ENDC + ": " + message
+    sys.stderr.write(colors.BOLD + colors.FAIL + "ERROR" + colors.ENDC + ": " + message + "\n")
     exit(1)
 
 def warn(message):
-    print colors.BOLD + colors.HEADER + "WARN" + colors.ENDC + ": " + message
+    sys.stderr.write(colors.BOLD + colors.HEADER + "WARN" + colors.ENDC + ": " + message + "\n")
 
 VAR_NAME_RE = re.compile("[a-zA-Z0-9_]+")
 INTERVAL = "([\[\(].*[\]\)])"
