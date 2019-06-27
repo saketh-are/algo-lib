@@ -1,5 +1,5 @@
 /*
- * Supports O(1) lowest common ancestor queries on an immutable tree.
+ * Supports O(1) lowest common ancestor queries on an immutable forest.
  */
 struct lowest_common_ancestor {
     struct visit {
@@ -9,41 +9,46 @@ struct lowest_common_ancestor {
         }
     };
 
-    vi depth, pos;
+    vi depth, pos, comp;
     sparse_table<visit> euler;
 
-    // Constructs the lookup table in O(V log V) time and memory
-    lowest_common_ancestor(const vvi& tree = {}, int root = 0) {
-        depth.resize(tree.size());
-        pos.resize(tree.size());
-        vector<visit> tour;
-        if (tree.size()) dfs(tree, tour, root, root);
+    lowest_common_ancestor(const vvi& tree = {}, int root = -1) {
+        depth.resize(sz(tree));
+        comp.resize(sz(tree), -1);
+        pos.resize(sz(tree), -1);
+
+        vector<visit> tour; int cc = 0;
+        auto dfs = [&](auto& self, int loc, int par) -> void {
+            comp[loc] = cc, pos[loc] = sz(tour);
+            tour.push_back({ loc, depth[loc] });
+            for (int nbr : tree[loc]) if (nbr != par) {
+                depth[nbr] = depth[loc] + 1;
+                self(self, nbr, loc);
+                tour.push_back({ loc, depth[loc] });
+            }
+        };
+        if (root != -1) dfs(dfs, root, root), cc++;
+        for (int i = 0; i < sz(tree); i++)
+            if (comp[i] == -1) dfs(dfs, i, i), cc++;
         euler = sparse_table<visit>(tour);
     }
 
-    void dfs(const vvi& tree, auto& tour, int loc, int par) {
-        pos[loc] = tour.size();
-        tour.push_back({ loc, depth[loc] });
-        for (int nbr : tree[loc]) if (nbr != par) {
-            depth[nbr] = depth[loc] + 1;
-            dfs(tree, tour, nbr, loc);
-            tour.push_back({ loc, depth[loc] });
-        }
-    }
-
-    // Returns the lowest common ancestor of u and v in O(1)
+    // Returns the lowest common ancestor of u and v
+    // Returns -1 if they are in different components
     int lca(int u, int v) {
+        if (comp[u] != comp[v]) return -1;
         u = pos[u], v = pos[v];
         if (u > v) swap(u, v);
         return euler.query(u, v).node;
     }
 
     int dist(int u, int v) {
+        assert(comp[u] == comp[v]);
         return depth[u] + depth[v] - 2 * depth[lca(u, v)];
     }
 
-    bool on_path(int u, int v, int inx) {
-        return dist(u, v) == (dist(u, inx) + dist(inx, v));
+    // Checks if btw is on the path from u to v
+    bool on_path(int u, int v, int btw) {
+        return dist(u, v) == (dist(u, btw) + dist(btw, v));
     }
 };
-
