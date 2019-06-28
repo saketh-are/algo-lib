@@ -1,25 +1,30 @@
 struct union_find {
-    vi P, R, S;
+    struct node {
+        int par, rank;
+        node(int id = 0) : par(id), rank(0) {}
+        void operator +=(const node& o) {
+            if (rank == o.rank) rank++;
+        }
+    };
 
-    union_find(int N) {
-        P.resize(N), R.resize(N, 0), S.resize(N, 1);
+    vector<node> uf;
+    union_find(int N = 0) : uf(N) {
         for (int i = 0; i < N; i++)
-            P[i] = i;
+            uf[i] = node(i);
     }
 
     int rep(int i) {
-        if(P[i] != i) P[i] = rep(P[i]);
-        return P[i];
+        if (i != uf[i].par)
+            uf[i].par = rep(uf[i].par);
+        return uf[i].par;
     }
 
     bool unio(int a, int b) {
         a = rep(a), b = rep(b);
-        if(a == b) return false;
-        if(R[a] < R[b]) swap(a, b);
-        P[b] = a;
-        S[a] += S[b];
-        if(R[a] == R[b]) R[a]++;
+        if (a == b) return false;
+        if (uf[a].rank < uf[b].rank) swap(a, b);
+        uf[a] += uf[b];
+        uf[b].par = a;
         return true;
     }
 };
-
