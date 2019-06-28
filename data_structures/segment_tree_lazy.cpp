@@ -1,67 +1,63 @@
-template<typename T, typename U> struct seg_tree_lazy {
-    int S, H;
-    vector<T> value;
-    vector<U> prop;
-    vb dirty;
-    bool push_down;
+template<typename T, typename U, bool PROP = true> struct segment_tree_lazy {
+    int S;
+    vector<T> table;
+    vb has; vector<U> ops;
 
-    seg_tree_lazy<T, U>(int _S, bool push_down = true) : push_down(push_down) {
-        for (S = 1, H = 1; S < _S; S *= 2, H++);
-        value.resize(2*S), dirty.resize(2*S), prop.resize(2*S);
+    segment_tree_lazy(int _S) : S(_S) {
+        table.resize(2 * S), has.resize(S), ops.resize(S);
     }
 
-    void rebuild() {
+    segment_tree_lazy(auto begin, auto end) : segment_tree_lazy(distance(begin, end)) {
+        copy(begin, end, table.begin() + S);
         for (int i = S - 1; i > 0; i--)
-            value[i] = prop[i](value[2 * i] + value[2 * i + 1]);
+            table[i] = table[2 * i] + table[2 * i + 1];
+    }
+
+    void apply(int i, const U &op) {
+        table[i] = op(table[i]);
+        if (i < S) has[i] = true, ops[i] = op(ops[i]);
     }
 
     void rebuild(int i) {
-        for (int l = i/2; l; l /= 2) {
-            value[l] = prop[l](value[2*l] + value[2*l+1]);
-        }
-    }
-
-    void apply(int i, U &update) {
-        value[i] = update(value[i]);
-        if (i < S) {
-            prop[i] = prop[i] + update;
-            dirty[i] = true;
-        }
+        for (i /= 2; i; i /= 2)
+            table[i] = ops[i](table[2 * i] + table[2 * i + 1]);
     }
 
     void propagate(int i) {
-        for (int h = H; h > 0; h--) {
-            int l = i >> h;
-            if (dirty[l]) {
-                apply(2*l, prop[l]);
-                apply(2*l+1, prop[l]);
-                prop[l] = U();
-                dirty[l] = false;
+        for (int j = 31 - __builtin_clz(i); j > 0; j--) {
+            if (int k = i >> j; has[k]) {
+                apply(2 * k, ops[k]);
+                apply(2 * k + 1, ops[k]);
+                has[k] = false, ops[k] = U{};
             }
         }
     }
 
-    void upd(int i, int j, U update) {
-        i += S, j += S;
-        if (push_down) propagate(i), propagate(j);
-
-        for (int l = i, r = j; l <= r; l /= 2, r /= 2) {
-            if ((l&1) == 1) apply(l++, update);
-            if ((r&1) == 0) apply(r--, update);
-        }
-        rebuild(i), rebuild(j);
+    void replace(int i, T v) {
+        if (PROP) propagate(i + S);
+        table[i + S] = v;
+        rebuild(i + S);
     }
 
-    T query(int i, int j) {
+    void operator()(int i, int j, U op) {
         i += S, j += S;
-        if (push_down) propagate(i), propagate(j);
-
-        T res_left, res_right;
-        for (; i <= j; i /= 2, j /= 2) {
-            if ((i&1) == 1) res_left = res_left + value[i++];
-            if ((j&1) == 0) res_right = value[j--] + res_right;
+        if (PROP) propagate(i), propagate(j - 1);
+        for (int l = i, r = j; l < r; l /= 2, r /= 2) {
+            if (l&1) apply(l++, op);
+            if (r&1) apply(--r, op);
         }
-        return res_left + res_right;
+        rebuild(i), rebuild(j - 1);
     }
+
+    T operator()(int i, int j) {
+        i += S, j += S;
+        if (PROP) propagate(i), propagate(j - 1);
+        T left{}, right{};
+        for (; i < j; i /= 2, j /= 2) {
+            if (i&1) left = left + table[i++];
+            if (j&1) right = table[--j] + right;
+        }
+        return left + right;
+    }
+    T operator()(int i) { return *this(i, i+1); }
 };
-
