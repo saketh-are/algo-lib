@@ -1,7 +1,7 @@
 template<typename T> struct point {
     T x, y;
     point() : x(0), y(0) {}
-    point(T x, T y) : x(x), y(y) {}
+    point(T _x, T _y) : x(_x), y(_y) {}
     friend istream& operator >> (istream& i, point& p) { return i >> p.x >> p.y; }
     friend ostream& operator << (ostream& o, const point& p) {
         return o << "(" << p.x << ", " << p.y << ")";
@@ -45,11 +45,6 @@ template<typename T> struct point {
     T dist(const point& a) const { return (a - *this).len(); }
     T dist(const point& a, const point& b) {
         return abs(cross(*this, a, b)) / a.dist(b);
-    }
-    double ang(const point& p, const point& r) const {
-        auto a = p - *this, b = r - *this;
-        double c = dot(a, b) / (a.len() * b.len());
-        return acos(max(-1., min(1., c)));
     }
     point reflect(const point& a, const point& b) const {
         return a + ((*this - a) / (b - a)).conj() * (b - a);
@@ -105,18 +100,20 @@ template<typename T> struct point {
     friend polygon convex_hull(const vector<point>& pts) {
         point pivot = *min_element(all(pts));
         auto sorted = pts;
-        sort(all(sorted), [&pivot](const auto& p, const auto& q) {
+        sort(all(sorted), [&pivot](const point& p, const point& q) {
             T cp = cross(pivot, p, q);
             if (cp != 0) return cp > 0;
             return pivot.dist(p) < pivot.dist(q);
         });
 
-        polygon res;
-        for (const auto& p : sorted) {
-            while (res.size() >= 2 && cross(*(res.end() - 2), *(res.end() - 1), p) <= 0)
-                res.pop_back();
-            res.push_back(p);
+        int j = 0;
+        polygon res(pts.size());
+        for (const point& p : sorted) {
+            while (j > 1 && cross(res[j - 2], res[j - 1], p) <= 0)
+                j--;
+            res[j++] = p;
         }
+        res.erase(res.begin() + j, res.end());
         return res;
     }
 };
