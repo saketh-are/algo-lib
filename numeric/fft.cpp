@@ -8,7 +8,7 @@ namespace FFT {
         static cnum unity_root(int deg, int pow) {
             static vector<cnum> table{ 0, 1 };
             while (sz(table) <= deg) {
-                dbl t = 2 * M_PI / sz(table);
+                dbl t = 2 * acos(-1) / sz(table);
                 cnum w{ cos(t), sin(t) };
                 for (int i = sz(table)/2, s = sz(table); i < s; i++) {
                     table.push_back(table[i]);
