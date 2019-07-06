@@ -43,12 +43,12 @@ struct frac {
     }
 
     static frac from_cont(const vll& cont) {
-        ll _n = 1, _d = 0;
+        ll n = 1, d = 0;
         for (int i = int(cont.size()) - 1; i >= 0; i--) {
-            swap(_n, _d);
-            _n += _d * cont[i];
+            swap(n, d);
+            n += d * cont[i];
         }
-        return { _n, _d };
+        return { n, d };
     }
 
     // "best" fraction in (x, y): minimizes both n and d
