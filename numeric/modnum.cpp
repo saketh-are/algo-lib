@@ -18,6 +18,7 @@ template<int MOD> struct modnum {
     friend modnum operator * (const modnum& a, const modnum& b) { return modnum(a) *= b; }
 
     modnum pow(ll e) const {
+        if (e < 0) return 1 / this->pow(-e);
         if (e == 0) return 1;
         if (e & 1) return *this * this->pow(e-1);
         return (*this * *this).pow(e/2);
@@ -85,21 +86,27 @@ template<int MOD> struct modnum {
         assert(false);
     }
 
+    static modnum unity_root(int deg) {
+        assert(totient() % deg == 0);
+        return generator().pow(totient() / deg);
+    }
+
     static modnum fact(int n) {
-        static vector<modnum<MOD>> fact = { 1 };
+        static vector<modnum> fact = { 1 };
         for (assert(n >= 0); fact.size() <= n; )
             fact.push_back(fact.back() * fact.size());
         return fact[n];
     }
 
     static modnum finv(int n) {
-        static vector<modnum<MOD>> finv = { 1 };
+        static vector<modnum> finv = { 1 };
         for (assert(n >= 0); finv.size() <= n; )
             finv.push_back(finv.back() / finv.size());
         return finv[n];
     }
 
     static modnum ncr(int n, int r) {
+        assert(n >= 0);
         if (r < 0 || n < r) return 0;
         return fact(n) * finv(r) * finv(n - r);
     }
