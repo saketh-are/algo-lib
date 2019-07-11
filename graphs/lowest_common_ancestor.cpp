@@ -39,7 +39,7 @@ struct lowest_common_ancestor {
         if (comp[u] != comp[v]) return -1;
         u = pos[u], v = pos[v];
         if (u > v) swap(u, v);
-        return euler.query(u, v).node;
+        return euler(u, v + 1).node;
     }
 
     int dist(int u, int v) {
