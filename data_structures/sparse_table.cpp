@@ -7,6 +7,7 @@ template<typename T> struct sparse_table {
     int S, L;
     vector<T> table;
     T& entry(int l, int i) { return table[l * S + i]; }
+    const T& entry(int l, int i) const { return table[l * S + i]; }
 
     // Constructs the table in O(S log S) time and memory
     sparse_table(const vector<T>& elts = {}) : S(sz(elts)) {
@@ -24,7 +25,7 @@ template<typename T> struct sparse_table {
     }
 
     // Returns elts[i] + ... + elts[j] in O(1)
-    T query(int i, int j) {
+    T query(int i, int j) const {
         int l = 31 - __builtin_clz(j - i + 1);
         return entry(l, i) + entry(l, j - (1 << l) + 1);
     }
