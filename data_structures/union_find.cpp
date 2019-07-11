@@ -1,9 +1,20 @@
+struct monostate {} ms;
+struct uf_monostate {
+    uf_monostate(__attribute__((unused)) int id) {}
+    void merge(__attribute__((unused)) uf_monostate& o,
+            __attribute__((unused)) const monostate& e) {}
+};
+
+template<typename T = uf_monostate, typename E = monostate>
 struct union_find {
     struct node {
-        int par, rank;
-        node(int id = 0) : par(id), rank(0) {}
-        void operator +=(const node& o) {
-            if (rank == o.rank) rank++;
+        int par, rnk, size; T state;
+        node(int id = 0) : par(id), rnk(0), size(1), state(id) {}
+        void merge(node& o, E& e) {
+            if (rnk == o.rnk) rnk++;
+            if (size < o.size) swap(state, o.state);
+            size += o.size;
+            state.merge(o.state, e);
         }
     };
 
@@ -19,12 +30,14 @@ struct union_find {
         return uf[i].par;
     }
 
-    bool unio(int a, int b) {
+    bool unio(int a, int b, E& e = ms) {
         a = rep(a), b = rep(b);
         if (a == b) return false;
-        if (uf[a].rank < uf[b].rank) swap(a, b);
-        uf[a] += uf[b];
+        if (uf[a].rnk < uf[b].rnk) swap(a, b);
         uf[b].par = a;
+        uf[a].merge(uf[b], e);
         return true;
     }
+
+    T& state(int i) { return uf[rep(i)].state; }
 };
