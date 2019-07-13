@@ -245,7 +245,7 @@ SPEC_CLASSES[ "strings" ] = StringVector
 
 class UndirectedGraph:
     TYPES = [ "graph", "connected_graph", "tree" ]
-    SPEC = re.compile("(.*)%(.*)")
+    SPEC = re.compile(".*")
 
     def __init__(self, scope, gname, uname, vname, graph_type, spec):
         assert graph_type in self.TYPES
@@ -253,22 +253,21 @@ class UndirectedGraph:
 
         if self.graph_type is "tree":
             self.graph_type = "connected_graph"
-            spec += "%" + spec + " -1"
+            spec += ", " + spec + " - 1"
         elif self.graph_type is "graph":
             warn("Graph on \"{} {}\" isn't specified as connected".format(uname, vname))
 
-        self.vertices, self.edges = self.SPEC.match(spec).groups()
+        self.spec = spec
         scope.vars[uname] = DerivedVector(scope, uname, [gname],\
                 lambda s : [edge[0] for edge in s.vars[gname].assigned_edgelist])
         scope.vars[vname] = DerivedVector(scope, vname, [gname],\
                 lambda s : [edge[1] for edge in s.vars[gname].assigned_edgelist])
 
     def dependencies(self):
-        return self.scope.dependencies(self.vertices) + self.scope.dependencies(self.edges)
+        return self.scope.dependencies(self.spec)
 
     def assign(self):
-        self.assigned_vertices = self.scope.evaluate(self.vertices)
-        self.assigned_edges = self.scope.evaluate(self.edges)
+        (self.assigned_vertices, self.assigned_edges) = self.scope.evaluate(self.spec)
 
         V, E = self.assigned_vertices, self.assigned_edges
         self.assigned_edgelist = []
