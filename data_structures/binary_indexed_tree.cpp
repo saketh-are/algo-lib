@@ -19,7 +19,7 @@ template<typename T> struct binary_indexed_tree {
 
     // Returns the sum of the elements at indices in [0, i)
     T sum(int i) const {
-        T res = T();
+        T res{};
         for (; i; i -= i&-i)
             res = res + table[i];
         return res;
@@ -27,7 +27,7 @@ template<typename T> struct binary_indexed_tree {
 
     // Returns the sum of the elements at indices in [l, r)
     T sum(int l, int r) const {
-        return sum(r) - sum(l);
+        return l > r ? T{} : sum(r) - sum(l);
     }
 
     /*
@@ -37,7 +37,7 @@ template<typename T> struct binary_indexed_tree {
      * The empty prefix is considered to have sum equal to T().
      */
     int lower_bound(const auto& comp) const {
-        T cur = T();
+        T cur = T{};
         if (comp(cur)) return 0;
 
         int inx = 0;
