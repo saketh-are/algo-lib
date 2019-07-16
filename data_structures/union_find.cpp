@@ -34,8 +34,8 @@ struct union_find {
         a = rep(a), b = rep(b);
         if (a == b) return false;
         if (uf[a].rnk < uf[b].rnk) swap(a, b);
-        uf[b].par = a;
         uf[a].merge(uf[b], e);
+        uf[b].par = a;
         return true;
     }
 
