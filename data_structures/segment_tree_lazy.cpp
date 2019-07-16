@@ -39,7 +39,7 @@ template<typename T, typename U, bool PROP = true> struct segment_tree_lazy {
         rebuild(i + S);
     }
 
-    void operator()(int i, int j, U op) {
+    void apply(int i, int j, U op) {
         i += S, j += S;
         if (PROP) propagate(i), propagate(j - 1);
         for (int l = i, r = j; l < r; l /= 2, r /= 2) {
