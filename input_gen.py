@@ -175,11 +175,32 @@ class NumberVector:
             self.assigned_length = self.scope.evaluate(self.length)
             lb, ub = self.numbers.range()
 
-            if "distinct" in self.flags and self.element_type is "int" and self.assigned_length * 2 > ub - lb:
-                include = [1] * self.assigned_length + [0] * (ub - lb + 1 - self.assigned_length)
-                random.shuffle(include)
-                self.assigned_value = [x for x in xrange(lb, ub + 1) if include[x - lb]]
-                random.shuffle(self.assigned_value)
+            if "distinct" in self.flags:
+                if self.element_type is "int" and self.assigned_length > ub - lb + 1:
+                    err("Cannot generate {} distinct integers in {}".format(self.assigned_length, self.numbers.range()))
+                if self.element_type is "int" and self.assigned_length * 2 > ub - lb + 1:
+                    include = [1] * self.assigned_length + [0] * (ub - lb + 1 - self.assigned_length)
+                    random.shuffle(include)
+                    self.assigned_value = [x for x in xrange(lb, ub + 1) if include[x - lb]]
+                    random.shuffle(self.assigned_value)
+                else:
+                    used = {}
+                    self.assigned_value = []
+                    for i in xrange(0, self.assigned_length):
+                        insert = self.numbers.assign()
+                        while insert in used:
+                            insert = self.numbers.assign()
+                        used[insert] = True
+                        self.assigned_value.append(insert)
+            elif "!=" in self.flags:
+                if self.element_type is "int" and self.assigned_length > 1 and ub - lb + 1 <= 1:
+                    err("Integer sequence has flag !=, but value range does not include two distinct values")
+                self.assigned_value = [self.numbers.assign()]
+                for i in xrange(0, self.assigned_length):
+                    insert = self.numbers.assign()
+                    while insert == self.assigned_value[-1]:
+                        insert = self.numbers.assign()
+                    self.assigned_value.append(insert)
             else:
                 self.assigned_value = [self.numbers.assign() for i in xrange(0, self.assigned_length)]
 
