@@ -1,12 +1,12 @@
 template<typename T> struct kmp {
-    int P;
+    size_t P;
     vector<T> word;
-    vi fail;
+    vector<size_t> fail;
 
-    int adv(int len, const T& nxt) const {
+    size_t adv(size_t len, const T& nxt) const {
         while (len > 0 && word[len] != nxt)
             len = fail[len];
-        return len + int(word[len] == nxt);
+        return len + size_t(word[len] == nxt);
     }
 
     /*
@@ -14,9 +14,10 @@ template<typename T> struct kmp {
      * For i > 0, fail[i] is the length of the longest proper
      * suffix of word[0, i) that is a prefix of word.
      */
-    kmp(const vector<T>& word) : P(word.size()), word(word) {
+    template<typename I> kmp(const I& begin, const I& end) : word(begin, end) {
+        P = sz(word);
         fail.resize(P + 1);
-        for (int i = 2; i <= P; i++)
+        for (size_t i = 2; i <= P; i++)
             fail[i] = adv(fail[i - 1], word[i - 1]);
     }
 
@@ -27,7 +28,7 @@ template<typename T> struct kmp {
      */
     vb find(const vector<T>& text) const {
         vb match(text.size());
-        for (int i = 0, len = 0; i < text.size(); i++) {
+        for (size_t i = 0, len = 0; i < text.size(); i++) {
             len = adv(len, text[i]);
             if (len == P) {
                 match[i - len + 1] = true;
@@ -37,4 +38,3 @@ template<typename T> struct kmp {
         return match;
     }
 };
-
