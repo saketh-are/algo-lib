@@ -10,21 +10,22 @@ template<char MIN_CHAR, int SIGMA> struct trie {
         node(int depth) : depth(depth), suff(0), dict(0), wct(0), wid(-1) {
             fill(all(link), 0);
         }
-        int& operator [] (char c) { return link[c - MIN_CHAR]; }
+        int& operator[](char c) { return link[c - MIN_CHAR]; }
+        int operator[](char c) const { return link[c - MIN_CHAR]; }
     };
 
     int W;
     vector<node> nodes;
+    vpii tour;
 
     /*
      * Builds a trie over the given word set and calculates Aho-Corasick links.
      * Runs in O(sum of word lengths).
      */
     trie() {}
-    trie(auto begin, auto end) : W(0), nodes({ node(0) }) {
-        int L = 0; for (auto it = begin; it != end; it++) L += it->size();
-        nodes.reserve(L);
+    const node& operator[](int i) const { return nodes[i]; }
 
+    trie(auto begin, auto end) : W(0), nodes({ node(0) }) {
         for (auto it = begin; it != end; it++) {
             int loc = 0;
             for (char c : *it) {
@@ -36,14 +37,15 @@ template<char MIN_CHAR, int SIGMA> struct trie {
                 loc = nodes[loc][c];
             }
             nodes[loc].dict = loc;
-            nodes[loc].wct = 1;
+            assert(!nodes[loc].wct++);
             nodes[loc].wid = W++;
         }
 
+        vvi ch(sz(nodes));
         for (queue<int> bfs({0}); !bfs.empty(); bfs.pop()) {
             int loc = bfs.front(), fail = nodes[loc].suff;
-            if (!nodes[loc].dict)
-                nodes[loc].dict = nodes[fail].dict;
+            if (loc) ch[fail].pb(loc);
+            if (!nodes[loc].dict) nodes[loc].dict = nodes[fail].dict;
             nodes[loc].wct += nodes[fail].wct;
 
             for (char c = MIN_CHAR; c < MIN_CHAR + SIGMA; c++) {
@@ -54,6 +56,15 @@ template<char MIN_CHAR, int SIGMA> struct trie {
                 } else succ = nodes[fail][c];
             }
         }
+
+        int e = 0;
+        tour.resz(sz(nodes));
+        auto dfs = [&](auto self, int loc) -> void {
+            tour[loc].f = e++;
+            for (int cloc : ch[loc]) self(self, cloc);
+            tour[loc].s = e;
+        };
+        dfs(dfs, 0);
     }
 
     /*
