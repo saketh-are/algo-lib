@@ -4,9 +4,9 @@
 struct lowest_common_ancestor {
     struct visit {
         int node, depth, index;
-        visit operator +(const visit& o) const {
-            if (depth != o.depth) return depth < o.depth ? *this : o;
-            return index > o.index ? *this : o;
+        static visit higher(const visit& a, const visit& b) {
+            if (a.depth != b.depth) return a.depth < b.depth ? a : b;
+            return a.index > b.index ? a : b;
         }
     };
 
@@ -38,7 +38,7 @@ struct lowest_common_ancestor {
                 dfs(dfs, i), cc++;
         }
 
-        table = sparse_table<visit>(tour);
+        table = sparse_table<visit>(tour, visit::higher);
     }
 
     // Returns the lowest common ancestor of u and v
