@@ -34,8 +34,7 @@ struct lowest_common_ancestor {
             dfs(dfs, i), cc++;
         }
         for (int i = 0; i < V; i++) {
-            if (comp[i] == -1)
-                dfs(dfs, i), cc++;
+            if (comp[i] == -1) dfs(dfs, i), cc++;
         }
 
         table = sparse_table<visit>(tour, visit::higher);
@@ -65,5 +64,48 @@ struct lowest_common_ancestor {
         assert(u != v && comp[u] == comp[v]);
         int w = lca(u, v);
         return u == w ? tour[table(first[u], first[v]).index+1].node : par[u];
+    }
+};
+
+// Extension for weighted trees to support path weight queries.
+struct weighted_lowest_common_ancestor {
+    int V;
+    vll weighted_depth;
+    vi root;
+    lowest_common_ancestor lca;
+    weighted_lowest_common_ancestor(const vvpii& tree = {}, vi roots = {}) : V(sz(tree)) {
+        vvi adj(V);
+        for (int v = 0; v < sz(tree); v++)
+            for (pii e : tree[v])
+                adj[v].push_back(e.first);
+        lca = lowest_common_ancestor(adj, roots);
+
+        weighted_depth.resize(V, LLONG_MIN);
+        root.resize(V);
+
+        int cc = 0;
+        auto dfs = [&](auto& self, int loc, int par, int rt) -> void {
+            root[loc] = rt;
+            for (pii e : tree[loc]) if (e.first != par) {
+                weighted_depth[e.first] = weighted_depth[loc] + e.second;
+                self(self, e.first, loc, rt);
+            }
+        };
+        for (int i : roots) {
+            assert(weighted_depth[i] == LLONG_MIN);
+            weighted_depth[i] = 0;
+            dfs(dfs, i, i, i), cc++;
+        }
+        for (int i = 0; i < V; i++) {
+            if (weighted_depth[i] == LLONG_MIN) {
+                weighted_depth[i] = 0;
+                dfs(dfs, i, i, i), cc++;
+            }
+        }
+    }
+
+    ll path_weight(int u, int v) {
+        assert(lca.comp[u] == lca.comp[v]);
+        return weighted_depth[u] + weighted_depth[v] - 2 * weighted_depth[lca.lca(u, v)];
     }
 };
