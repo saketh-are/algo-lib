@@ -1,4 +1,3 @@
-struct monostate {} ms;
 struct uf_monostate {
     uf_monostate(__attribute__((unused)) int id) {}
     void merge(__attribute__((unused)) uf_monostate& o,

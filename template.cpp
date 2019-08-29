@@ -48,6 +48,30 @@ template<typename T> void ckmax(T& a, const T& b) { a = max(a, b); }
 
 mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
 
+namespace __algorithm {
+    template<typename T> void dedup(vector<T>& v) {
+        sort(all(v)); v.erase(unique(all(v)), v.end());
+    }
+    template<typename T> typename vector<T>::iterator find(vector<T>& v, const T& x) {
+        auto it = lower_bound(all(v), x); return it != v.end() && *it == x ? it : v.end();
+    }
+    template<typename T> size_t index(vector<T>& v, const T& x) {
+        auto it = find(v, x); assert(it != v.end() && *it == x); return it - v.begin();
+    }
+    template<typename C, typename T, typename OP> vector<T> prefixes(const C& v, T id, OP op) {
+        vector<T> r(sz(v)+1, id); F0R (i, sz(v)) r[i+1] = op(r[i], v[i]); return r;
+    }
+    template<typename C, typename T, typename OP> vector<T> suffixes(const C& v, T id, OP op) {
+        vector<T> r(sz(v)+1, id); F0Rd (i, sz(v)) r[i] = op(v[i], r[i+1]); return r;
+    }
+}
+using namespace __algorithm;
+
+struct monostate {
+    friend istream& operator>>(istream& is, const __attribute__((unused))monostate& ms) { return is; }
+    friend ostream& operator<<(ostream& os, const __attribute__((unused))monostate& ms) { return os; }
+} ms;
+
 namespace __io {
     void setIn(string s) { freopen(s.c_str(),"r",stdin); }
     void setOut(string s) { freopen(s.c_str(),"w",stdout); }
