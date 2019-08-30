@@ -72,6 +72,14 @@ struct monostate {
     friend ostream& operator<<(ostream& os, const __attribute__((unused))monostate& ms) { return os; }
 } ms;
 
+template<typename W=monostate> struct wedge {
+    int u, v, i; W w;
+    wedge<W>(int _u=-1, int _v=-1, int _i=-1) : u(_u), v(_v), i(_i) {}
+    int operator[](int loc) const { return u ^ v ^ loc; }
+    friend void re(wedge& e) { re(e.u, e.v, e.w); --e.u, --e.v; }
+    friend void pr(const wedge& e) { pr(e.u, "<-", e.w, "->", e.v); }
+};
+
 namespace __io {
     void setIn(string s) { freopen(s.c_str(),"r",stdin); }
     void setOut(string s) { freopen(s.c_str(),"w",stdout); }
