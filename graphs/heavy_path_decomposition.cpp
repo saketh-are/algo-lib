@@ -83,16 +83,16 @@ template<typename E> struct heavy_path_decomposition : lowest_common_ancestor<E>
         for_each(u, v, include_lca, f, f);
     }
 
-    template<typename T, typename OP, typename LFOLD, typename RFOLD>
-    T accumulate(int u, int v, bool include_lca, T iv, OP op, LFOLD lf, RFOLD rf) const {
+    template<typename T, typename OP, typename FOLDL, typename FOLDR>
+    T accumulate(int u, int v, bool include_lca, T iv, OP lplus, FOLDL fl, FOLDR fr) const {
         for (pii r : decompose_path(u, v, include_lca)) {
-            if (r.f > r.s) iv = op(iv, rf(r.s, r.f + 1));
-            else iv = op(iv, lf(r.f, r.s + 1));
+            if (r.f > r.s) iv = lplus(iv, fr(r.s, r.f + 1));
+            else iv = lplus(iv, fl(r.f, r.s + 1));
         }
         return iv;
     }
     template<typename T, typename OP, typename FOLD>
-    T accumulate_commutative(int u, int v, bool include_lca, T iv, OP op, FOLD f) const {
-        return accumulate(u, v, include_lca, iv, op, f, f);
+    T accumulate_commutative(int u, int v, bool include_lca, T iv, OP lplus, FOLD f) const {
+        return accumulate(u, v, include_lca, iv, lplus, f, f);
     }
 };
