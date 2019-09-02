@@ -7,7 +7,7 @@ template<typename E> struct tree {
     tree(int _V) : V(_V) {
         nbrs.resz(V), eids.resz(V), edges.resz(V-1);
     }
-    tree(const vector<E>& __edges) : V(sz(edges) + 1), edges(__edges)  {
+    tree(const vector<E>& __edges) : V(sz(__edges) + 1), edges(__edges)  {
         nbrs.resz(V), eids.resz(V);
         init();
     }
