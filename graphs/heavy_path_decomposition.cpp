@@ -1,23 +1,25 @@
 template<typename E> struct heavy_path_decomposition : lowest_common_ancestor<E> {
-    struct heavy_path { int index, htop; };
+    struct heavy_path { int index, htop, hbot; };
     vector<heavy_path> hld;
-    vi at_index;
+    vi preorder;
 
     int par(int v) const { return this->_par[v]; }
     int depth(int v) const { return this->_depth[v]; }
     int subt_sz(int v) const { return this->_subt_sz[v]; }
 
     heavy_path_decomposition(tree<E> _t) : lowest_common_ancestor<E>(_t) {
-        hld.resz(this->t.V), at_index.resz(this->t.V);
+        hld.resz(this->t.V), preorder.resz(this->t.V);
         auto dfs = [&](auto& self, int loc, int index, int htop) -> int {
-            at_index[index] = loc;
-            hld[loc] = {index++, htop};
+            preorder[index] = loc;
+            hld[loc] = {index++, htop, -1};
             auto it = max_element(all(this->nbrs(loc)), [&](int u, int v) {
                 if (u == v) return 0;
                 return u == par(loc) ? 1 : v == par(loc) ? 0 : subt_sz(u) < subt_sz(v);
             });
             if (*it != par(loc)) {
                 index = self(self, *it, index, htop);
+            } else {
+                hld[htop].hbot = loc;
             }
             for (int nbr : this->nbrs(loc)) if (nbr != par(loc) && nbr != *it) {
                 index = self(self, nbr, index, nbr);
@@ -28,7 +30,13 @@ template<typename E> struct heavy_path_decomposition : lowest_common_ancestor<E>
     }
 
     int index(int v) const { return hld[v].index; }
+    int at_index(int i) const { return preorder[i]; }
+
     int htop(int v) const { return hld[v].htop; }
+    int hbot(int v) const { return hld[htop(v)].hbot; }
+    pii hpath(int v) const {
+        return make_pair(index(htop(v)), index(hbot(v)) + 1);
+    }
 
     int edge_index(int eid) const {
         const E& e = this->t.edges[eid];
@@ -79,6 +87,18 @@ template<typename E> struct heavy_path_decomposition : lowest_common_ancestor<E>
         }
     }
     template<typename FOR>
+    void for_each_down(int u, int v, bool include_lca, FOR f) const {
+        assert(this->lca(u, v) == u);
+        auto fd = [&f](int i, int j){ assert(j - i <= 1); return f(i, j); };
+        for_each(u, v, include_lca, f, /*unused*/fd);
+    }
+    template<typename FORd>
+    void for_each_up(int u, int v, bool include_lca, FORd fd) const {
+        assert(this->lca(u, v) == v);
+        auto f = [&fd](int i, int j){ assert(j - i <= 1); return fd(i, j); };
+        for_each(u, v, include_lca, /*unused*/f, fd);
+    }
+    template<typename FOR>
     void for_each_commutative(int u, int v, bool include_lca, FOR f) const {
         for_each(u, v, include_lca, f, f);
     }
@@ -90,6 +110,18 @@ template<typename E> struct heavy_path_decomposition : lowest_common_ancestor<E>
             else iv = lplus(iv, fl(r.f, r.s + 1));
         }
         return iv;
+    }
+    template<typename T, typename OP, typename FOLDL>
+    T accumulate_down(int u, int v, bool include_lca, T iv, OP lplus, FOLDL fl) const {
+        assert(this->lca(u, v) == u);
+        auto fr = [&fl](int i, int j){ assert(j - i <= 1); return fl(i, j); };
+        return accumulate(u, v, include_lca, iv, lplus, fl, /*unused*/fr);
+    }
+    template<typename T, typename OP, typename FOLDR>
+    T accumulate_up(int u, int v, bool include_lca, T iv, OP lplus, FOLDR fr) const {
+        assert(this->lca(u, v) == v);
+        auto fl = [&fr](int i, int j){ assert(j - i <= 1); return fr(i, j); };
+        return accumulate(u, v, include_lca, iv, lplus, /*unused*/fl, fr);
     }
     template<typename T, typename OP, typename FOLD>
     T accumulate_commutative(int u, int v, bool include_lca, T iv, OP lplus, FOLD f) const {
