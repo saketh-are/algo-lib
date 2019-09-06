@@ -7,6 +7,7 @@ template<typename E> struct heavy_path_decomposition : lowest_common_ancestor<E>
     int depth(int v) const { return this->_depth[v]; }
     int subt_sz(int v) const { return this->_subt_sz[v]; }
 
+    heavy_path_decomposition() {}
     heavy_path_decomposition(tree<E> _t) : lowest_common_ancestor<E>(_t) {
         hld.resz(this->t.V), preorder.resz(this->t.V);
         auto dfs = [&](auto& self, int loc, int index, int htop) -> int {
@@ -32,6 +33,7 @@ template<typename E> struct heavy_path_decomposition : lowest_common_ancestor<E>
 
     int index(int v) const { return hld[v].index; }
     int at_index(int i) const { return preorder[i]; }
+    pii subtree(int v) const { return {index(v), index(v) + subt_sz(v)}; }
 
     int htop(int v) const { return hld[v].htop; }
     int hbot(int v) const { return hld[htop(v)].hbot; }
@@ -48,7 +50,7 @@ template<typename E> struct heavy_path_decomposition : lowest_common_ancestor<E>
         assert(0 <= k && k <= depth(u));
         while (true) {
             if (k <= depth(u) - depth(htop(u)))
-                return at_index[index(u) - k];
+                return at_index(index(u) - k);
             k -= depth(u) - depth(htop(u)) + 1;
             u = par(htop(u));
         }
