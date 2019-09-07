@@ -5,6 +5,7 @@ struct segment_tree_lazy {
     vector<T> table;
     vb has; vector<U> ops;
 
+    segment_tree_lazy() {}
     segment_tree_lazy(int _SZ, T _tid, U _uid, TT _tt, UU _uu, UT _ut)
             : SZ(_SZ), tid(_tid), uid(_uid), tt(_tt), uu(_uu), ut(_ut) {
         table.resize(2 * SZ, tid), has.resize(SZ), ops.resize(SZ, uid);
