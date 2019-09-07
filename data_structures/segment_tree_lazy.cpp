@@ -7,8 +7,16 @@ struct segment_tree_lazy {
 
     segment_tree_lazy() {}
     segment_tree_lazy(int _SZ, T _tid, U _uid, TT _tt, UU _uu, UT _ut)
-            : SZ(_SZ), tid(_tid), uid(_uid), tt(_tt), uu(_uu), ut(_ut) {
+            : tid(_tid), uid(_uid), tt(_tt), uu(_uu), ut(_ut) {
+        init(_SZ);
+    }
+    void init(int _SZ) {
+        SZ = _SZ;
         table.resize(2 * SZ, tid), has.resize(SZ), ops.resize(SZ, uid);
+    }
+    template<typename L> void set_leaves(L create) {
+        F0R (i, SZ) table[SZ + i] = create(i);
+        FORd (i, 1, SZ) table[i] = tt(table[2 * i], table[2 * i + 1]);
     }
 
     void _apply(int i, const U &op) {
@@ -25,7 +33,7 @@ struct segment_tree_lazy {
             if (has[k]) {
                 _apply(2 * k, ops[k]);
                 _apply(2 * k + 1, ops[k]);
-                has[k] = false, ops[k] = U{};
+                has[k] = false, ops[k] = uid;
             }
         }
     }
@@ -53,7 +61,7 @@ struct segment_tree_lazy {
     T operator()(int i, int j) {
         i += SZ, j += SZ;
         _propagate(i), _propagate(j - 1);
-        T left{}, right{};
+        T left = tid, right = tid;
         for (; i < j; i /= 2, j /= 2) {
             if (i&1) left = tt(left, table[i++]);
             if (j&1) right = tt(table[--j], right);
