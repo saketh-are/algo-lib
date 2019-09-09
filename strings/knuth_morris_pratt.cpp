@@ -14,7 +14,7 @@ template<typename T> struct kmp {
      * For i > 0, fail[i] is the length of the longest proper
      * suffix of word[0, i) that is a prefix of word.
      */
-    template<typename I> kmp(const I& begin, const I& end) : word(begin, end) {
+    template<typename I> kmp(I begin, I end) : word(begin, end) {
         P = sz(word);
         fail.resize(P + 1);
         for (size_t i = 2; i <= P; i++)
