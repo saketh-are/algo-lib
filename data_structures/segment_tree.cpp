@@ -5,7 +5,7 @@ template<typename T, typename F> struct segment_tree {
 
     segment_tree() {}
     segment_tree(int _SZ, T _id, F _tt) : SZ(_SZ), id(_id), tt(_tt) {
-        table.resize(2 * SZ);
+        table.resize(2 * SZ, id);
     }
     template<typename L> void set_leaves(L create) {
         F0R (i, SZ) table[SZ + i] = create(i);
