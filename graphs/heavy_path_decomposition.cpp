@@ -130,4 +130,16 @@ template<typename E> struct heavy_path_decomposition : lowest_common_ancestor<E>
     T accumulate_commutative(int u, int v, bool include_lca, T iv, OP lplus, FOLD f) const {
         return accumulate(u, v, include_lca, iv, lplus, f, f);
     }
+
+    vpii decompose_subtree(int u, int r) const {
+        if (u == r) return {{0, this->t.V}};
+        int w = this->first_step(u, r);
+        if (w == par(u)) return {{index(u), index(u) + subt_sz(u)}};
+        return {{0, index(w)}, {index(w) + subt_sz(w), this->t.V}};
+    }
+    template<typename T, typename OP, typename FOLD>
+    T accumulate_subtree(int u, int r, T iv, OP lplus, FOLD f) const {
+        vpii st = decompose_subtree(u, r);
+        return std::accumulate(all(st), iv, [&](T v, pii p){ return lplus(v, f(p.f, p.s)); });
+    }
 };
