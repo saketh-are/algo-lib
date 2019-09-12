@@ -2,7 +2,7 @@
  * Returns the vector z[i] = the greatest length l
  * such that s[i, i+l) is identical to s[0, l).
  */
-template<typename T> vi z_algorithm(const vector<T>& s) {
+template<typename T> vi z_algorithm(T s) {
     int N = s.size();
     vi z(N);
     z[0] = N;
@@ -16,4 +16,3 @@ template<typename T> vi z_algorithm(const vector<T>& s) {
     }
     return z;
 };
-
