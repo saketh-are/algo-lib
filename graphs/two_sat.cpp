@@ -49,7 +49,7 @@ struct two_sat {
         vb res(sz(graph));
         for (int v = 0; v < sz(res); v++) {
             if (comp[v] == comp[v^1]) return {};
-            res[v] = comp[v] > comp[v^1];
+            res[v] = comp[v] < comp[v^1];
         }
         return res;
     }
