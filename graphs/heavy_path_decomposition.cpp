@@ -15,15 +15,17 @@ template<typename E> struct heavy_path_decomposition : lowest_common_ancestor<E>
             hld[loc] = {index++, htop, -1};
             const vi& nbrs = this->nbrs(loc);
             vi::const_iterator it = max_element(all(nbrs), [&](int u, int v) {
-                if (u == v) return 0;
-                return u == par(loc) ? 1 : v == par(loc) ? 0 : subt_sz(u) < subt_sz(v);
+                if (u == v) return false;
+                if (u == this->par(loc)) return true;
+                if (v == this->par(loc)) return false;
+                return this->subt_sz(u) < this->subt_sz(v);
             });
-            if (it != nbrs.end() && *it != par(loc)) {
+            if (it != nbrs.end() && *it != this->par(loc)) {
                 index = self(self, *it, index, htop);
             } else {
                 hld[htop].hbot = loc;
             }
-            for (int nbr : nbrs) if (nbr != par(loc) && nbr != *it) {
+            for (int nbr : nbrs) if (nbr != this->par(loc) && nbr != *it) {
                 index = self(self, nbr, index, nbr);
             }
             return index;

@@ -28,12 +28,12 @@ template<typename E> struct lowest_common_ancestor {
             first_visit[loc] = sz(euler_tour);
             euler_tour.pb({loc, _depth[loc], sz(euler_tour)});
 
-            for (int nbr : nbrs(loc)) if (nbr != par(loc)) {
+            for (int nbr : this->nbrs(loc)) if (nbr != this->par(loc)) {
                 _par[nbr] = loc;
-                _depth[nbr] = depth(loc) + 1;
+                _depth[nbr] = this->depth(loc) + 1;
                 self(self, nbr);
-                _subt_sz[loc] += subt_sz(nbr);
-                euler_tour.push_back({loc, depth(loc), sz(euler_tour)});
+                _subt_sz[loc] += this->subt_sz(nbr);
+                euler_tour.push_back({loc, this->depth(loc), sz(euler_tour)});
             }
         };
         dfs(dfs, root);
