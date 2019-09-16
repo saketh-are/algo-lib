@@ -33,7 +33,9 @@ template<typename E> struct tree {
 
     void calc_subt_sz(int v, int p = -1) {
         subt_sz[v] = 1;
-        trav (e, adj[v]) if (int u = e[v]; !erased[u] && u != p) {
+        trav (e, adj[v]) {
+            int u = e[v];
+            if (erased[u] || u == p) continue;
             calc_subt_sz(u, v);
             subt_sz[v] += subt_sz[u];
         }
@@ -42,8 +44,9 @@ template<typename E> struct tree {
     int centroid(int v) {
         calc_subt_sz(v);
         int c = v;
-        FIND: trav (e, adj[c]) if (int u = e[c]; !erased[u]) {
-            if (subt_sz[u] < subt_sz[c] && 2 * subt_sz[u] >= subt_sz[v]) {
+        FIND: trav (e, adj[c]) {
+            int u = e[c];
+            if (!erased[u] && subt_sz[u] < subt_sz[c] && 2 * subt_sz[u] >= subt_sz[v]) {
                 c = u; goto FIND;
             }
         }
