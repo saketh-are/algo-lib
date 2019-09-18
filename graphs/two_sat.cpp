@@ -14,6 +14,14 @@ struct two_sat {
         if (v) implies(neg(a), a);
         else implies(a, neg(a));
     }
+    void equal(int a, int b) {
+        implies(a, b);
+        implies(neg(a), neg(b));
+    }
+    void not_equal(int a, int b) {
+        implies(a, neg(b));
+        implies(neg(a), b);
+    }
     void at_most_one(int a, int b) {
         implies(a, neg(b)); // contrapositive is automatic
     }
