@@ -116,4 +116,12 @@ template<typename T> struct point {
         res.erase(res.begin() + j, res.end());
         return res;
     }
+
+    // twice the signed area
+    friend T area(const polygon& p) {
+        T a = 0;
+        for (int i = 0; i < sz(p); i++)
+            a += cross(p[i], p[i+1 < sz(p) ? i+1 : 0]);
+        return a;
+    }
 };
