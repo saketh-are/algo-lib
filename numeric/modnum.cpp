@@ -39,7 +39,7 @@ template<int MOD> struct modnum {
     modnum& operator /= (const modnum& o) { return (*this) *= o.inv(); }
     friend modnum operator / (const modnum& a, const modnum& b) { return modnum(a) /= modnum(b); }
 
-    static int totient() {
+    static constexpr int totient() {
         int tot = MOD, tmp = MOD;
         for (int p = 2; p * p <= tmp; p++) if (tmp % p == 0) {
             tot = tot / p * (p - 1);
