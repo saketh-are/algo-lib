@@ -8,8 +8,8 @@ template<typename T, typename F> struct segment_tree {
         table.resize(2 * SZ, id);
     }
     template<typename L> void set_leaves(L create) {
-        F0R (i, SZ) table[SZ + i] = create(i);
-        FORd (i, 1, SZ) table[i] = tt(table[2 * i], table[2 * i + 1]);
+        for (int i = 0; i < SZ; i++) table[SZ + i] = create(i);
+        for (int i = SZ - 1; i; i--) table[i] = tt(table[2 * i], table[2 * i + 1]);
     }
 
     // Replaces the element at index i with v
