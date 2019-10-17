@@ -20,6 +20,16 @@ template<typename T> struct matrix {
         copy(m.data, m.data + N * M, data);
     }
 
+    matrix<T>& operator=(const matrix<T>& o) {
+        if (this != &o) {
+            N = o.N, M = o.M;
+            free(data);
+            data = (T*) malloc(N * M * sizeof(T));
+            copy(o.data, o.data + N * M, data);
+        }
+        return *this;
+    }
+
     ~matrix<T> () { free(data); }
 
     explicit operator T() const { assert(N == 1 && M == 1); return data[0]; }
