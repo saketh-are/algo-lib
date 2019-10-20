@@ -1,3 +1,5 @@
+// Labels strongly connected components in reverse topological order.
+// That means for any edge u-->v comp[u] >= comp[v].
 tuple<int, vi> strongly_connected_components(const vvi& graph) {
     const int N = graph.size();
     int C = 0, V = 0, top = 0;
