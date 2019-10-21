@@ -22,7 +22,7 @@ template<typename E> struct lowest_common_ancestor {
 
     lowest_common_ancestor() {}
     lowest_common_ancestor(tree<E> _t, int _root = 0) : t(_t), root(_root) {
-        _par.resz(t.V), _depth.resz(t.V), _subt_sz.resz(t.V), first_visit.resz(t.V);
+        _par.resz(t.V,-1), _depth.resz(t.V), _subt_sz.resz(t.V), first_visit.resz(t.V);
         auto dfs = [&](auto& self, int loc) -> void {
             _subt_sz[loc] = 1;
             first_visit[loc] = sz(euler_tour);
@@ -51,7 +51,7 @@ template<typename E> struct lowest_common_ancestor {
     }
 
     bool uv_path_has_w(int u, int v, int w) const {
-        return dist(u, v) == (dist(u, w) + dist(w, v));
+        return w != -1 && dist(u, v) == (dist(u, w) + dist(w, v));
     }
 
     // Returns the neighbor of u on the simple path from u to v

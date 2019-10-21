@@ -5,6 +5,7 @@ struct index_t {
     index_t operator + (int b) { return {i+b}; }
     index_t operator - (int b) { return {i-b}; }
     int operator - (index_t b) { return i-b.i; }
+    friend ostream& operator << (ostream& o, index_t a) { o << a.i; return o; }
 };
 using range_t = pair<index_t, index_t>;
 using ranges = vector<range_t>;
@@ -93,9 +94,12 @@ template<typename E> struct heavy_path_decomposition : lowest_common_ancestor<E>
     ranges decompose_path(int u, int v, bool include_lca) const {
         ranges res;
         int w = this->lca(u, v);
-        if (u != w) decompose_vertical_path(u, this->first_step(w, u), true, res);
-        if (include_lca) res.emplace_back(index(w), index(w));
-        if (v != w) decompose_vertical_path(v, this->first_step(w, v), false, res);
+        bool give_u_lca = include_lca && u!=w && htop(w) == htop(this->first_step(w, u)),
+             give_v_lca = include_lca ^ give_u_lca;
+        if (u != w || give_u_lca)
+            decompose_vertical_path(u, give_u_lca ? w : this->first_step(w, u), true, res);
+        if (v != w || give_v_lca)
+            decompose_vertical_path(v, give_v_lca ? w : this->first_step(w, v), false, res);
         return res;
     }
 
