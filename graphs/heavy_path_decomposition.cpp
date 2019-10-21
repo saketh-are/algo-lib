@@ -152,6 +152,19 @@ template<typename E> struct heavy_path_decomposition : lowest_common_ancestor<E>
         return accumulate(u, v, include_lca, iv, lplus, f, f);
     }
 
+    // Returns a closed, oriented interval of indices denoting the
+    // intersection between the semi-open range r and the path from u to v.
+    static constexpr range_t EMPTY{index_t{-1}, index_t{-1}};
+    range_t intersect(range_t r, int u, int v) {
+        int ru = at_index(r.f), rv = at_index(r.s - 1), uvl = this->lca(u, v);
+        assert(r.f < r.s && htop(ru) == htop(rv));
+        if (depth(rv) < depth(uvl)) return EMPTY;
+        if (depth(ru) < depth(uvl)) { assert(htop(uvl) == htop(ru)); ru = uvl; }
+        if (!this->uv_path_has_w(u, rv, ru)) return {index(this->lca(u, rv)), index(ru)};
+        if (!this->uv_path_has_w(v, rv, ru)) return {index(ru), index(this->lca(v, rv))};
+        return this->uv_path_has_w(u, v, ru) ? range_t{index(ru),index(ru)} : EMPTY;
+    }
+
     ranges decompose_subtree(int u, int r) const {
         if (u == r) return {{index_t{0}, index_t{this->t.V}}};
         int w = this->first_step(u, r);
