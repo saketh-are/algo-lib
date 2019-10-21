@@ -1,12 +1,13 @@
 struct frac {
     ll n, d;
-    frac(ll _n, ll _d) : n(_n), d(_d) {
+    frac(ll _n, ll _d = 1) : n(_n), d(_d) {
         assert(n != 0 || d != 0);
         if (d < 0) { n *= -1; d *= -1; }
         ll g = __gcd(abs(n), d);
         n /= g;
         d /= g;
     }
+    explicit operator double() const { return double(n)/d; }
     friend ostream& operator << (ostream& o, const frac& f) {
         return o << f.n << "/" << f.d;
     }
@@ -20,14 +21,27 @@ struct frac {
     friend bool operator == (const frac& a, const frac& b) {
         return a.n * b.d == b.n * a.d;
     }
+    friend bool operator != (const frac& a, const frac& b) {
+        return a.n * b.d != b.n * a.d;
+    }
     friend bool operator >= (const frac& a, const frac& b) {
         return a.n * b.d >= b.n * a.d;
     }
     friend bool operator > (const frac& a, const frac& b) {
         return a.n * b.d > b.n * a.d;
     }
+
     friend frac min(const frac a, const frac b) { return a <= b ? a : b; }
     friend frac max(const frac a, const frac b) { return a >= b ? a : b; }
+
+    frac& operator += (const frac& b) { return *this = frac(n*b.d+b.n*d, d*b.d); }
+    frac& operator -= (const frac& b) { return *this = frac(n*b.d-b.n*d, d*b.d); }
+    frac& operator *= (const frac& b) { return *this = frac(n*b.n, d*b.d); }
+    frac& operator /= (const frac& b) { return *this = frac(n*b.d, d*b.n); }
+    friend frac operator + (const frac& a, const frac& b) { return frac(a) += b; }
+    friend frac operator - (const frac& a, const frac& b) { return frac(a) -= b; }
+    friend frac operator * (const frac& a, const frac& b) { return frac(a) *= b; }
+    friend frac operator / (const frac& a, const frac& b) { return frac(a) /= b; }
 
     // canonical continued fraction
     vll to_cont() const {
