@@ -11,9 +11,21 @@ template<v_t MOD> struct modnum {
     friend bool operator == (const modnum& a, const modnum& b) { return a.v == b.v; }
     friend bool operator != (const modnum& a, const modnum& b) { return a.v != b.v; }
 
+    static unsigned fast_mod(uint64_t x, unsigned m = MOD) {
+#if !defined(_WIN32) || defined(_WIN64)
+        return x % m;
+#endif
+        // x must be less than 2^32 * m so that x / m fits in a 32-bit integer.
+        unsigned x_high = x >> 32, x_low = (unsigned) x, quot, rem;
+        asm("divl %4\n"
+                : "=a" (quot), "=d" (rem)
+                : "d" (x_high), "a" (x_low), "r" (m));
+        return rem;
+    }
+
     modnum& operator += (const modnum& o) { v += o.v; if (v >= MOD) v -= MOD; return *this; }
     modnum& operator -= (const modnum& o) { v -= o.v; if (v < 0) v += MOD; return *this; }
-    modnum& operator *= (const modnum& o) { v = v_t(vv_t(v) * o.v % MOD); return *this; }
+    modnum& operator *= (const modnum& o) { v = fast_mod(vv_t(v) * o.v); return *this; }
     modnum operator - () { modnum res; if (v) res.v = MOD - v; return res; }
     friend modnum operator + (const modnum& a, const modnum& b) { return modnum(a) += b; }
     friend modnum operator - (const modnum& a, const modnum& b) { return modnum(a) -= b; }
@@ -91,6 +103,18 @@ template<v_t MOD> struct modnum {
     static modnum unity_root(int deg) {
         assert(totient() % deg == 0);
         return generator().pow(totient() / deg);
+    }
+
+    static modnum unity_root(int deg, int pow) {
+        static vector<modnum> table{ 0, 1 };
+        while (sz(table) <= deg) {
+            modnum w = unity_root(sz(table));
+            for (int i = sz(table)/2, s = sz(table); i < s; i++) {
+                table.push_back(table[i]);
+                table.push_back(table[i] * w);
+            }
+        }
+        return table[deg + (pow < 0 ? deg + pow : pow)];
     }
 
     static modnum fact(int n) {
