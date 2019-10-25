@@ -42,17 +42,32 @@ namespace complex_fft {
     vector<modnum<MOD>> operator*(const vector<modnum<MOD>>& a, const vector<modnum<MOD>>& b) {
         if (a.empty() || b.empty()) return {};
         int s = sz(a) + sz(b) - 1;
+        if (min(sz(a), sz(b)) < 150) {
+            const vv_t VV_BOUND = numeric_limits<vv_t>::max() - vv_t(MOD) * MOD;
+            vector<vv_t> res(s);
+            for (int i = 0; i < sz(a); i++) for (int j = 0; j < sz(b); j++) {
+                if ((res[i + j] += vv_t(a[i].v) * b[j].v) > VV_BOUND) res[i + j] %= MOD;
+            }
+            return {res.begin(), res.end()};
+        }
+
         int N = 1 << (s > 1 ? 32 - __builtin_clz(s - 1) : 0);
         if (N > sz(fa)) fa.resize(N), fb.resize(N);
 
         for (int i = 0; i < sz(a); i++)
             fa[i] = cnum(a[i].v & ((1 << 15) - 1), a[i].v >> 15);
         fill(fa.begin() + sz(a), fa.begin() + N, 0);
-        for (int i = 0; i < sz(b); i++)
-            fb[i] = cnum(b[i].v & ((1 << 15) - 1), b[i].v >> 15);
-        fill(fb.begin() + sz(b), fb.begin() + N, 0);
+        fft<cnum, false>(fa, N);
 
-        fft<cnum, false>(fa, N), fft<cnum, false>(fb, N);
+        if (a != b) {
+            for (int i = 0; i < sz(b); i++)
+                fb[i] = cnum(b[i].v & ((1 << 15) - 1), b[i].v >> 15);
+            fill(fb.begin() + sz(b), fb.begin() + N, 0);
+            fft<cnum, false>(fb, N);
+        } else {
+            copy(fa.begin(), fa.begin() + N, fb.begin());
+        }
+
         for (int i = 0; i <= N / 2; i++) {
             int j = (N - i) & (N - 1);
             cnum g0 = (fb[i] + fb[j].conj()) / (2 * N);
