@@ -82,10 +82,10 @@ namespace vector_operators {
     }
 
     template<typename T> vector<T>& operator/=(vector<T>& a, const vector<T>& b) {
-        return a = min(sz(a), sz(b)) < 150 ? long_division(a, b).first  : quo(a, b);
+        return a = min(sz(a), sz(b)) < FFT_CUTOFF ? long_division(a, b).first  : quo(a, b);
     }
     template<typename T> vector<T>& operator%=(vector<T>& a, const vector<T>& b) {
-        return a = min(sz(a), sz(b)) < 150 ? long_division(a, b).second : rem(a, b);
+        return a = min(sz(a), sz(b)) < FFT_CUTOFF ? long_division(a, b).second : rem(a, b);
     }
     template<typename T> vector<T> operator/(vector<T> a, const vector<T>& b) { return a /= b; }
     template<typename T> vector<T> operator%(vector<T> a, const vector<T>& b) { return a %= b; }

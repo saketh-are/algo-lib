@@ -1,3 +1,4 @@
+const int FFT_CUTOFF = 150;
 template<typename T, bool INV> static void fft(vector<T>& a, int N) {
     assert(__builtin_popcount(N) == 1);
     for (int i = 1, j = 0, k; i < N; i++) {

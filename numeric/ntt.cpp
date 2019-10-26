@@ -3,7 +3,7 @@ namespace ntt {
     vector<modnum<MOD>> operator*(vector<modnum<MOD>> a, vector<modnum<MOD>> b) {
         if (a.empty() || b.empty()) return {};
         int s = sz(a) + sz(b) - 1;
-        if (min(sz(a), sz(b)) < 150) {
+        if (min(sz(a), sz(b)) < FFT_CUTOFF) {
             const vv_t VV_BOUND = numeric_limits<vv_t>::max() - vv_t(MOD) * MOD;
             vector<vv_t> res(s);
             for (int i = 0; i < sz(a); i++) for (int j = 0; j < sz(b); j++) {
