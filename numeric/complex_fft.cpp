@@ -91,4 +91,8 @@ namespace complex_fft {
                  + (ll(fb[i].y + 0.5) % MOD << 30);
         return c;
     }
+    template<int MOD>
+    vector<modnum<MOD>> conv(const vector<modnum<MOD>>& a, const vector<modnum<MOD>>& b) {
+        return a * b;
+    }
 }
