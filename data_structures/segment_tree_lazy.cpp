@@ -68,5 +68,5 @@ struct segment_tree_lazy {
         }
         return tt(left, right);
     }
-    T operator[](int i) { return *this(i, i+1); }
+    T operator[](int i) { return (*this)(i, i+1); }
 };
