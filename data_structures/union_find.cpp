@@ -1,19 +1,12 @@
-struct uf_monostate {
-    uf_monostate(__attribute__((unused)) int id) {}
-    void merge(__attribute__((unused)) uf_monostate& o,
-            __attribute__((unused)) const monostate& e) {}
-};
-
-template<typename T = uf_monostate, typename E = monostate>
+template<typename V = monostate, typename E = monostate>
 struct union_find {
     struct node {
-        int par, rnk, size; T state;
-        node(int id = 0) : par(id), rnk(0), size(1), state(id) {}
+        int par, rnk, size; V state;
+        node(int id = 0) : par(id), rnk(0), size(1) {}
         void merge(node& o, E& e) {
             if (rnk == o.rnk) rnk++;
-            if (size < o.size) swap(state, o.state);
             size += o.size;
-            state.merge(o.state, e);
+            state += o.state;
         }
     };
 
@@ -38,5 +31,5 @@ struct union_find {
         return true;
     }
 
-    T& state(int i) { return uf[rep(i)].state; }
+    node& operator[](int i) { return uf[rep(i)]; }
 };
