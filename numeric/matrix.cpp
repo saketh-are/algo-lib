@@ -2,6 +2,8 @@ template<typename T> struct matrix {
     int N, M;
     T* data;
 
+    matrix<T> () : N(0), M(0), data(nullptr) {}
+
     matrix<T> (int _N, int _M, T f = 0, T d = 0) : N(_N), M(_M) {
         data = (T*) malloc(N * M * sizeof(T));
         fill(data, data + N * M, f);
