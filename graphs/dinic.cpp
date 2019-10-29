@@ -17,9 +17,10 @@ template<typename F> struct dinic {
     }
 
     // Inserts a directed edge u --> v with capacity c.
-    void arc(int u, int v, F c) {
+    int arc(int u, int v, F c) {
         __arc(u, v, c);
         __arc(v, u, F(0));
+        return sz(dest) - 2;
     }
 
     bool bfs(int s, int t, vi& level, vector<F>& flow) const {
