@@ -7,15 +7,15 @@ template<char MIN_CHAR, int SIGMA> struct trie {
         // wid: index of this node's word in the dictionary
         array<int, SIGMA> link;
         int depth, suff, dict, wct, wid;
-        node(int depth) : depth(depth), suff(0), dict(0), wct(0), wid(-1) {
+        node(int _depth) : depth(_depth), suff(0), dict(0), wct(0), wid(-1) {
             fill(all(link), 0);
         }
         int& operator[](char c) { return link[c - MIN_CHAR]; }
         int operator[](char c) const { return link[c - MIN_CHAR]; }
     };
 
-    int W;
     vector<node> nodes;
+    vi wloc, defer;
     vpii tour;
 
     /*
@@ -25,20 +25,23 @@ template<char MIN_CHAR, int SIGMA> struct trie {
     trie() {}
     const node& operator[](int i) const { return nodes[i]; }
 
-    trie(auto begin, auto end) : W(0), nodes({ node(0) }) {
+    trie(auto begin, auto end) : nodes({ node(0) }) {
         for (auto it = begin; it != end; it++) {
             int loc = 0;
             for (char c : *it) {
                 assert(MIN_CHAR <= c && c < MIN_CHAR + SIGMA);
                 if (!nodes[loc][c]) {
-                    nodes[loc][c] = nodes.size();
+                    nodes[loc][c] = sz(nodes);
                     nodes.push_back(nodes[loc].depth + 1);
                 }
                 loc = nodes[loc][c];
             }
-            nodes[loc].dict = loc;
-            assert(!nodes[loc].wct++);
-            nodes[loc].wid = W++;
+            if (!nodes[loc].wct++) {
+                nodes[loc].dict = loc;
+                nodes[loc].wid = int(wloc.size());
+            }
+            wloc.push_back(loc);
+            defer.push_back(nodes[loc].wid);
         }
 
         vvi ch(sz(nodes));
@@ -60,9 +63,9 @@ template<char MIN_CHAR, int SIGMA> struct trie {
         int e = 0;
         tour.resz(sz(nodes));
         auto dfs = [&](auto self, int loc) -> void {
-            tour[loc].f = e++;
+            tour[loc].first = e++;
             for (int cloc : ch[loc]) self(self, cloc);
-            tour[loc].s = e;
+            tour[loc].second = e;
         };
         dfs(dfs, 0);
     }
@@ -74,13 +77,13 @@ template<char MIN_CHAR, int SIGMA> struct trie {
      * Runs in O(length of string to be searched + number of words in the dictionary).
      */
     vi matches(const string& text) const {
-        vi res(W);
+        vi res(sz(wloc));
         priority_queue<pair<int, int>> found;
 
-        int loc = 0;
+        int cloc = 0;
         for (char c : text) {
-            loc = nodes[loc].link[c - MIN_CHAR];
-            int match = nodes[loc].dict;
+            cloc = nodes[cloc].link[c - MIN_CHAR];
+            int match = nodes[cloc].dict;
             if (match) {
                 if (!res[nodes[match].wid]++)
                     found.push({ nodes[match].depth, match });
@@ -92,9 +95,12 @@ template<char MIN_CHAR, int SIGMA> struct trie {
             int nxt = nodes[nodes[loc].suff].dict;
             if (nxt) {
                 if (!res[nodes[nxt].wid]) found.push({ nodes[nxt].depth, nxt });
-                res[nodes[nxt].id] += res[nodes[loc].id];
+                res[nodes[nxt].wid] += res[nodes[loc].wid];
             }
         }
+
+        for (int i = 0; i < sz(defer); i++)
+            if (defer[i] != i) res[i] = res[defer[i]];
         return res;
     }
 
