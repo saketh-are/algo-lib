@@ -55,8 +55,8 @@ namespace __algorithm {
     template<typename T> typename vector<T>::iterator find(vector<T>& v, const T& x) {
         auto it = lower_bound(all(v), x); return it != v.end() && *it == x ? it : v.end();
     }
-    template<typename T> size_t index(vector<T>& v, const T& x) {
-        auto it = find(v, x); assert(it != v.end() && *it == x); return it - v.begin();
+    template<typename T> int index(vector<T>& v, const T& x) {
+        auto it = find(v, x); assert(it != v.end() && *it == x); return int(it - v.begin());
     }
     template<typename C, typename T, typename OP> vector<T> prefixes(const C& v, T id, OP op) {
         vector<T> r(sz(v)+1, id); F0R (i, sz(v)) r[i+1] = op(r[i], v[i]); return r;
@@ -74,7 +74,7 @@ struct monostate {
 
 template<typename W=monostate> struct wedge {
     int u, v, i; W w;
-    wedge<W>(int _u=-1, int _v=-1, int _i=-1) : u(_u), v(_v), i(_i) {}
+    wedge<W>(int _u=-1, int _v=-1, int _i=-1, W _w = W{}) : u(_u), v(_v), i(_i), w(_w) {}
     int operator[](int loc) const { return u ^ v ^ loc; }
     friend void re(wedge& e) { re(e.u, e.v, e.w); --e.u, --e.v; }
     friend void pr(const wedge& e) { pr(e.u, "<-", e.w, "->", e.v); }

@@ -21,6 +21,7 @@ template<typename E> struct tree {
         assert(t.V > 0);
         vector<E> __edge_list(t.V - 1);
         re(__edge_list);
+        for (int i = 0; i < t.V - 1; i++) __edge_list[i].i = i;
         t = tree<E>(__edge_list);
     }
     friend void pr(const tree& t) { pr("{V=", t.V, " ", t.edge_list, "}"); }
