@@ -7,29 +7,20 @@ template<typename v_t = long long> struct frac {
         n /= g;
         d /= g;
     }
-    explicit operator double() const { return double(n)/d; }
     friend ostream& operator << (ostream& o, const frac& f) {
         return o << f.n << "/" << f.d;
     }
 
-    friend bool operator < (const frac& a, const frac& b) {
-        return a.n * b.d < b.n * a.d;
+#define define_relational_operator(OP) \
+    friend bool operator OP (const frac& a, const frac& b) { \
+        return a.n * b.d OP b.n * a.d; \
     }
-    friend bool operator <= (const frac& a, const frac& b) {
-        return a.n * b.d <= b.n * a.d;
-    }
-    friend bool operator == (const frac& a, const frac& b) {
-        return a.n * b.d == b.n * a.d;
-    }
-    friend bool operator != (const frac& a, const frac& b) {
-        return a.n * b.d != b.n * a.d;
-    }
-    friend bool operator >= (const frac& a, const frac& b) {
-        return a.n * b.d >= b.n * a.d;
-    }
-    friend bool operator > (const frac& a, const frac& b) {
-        return a.n * b.d > b.n * a.d;
-    }
+    define_relational_operator(<)
+    define_relational_operator(<=)
+    define_relational_operator(==)
+    define_relational_operator(!=)
+    define_relational_operator(>)
+    define_relational_operator(>=)
 
     friend frac min(const frac a, const frac b) { return a <= b ? a : b; }
     friend frac max(const frac a, const frac b) { return a >= b ? a : b; }
@@ -43,6 +34,7 @@ template<typename v_t = long long> struct frac {
     friend frac operator * (const frac& a, const frac& b) { return frac(a) *= b; }
     friend frac operator / (const frac& a, const frac& b) { return frac(a) /= b; }
 
+    explicit operator double() const { return double(n)/d; }
     v_t floor() { assert(d > 0); return n / d - ((n < 0) && (n % d)); }
     v_t ceil() { assert(d > 0); return n / d + ((n > 0) && (n % d)); }
 
