@@ -43,6 +43,9 @@ template<typename v_t = long long> struct frac {
     friend frac operator * (const frac& a, const frac& b) { return frac(a) *= b; }
     friend frac operator / (const frac& a, const frac& b) { return frac(a) /= b; }
 
+    v_t floor() { assert(d > 0); return n / d - ((n < 0) && (n % d)); }
+    v_t ceil() { assert(d > 0); return n / d + ((n > 0) && (n % d)); }
+
     // canonical continued fraction
     vector<v_t> to_cont() const {
         if (d == 0) return { LLONG_MAX };
