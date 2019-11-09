@@ -26,7 +26,7 @@ template<typename T> struct kmp {
      * match[i] indicates whether there exists a match starting at
      * index i of text.
      */
-    vb find(const vector<T>& text) const {
+    template<typename C> vb find(const C& text) const {
         vb match(text.size());
         for (size_t i = 0, len = 0; i < text.size(); i++) {
             len = adv(len, text[i]);
