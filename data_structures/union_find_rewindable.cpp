@@ -1,4 +1,4 @@
-struct persistent_union_find {
+struct union_find_rewindable {
     struct node {
         int par, rank;
         node(int id = 0) : par(id), rank(0) {}
@@ -11,7 +11,7 @@ struct persistent_union_find {
     vector<node> dsu;
     vector<tuple<int, node, int, int>> history;
 
-    persistent_union_find(int _N) : N(_N), ops(0) {
+    union_find_rewindable(int _N) : N(_N), ops(0) {
         for (int i = 0; i < N; i++)
             dsu.push_back(node(i));
     }
