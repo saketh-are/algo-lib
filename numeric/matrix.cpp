@@ -81,7 +81,7 @@ template<typename T> struct matrix {
                 swap_ranges(m[r], m[r] + M, m[i]);
                 break;
             }
-            if (m[r][j] == 0) continue;
+            if (r == N || m[r][j] == 0) continue;
 
             for (int i = 0; i < N; i++) if (i != r) {
                 T c = m[i][j] / m[r][j];
