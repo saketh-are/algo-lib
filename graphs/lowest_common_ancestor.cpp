@@ -1,5 +1,5 @@
 template<typename E> struct lowest_common_ancestor {
-    tree<E> t;
+    const tree<E>& t;
     int root;
     vi _par, _depth, _subt_sz;
 
@@ -21,7 +21,7 @@ template<typename E> struct lowest_common_ancestor {
     sparse_table<visit, adder> table;
 
     lowest_common_ancestor() {}
-    lowest_common_ancestor(tree<E> _t, int _root = 0) : t(_t), root(_root) {
+    lowest_common_ancestor(const tree<E>& _t, int _root = 0) : t(_t), root(_root) {
         _par.resz(t.V,-1), _depth.resz(t.V), _subt_sz.resz(t.V), first_visit.resz(t.V);
         auto dfs = [&](auto& self, int loc) -> void {
             _subt_sz[loc] = 1;
