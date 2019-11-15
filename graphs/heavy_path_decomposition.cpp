@@ -21,7 +21,7 @@ template<typename E> struct heavy_path_decomposition : lowest_common_ancestor<E>
     int subt_sz(int v) const { return this->_subt_sz[v]; }
 
     heavy_path_decomposition() {}
-    heavy_path_decomposition(tree<E> _t) : lowest_common_ancestor<E>(_t) {
+    heavy_path_decomposition(tree<E> _t, int _root = 0) : lowest_common_ancestor<E>(_t, _root) {
         hld.resz(this->t.V), preorder.resz(this->t.V);
         auto dfs = [&](auto& self, int loc, index_t index, int htop) -> index_t {
             hld[loc] = {index, htop, -1};
@@ -43,7 +43,7 @@ template<typename E> struct heavy_path_decomposition : lowest_common_ancestor<E>
             }
             return index;
         };
-        dfs(dfs, 0, index_t{0}, 0);
+        dfs(dfs, this->root, index_t{0}, this->root);
     }
 
     index_t index(int v) const { return hld[v].index; }
