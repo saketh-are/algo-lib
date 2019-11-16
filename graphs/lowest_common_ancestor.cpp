@@ -8,17 +8,8 @@ template<typename E> struct lowest_common_ancestor {
     int depth(int v) const { return _depth[v]; }
     int subt_sz(int v) const { return _subt_sz[v]; }
 
-    struct visit { int node, depth, index; };
-    struct adder {
-        visit operator()(const visit& a, const visit& b) const {
-            if (a.depth != b.depth) return a.depth < b.depth ? a : b;
-            return a.index > b.index ? a : b;
-        }
-    } vv;
-
-    vector<visit> euler_tour;
-    vi first_visit;
-    sparse_table<visit, adder> table;
+    vi euler_tour, first_visit;
+    sparse_table<int, function<int(int, int)>> table;
 
     lowest_common_ancestor() {}
     lowest_common_ancestor(const tree<E>& _t, int _root = 0) : t(_t), root(_root) {
@@ -26,24 +17,27 @@ template<typename E> struct lowest_common_ancestor {
         auto dfs = [&](auto& self, int loc) -> void {
             _subt_sz[loc] = 1;
             first_visit[loc] = sz(euler_tour);
-            euler_tour.pb({loc, _depth[loc], sz(euler_tour)});
+            euler_tour.pb(loc);
 
             for (int nbr : this->nbrs(loc)) if (nbr != this->par(loc)) {
                 _par[nbr] = loc;
                 _depth[nbr] = this->depth(loc) + 1;
                 self(self, nbr);
                 _subt_sz[loc] += this->subt_sz(nbr);
-                euler_tour.push_back({loc, this->depth(loc), sz(euler_tour)});
+                euler_tour.pb(loc);
             }
         };
         dfs(dfs, root);
-        table = sparse_table<visit, adder>(euler_tour, vv);
+        vi index(sz(euler_tour)); for (int i = 0; i < sz(index); i++) index[i] = i;
+        table = sparse_table<int, function<int(int, int)>>(index, [&](int i, int j) {
+            return _depth[euler_tour[i]] < _depth[euler_tour[j]] ? i : j;
+        });
     }
 
     int lca(int u, int v) const {
         u = first_visit[u], v = first_visit[v];
         if (u > v) swap(u, v);
-        return table(u, v + 1).node;
+        return euler_tour[table(u, v + 1)];
     }
 
     int dist(int u, int v) const {
@@ -58,7 +52,7 @@ template<typename E> struct lowest_common_ancestor {
     int first_step(int u, int v) const {
         assert(u != v);
         if (lca(u, v) != u) return par(u);
-        return euler_tour[table(first_visit[u], first_visit[v]).index + 1].node;
+        return euler_tour[table(first_visit[u], first_visit[v]) + 1];
     }
 
     template<typename T, typename F> vector<T> prefix_sums(T id, F op) {
