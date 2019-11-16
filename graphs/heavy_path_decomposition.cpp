@@ -91,8 +91,8 @@ template<typename E> struct heavy_path_decomposition : lowest_common_ancestor<E>
         if (!up) reverse(res.begin() + bef, res.end());
     }
 
-    ranges decompose_path(int u, int v, bool include_lca) const {
-        ranges res;
+    const ranges& decompose_path(int u, int v, bool include_lca) const {
+        static ranges res; res.clear();
         int w = this->lca(u, v);
         bool give_u_lca = include_lca && u!=w && htop(w) == htop(this->first_step(w, u)),
              give_v_lca = include_lca ^ give_u_lca;

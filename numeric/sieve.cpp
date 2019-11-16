@@ -3,7 +3,7 @@ template<size_t N> struct sieve {
     struct num {
         int lp;   // least prime divisor
         char lpk; // multiplicity of least prime divisor
-        int pp;  // lp ** lpk
+        int pp;   // lp ** lpk
         int pd;   // largest proper divisor (num / lp)
         int wlp;  // largest divisor without the least prime (num / (lp ** lpk))
         int phi;  // euler's totient function
@@ -33,9 +33,9 @@ template<size_t N> struct sieve {
         return nums[v].lp == v;
     }
 
-    vpii factor(int v) {
+    const vpii& factor(int v) {
         assert(0 < v && v <= N);
-        vpii res;
+        static vpii res; res.clear();
         for (; v > 1; v = nums[v].wlp)
             res.emplace_back(nums[v].lp, nums[v].lpk);
         reverse(all(res));
