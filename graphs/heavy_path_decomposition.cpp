@@ -10,52 +10,33 @@ struct index_t {
 using range_t = pair<index_t, index_t>;
 using ranges = vector<range_t>;
 template<typename E> struct heavy_path_decomposition : lowest_common_ancestor<E> {
+    const tree<E>& t;
     /* Any node identifier represented as a plain int indexes into the original tree's labeling.
      * Any node identifier represented as an index_t indexes into the decomposition's relabeling.*/
-    struct heavy_path { index_t index; int htop, hbot; };
+    struct heavy_path { index_t index; int htop; };
     vector<heavy_path> hld;
-    vi preorder;
-
-    int par(int v) const { return this->_par[v]; }
-    int depth(int v) const { return this->_depth[v]; }
-    int subt_sz(int v) const { return this->_subt_sz[v]; }
 
     heavy_path_decomposition() {}
-    heavy_path_decomposition(const tree<E>& _t, int _root = 0) : lowest_common_ancestor<E>(_t, _root) {
-        hld.resz(this->t.V), preorder.resz(this->t.V);
-        auto dfs = [&](auto& self, int loc, index_t index, int htop) -> index_t {
-            hld[loc] = {index, htop, -1};
-            preorder[index.i++] = loc;
-            const vi& nbrs = this->nbrs(loc);
-            vi::const_iterator it = max_element(all(nbrs), [&](int u, int v) {
-                if (u == v) return false;
-                if (u == this->par(loc)) return true;
-                if (v == this->par(loc)) return false;
-                return this->subt_sz(u) < this->subt_sz(v);
-            });
-            if (it != nbrs.end() && *it != this->par(loc)) {
-                index = self(self, *it, index, htop);
-            } else {
-                hld[htop].hbot = loc;
-            }
-            for (int nbr : nbrs) if (nbr != this->par(loc) && nbr != *it) {
-                index = self(self, nbr, index, nbr);
-            }
-            return index;
-        };
-        dfs(dfs, this->root, index_t{0}, this->root);
+    heavy_path_decomposition(const tree<E>& _t) : t(_t), lowest_common_ancestor<E>(_t), hld(t.V) {
+        for (int i = 0; i < t.V; i++) {
+            int u = t.preorder[i];
+            hld[u] = {
+                index_t{i},
+                i > 0 && t.preorder[i-1] == t.par[u] ? hld[t.par[u]].htop : u
+            };
+        }
     }
 
     index_t index(int v) const { return hld[v].index; }
-    int at_index(index_t i) const { return preorder[int(i)]; }
+    int at_index(index_t i) const { return t.preorder[int(i)]; }
     int htop(int v) const { return hld[v].htop; }
-    int hbot(int v) const { return hld[htop(v)].hbot; }
+    //int hbot(int v) const { return hld[htop(v)].hbot; }
 
-    range_t hpath(int v) const {
+    /*range_t hpath(int v) const {
         return make_pair(index(htop(v)), index(hbot(v)) + 1);
-    }
+    }*/
     range_t subtree(int v) const {
-        return {index(v), index(v) + subt_sz(v)};
+        return {index(v), index(v) + t.subt_sz[v]};
     }
 
     // Returns the index of the deeper incident vertex.
@@ -65,12 +46,12 @@ template<typename E> struct heavy_path_decomposition : lowest_common_ancestor<E>
     }
 
     int kth_ancestor(int u, int k) const {
-        assert(0 <= k && k <= depth(u));
+        assert(0 <= k && k <= t.depth[u]);
         while (true) {
-            if (k <= depth(u) - depth(htop(u)))
+            if (k <= t.depth[u] - t.depth[htop(u)])
                 return at_index(index(u) - k);
-            k -= depth(u) - depth(htop(u)) + 1;
-            u = par(htop(u));
+            k -= t.depth[u] - t.depth[htop(u)] + 1;
+            u = t.par[htop(u)];
         }
     }
 
@@ -78,13 +59,13 @@ template<typename E> struct heavy_path_decomposition : lowest_common_ancestor<E>
     int kth_step(int u, int v, int k) const {
         int w = this->lca(u, v), d = this->dist(u, v);
         assert(d >= k);
-        return k <= depth(u) - depth(w) ? kth_ancestor(u, k) : kth_ancestor(v, d - k);
+        return k <= t.depth[u] - t.depth[w] ? kth_ancestor(u, k) : kth_ancestor(v, d - k);
     }
 
     void decompose_vertical_path(int u, int v, bool up, ranges& res) const {
         size_t bef = res.size();
-        for (assert(depth(u) >= depth(v)); true; u = par(u)) {
-            int w = depth(htop(u)) >= depth(v) ? htop(u) : v;
+        for (assert(t.depth[u] >= t.depth[v]); true; u = t.par[u]) {
+            int w = t.depth[htop(u)] >= t.depth[v] ? htop(u) : v;
             res.emplace_back(index(up ? u : w), index(up ? w : u));
             if ((u = w) == v) break;
         }
@@ -158,8 +139,8 @@ template<typename E> struct heavy_path_decomposition : lowest_common_ancestor<E>
     range_t intersect(range_t r, int u, int v) {
         int ru = at_index(r.f), rv = at_index(r.s - 1), uvl = this->lca(u, v);
         assert(r.f < r.s && htop(ru) == htop(rv));
-        if (depth(rv) < depth(uvl)) return EMPTY;
-        if (depth(ru) < depth(uvl)) { assert(htop(uvl) == htop(ru)); ru = uvl; }
+        if (t.depth[rv] < t.depth[uvl]) return EMPTY;
+        if (t.depth[ru] < t.depth[uvl]) { assert(htop(uvl) == htop(ru)); ru = uvl; }
         if (!this->uv_path_has_w(u, rv, ru)) return {index(this->lca(u, rv)), index(ru)};
         if (!this->uv_path_has_w(v, rv, ru)) return {index(ru), index(this->lca(v, rv))};
         return this->uv_path_has_w(u, v, ru) ? range_t{index(ru),index(ru)} : EMPTY;
@@ -168,8 +149,8 @@ template<typename E> struct heavy_path_decomposition : lowest_common_ancestor<E>
     ranges decompose_subtree(int u, int r) const {
         if (u == r) return {{index_t{0}, index_t{this->t.V}}};
         int w = this->first_step(u, r);
-        if (w == par(u)) return {{index(u), index(u) + subt_sz(u)}};
-        return {{index_t{0}, index(w)}, {index(w) + subt_sz(w), index_t{this->t.V}}};
+        if (w == t.par[u]) return {{index(u), index(u) + t.subt_sz[u]}};
+        return {{index_t{0}, index(w)}, {index(w) + t.subt_sz[w], index_t{this->t.V}}};
     }
     template<typename T, typename OP, typename FOLD>
     T accumulate_subtree(int u, int r, T iv, OP lplus, FOLD f) const {

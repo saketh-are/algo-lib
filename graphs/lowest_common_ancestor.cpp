@@ -1,37 +1,40 @@
 template<typename E> struct lowest_common_ancestor {
     const tree<E>& t;
-    int root;
-    vi _par, _depth, _subt_sz;
+    vi euler_tour, first_visit, last_visit;
 
-    const vi& nbrs(int v) const { return t.nbrs[v]; }
-    int par(int v) const { return _par[v]; }
-    int depth(int v) const { return _depth[v]; }
-    int subt_sz(int v) const { return _subt_sz[v]; }
-
-    vi euler_tour, first_visit;
-    sparse_table<int, function<int(int, int)>> table;
+    struct visit_adder {
+        vi tour_depths;
+        int operator()(int i, int j) const {
+            return tour_depths[i] < tour_depths[j] ? i : j;
+        }
+    } adder;
+    sparse_table<int, visit_adder> table;
 
     lowest_common_ancestor() {}
-    lowest_common_ancestor(const tree<E>& _t, int _root = 0) : t(_t), root(_root) {
-        _par.resz(t.V,-1), _depth.resz(t.V), _subt_sz.resz(t.V), first_visit.resz(t.V);
-        auto dfs = [&](auto& self, int loc) -> void {
-            _subt_sz[loc] = 1;
-            first_visit[loc] = sz(euler_tour);
-            euler_tour.pb(loc);
+    lowest_common_ancestor(const tree<E>& _t) : t(_t), first_visit(t.V), last_visit(t.V) {
+        record_tour(t.root);
 
-            for (int nbr : this->nbrs(loc)) if (nbr != this->par(loc)) {
-                _par[nbr] = loc;
-                _depth[nbr] = this->depth(loc) + 1;
-                self(self, nbr);
-                _subt_sz[loc] += this->subt_sz(nbr);
-                euler_tour.pb(loc);
-            }
-        };
-        dfs(dfs, root);
-        vi index(sz(euler_tour)); for (int i = 0; i < sz(index); i++) index[i] = i;
-        table = sparse_table<int, function<int(int, int)>>(index, [&](int i, int j) {
-            return _depth[euler_tour[i]] < _depth[euler_tour[j]] ? i : j;
-        });
+        vi index(sz(euler_tour));
+        for (int i = 0; i < sz(index); i++) index[i] = i;
+        table = sparse_table<int, visit_adder>(index, adder);
+    }
+
+    void record_tour(int u) {
+        first_visit[u] = sz(euler_tour);
+        euler_tour.pb(u);
+        adder.tour_depths.pb(t.depth[u]);
+
+        for (int v : t.children[u]) {
+            record_tour(v);
+            euler_tour.pb(u);
+            adder.tour_depths.pb(t.depth[u]);
+        }
+        last_visit[u] = sz(euler_tour) - 1;
+    }
+
+    bool is_ancestor(int anc, int desc) const {
+        return first_visit[anc] <= first_visit[desc]
+                                && first_visit[desc] <= last_visit[anc];
     }
 
     int lca(int u, int v) const {
@@ -41,7 +44,7 @@ template<typename E> struct lowest_common_ancestor {
     }
 
     int dist(int u, int v) const {
-        return depth(u) + depth(v) - 2 * depth(lca(u, v));
+        return t.depth[u] + t.depth[v] - 2 * t.depth[lca(u, v)];
     }
 
     bool uv_path_has_w(int u, int v, int w) const {
@@ -51,24 +54,7 @@ template<typename E> struct lowest_common_ancestor {
     // Returns the neighbor of u on the simple path from u to v
     int first_step(int u, int v) const {
         assert(u != v);
-        if (lca(u, v) != u) return par(u);
+        if (!is_ancestor(u, v)) return t.par[u];
         return euler_tour[table(first_visit[u], first_visit[v]) + 1];
-    }
-
-    template<typename T, typename F> vector<T> prefix_sums(T id, F op) {
-        vector<T> res(t.V, id);
-        auto dfs = [&](auto& self, int loc) -> void {
-            for (int eid : t.eids[loc]) {
-                E& e = t.edges[eid]; int nbr = e[loc];
-                if (nbr == par(loc)) continue;
-                res[nbr] = op(res[loc], e);
-                self(self, nbr);
-            }
-        };
-        dfs(dfs, root);
-        return res;
-    }
-    template<typename T> T read_path(vector<T> prefix_sums, int u, int v) {
-        return prefix_sums[u] + prefix_sums[v] - 2 * prefix_sums[lca(u, v)];
     }
 };
