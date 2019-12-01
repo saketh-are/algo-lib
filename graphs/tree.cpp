@@ -12,22 +12,22 @@ template<typename W=monostate> struct wedge {
 
 enum INPUT_FORMAT { EDGE_LIST, PARENT_LIST };
 template<typename E> struct tree {
+    vector<E> edge_list;
+
     int V, root;
+    vector<vector<E>> edges;
 
     vvi nbrs, children;
     vi par, depth, subt_sz;
 
     vi preorder, reverse_preorder;
 
-    vector<E> edge_list;
-    vector<vector<E>> edges;
-
     vb erased;
     void erase(int u) { erased[u] = true; }
 
     tree(int _V = 0) : V(_V) {}
     tree(const vector<E>& __edge_list, int _root = 0) : edge_list(__edge_list),
-            V(sz(__edge_list) + 1), edges(V), root(_root),
+            V(sz(__edge_list) + 1), root(_root), edges(V),
             nbrs(V), children(V), par(V, -1), depth(V), subt_sz(V), erased(V) {
         for (E& e : edge_list) {
             assert(0 <= e.u && e.u < V && 0 <= e.v && e.v < V);
