@@ -57,6 +57,13 @@ struct segment_tree_lazy {
         _rebuild(i), _rebuild(j - 1);
     }
 
+    // Returns the element at index i
+    const T& operator[](int i) {
+        i += SZ;
+        _propagate(i);
+        return table[i];
+    }
+
     // Accumulates the elements at indices in [i, j)
     T operator()(int i, int j) {
         i += SZ, j += SZ;
@@ -68,5 +75,4 @@ struct segment_tree_lazy {
         }
         return tt(left, right);
     }
-    T operator[](int i) { return (*this)(i, i+1); }
 };
