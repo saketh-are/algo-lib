@@ -1,30 +1,24 @@
 template<typename T, typename F> struct sparse_table {
     int SZ;
     F tt; // idempotent
-    vector<T> table;
-
-    T& entry(int l, int i) { return table[l * SZ + i]; }
-    const T& entry(int l, int i) const { return table[l * SZ + i]; }
+    vector<vector<T>> table;
 
     sparse_table() {}
-    sparse_table(const vector<T>& elts, F _tt) : SZ(sz(elts)), tt(_tt) {
+    template<typename I> sparse_table(int _SZ, F _tt, I init) : SZ(_SZ), tt(_tt) {
         const int L = 32 - __builtin_clz(max(SZ - 1, 1));
-        table.resize(L * SZ);
-        copy(all(elts), table.begin());
+        table.resz(L, vector<T>(SZ));
 
-        for (int l = 0; l + 1 < L; l++) {
-            for (int i = 0; i < SZ; i++) {
-                entry(l + 1, i) = entry(l, i);
-                if (i + (1 << l) < SZ)
-                    entry(l + 1, i) = tt(entry(l + 1, i), entry(l, i + (1 << l)));
-            }
-        }
+        for (int i = 0; i < SZ; i++) table[0][i] = init(i);
+
+        for (int l = 0; l + 1 < L; l++)
+            for (int i = 0; i + (2 << l) <= SZ; i++)
+                table[l+1][i] = tt(table[l][i], table[l][i + (1 << l)]);
     }
 
     // Accumulates the elements at indices in [i, j) in O(1)
     T operator()(int i, int j) const {
         assert(0 <= i && i < j && j <= SZ);
         int l = j - i - 1 ? 31 - __builtin_clz(j - i - 1) : 0;
-        return tt(entry(l, i), entry(l, j - (1 << l)));
+        return tt(table[l][i], table[l][j - (1 << l)]);
     }
 };

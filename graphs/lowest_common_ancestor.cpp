@@ -13,10 +13,7 @@ template<typename E> struct lowest_common_ancestor {
     lowest_common_ancestor() {}
     lowest_common_ancestor(const tree<E>& _t) : t(_t), first_visit(t.V), last_visit(t.V) {
         record_tour(t.root);
-
-        vi index(sz(euler_tour));
-        for (int i = 0; i < sz(index); i++) index[i] = i;
-        table = sparse_table<int, visit_adder>(index, adder);
+        table = sparse_table<int, visit_adder>(sz(euler_tour), adder, [](int i){ return i; });
     }
 
     void record_tour(int u) {
