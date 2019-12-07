@@ -1,7 +1,7 @@
 template<typename W=monostate> struct wedge {
     int u, v, i; W w;
     wedge<W>(int _u=-1, int _v=-1, int _i=-1, W _w = W{}) : u(_u), v(_v), i(_i), w(_w) {}
-    int operator[](int loc) const { return u ^ v ^ loc; }
+    int operator()(int loc) const { return u ^ v ^ loc; }
     friend void pr(const wedge& e) { pr(e.u, "<-", e.w, "->", e.v); }
 
     template<bool FIRST_INDEX = 1>
@@ -12,11 +12,8 @@ template<typename W=monostate> struct wedge {
 
 enum INPUT_FORMAT { EDGE_LIST, PARENT_LIST };
 template<typename E> struct tree {
-    vector<E> edge_list;
-
     int V, root;
-    vector<E> par_edge;
-    vector<vector<E>> child_edges;
+    vector<vector<E>> edges;
 
     vvi nbrs, children;
     vi par, depth, subt_sz;
@@ -27,21 +24,20 @@ template<typename E> struct tree {
     void erase(int u) { erased[u] = true; }
 
     tree(int _V = 0) : V(_V) {}
-    tree(const vector<E>& __edge_list, int _root = 0) : edge_list(__edge_list),
-            V(sz(__edge_list) + 1), root(_root), par_edge(V), child_edges(V),
+    tree(const vector<E>& edge_list, int _root = 0) :
+            V(sz(edge_list) + 1), root(_root), edges(V),
             nbrs(V), children(V), par(V, -1), depth(V), subt_sz(V), erased(V) {
-        for (E& e : edge_list) {
+        for (const E& e : edge_list) {
             assert(0 <= e.u && e.u < V && 0 <= e.v && e.v < V);
+            edges[e.u].pb(e);
+            edges[e.v].pb(e);
             nbrs[e.u].push_back(e.v);
             nbrs[e.v].push_back(e.u);
         }
 
         init(root);
-        for (E& e : edge_list) {
-            int child = depth[e.u] > depth[e.v] ? e.u : e.v;
-            par_edge[child] = e;
-            child_edges[e[child]].pb(e);
-        }
+        for (int u = 0; u < V; u++)
+            sort_by(edges[u], subt_sz[a(u)] > subt_sz[b(u)]);
 
         build_preorder(root);
         reverse_preorder = preorder;
@@ -54,12 +50,10 @@ template<typename E> struct tree {
             par[v] = u;
             depth[v] = depth[u] + 1;
             init(v);
-            subt_sz[u] += subt_sz[v];
-
             children[u].pb(v);
-            if (subt_sz[v] > subt_sz[children[u].front()])
-                swap(children[u].front(), children[u].back());
+            subt_sz[u] += subt_sz[v];
         }
+        sort_by(children[u], subt_sz[a] > subt_sz[b]);
     }
 
     void build_preorder(int u) {
