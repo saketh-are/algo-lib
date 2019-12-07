@@ -29,11 +29,6 @@ template<typename E> struct lowest_common_ancestor {
         last_visit[u] = sz(euler_tour) - 1;
     }
 
-    bool is_ancestor(int anc, int desc) const {
-        return first_visit[anc] <= first_visit[desc]
-                                && first_visit[desc] <= last_visit[anc];
-    }
-
     int lca(int u, int v) const {
         u = first_visit[u], v = first_visit[v];
         if (u > v) swap(u, v);
@@ -46,6 +41,10 @@ template<typename E> struct lowest_common_ancestor {
 
     bool uv_path_has_w(int u, int v, int w) const {
         return w != -1 && dist(u, v) == (dist(u, w) + dist(w, v));
+    }
+
+    bool is_ancestor(int anc, int desc) const {
+        return first_visit[anc] <= first_visit[desc] && first_visit[desc] <= last_visit[anc];
     }
 
     // Returns the neighbor of u on the simple path from u to v
