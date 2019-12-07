@@ -117,23 +117,33 @@ template<v_t MOD> struct modnum {
         return table[deg + (pow < 0 ? deg + pow : pow)];
     }
 
-    static modnum fact(int n) {
-        static vector<modnum> fact = { 1 };
-        for (assert(n >= 0); fact.size() <= n; )
-            fact.push_back(fact.back() * fact.size());
+    static modnum factorial(int n) {
+        static vector<modnum> fact = {1};
+        assert(n >= 0);
+        if (sz(fact) <= n) {
+            int had = sz(fact);
+            fact.resize(n + 1);
+            for (int i = had; i <= n; i++) fact[i] = fact[i-1] * i;
+        }
         return fact[n];
     }
-
-    static modnum finv(int n) {
-        static vector<modnum> finv = { 1 };
-        for (assert(n >= 0); finv.size() <= n; )
-            finv.push_back(finv.back() / finv.size());
+    static modnum inverse_factorial(int n) {
+        static vector<modnum> finv = {1};
+        assert(n >= 0);
+        if (sz(finv) <= n) {
+            int had = sz(finv);
+            finv.resz(n + 1), finv[n] = factorial(n).inv();
+            for (int i = n - 1; i >= had; i--) finv[i] = finv[i+1] * (i+1);
+        }
         return finv[n];
     }
 
+    static modnum small_inv(int n) {
+        assert(n > 0); return factorial(n - 1) * inverse_factorial(n);
+    }
+
     static modnum ncr(int n, int r) {
-        assert(n >= 0);
         if (r < 0 || n < r) return 0;
-        return fact(n) * finv(r) * finv(n - r);
+        return factorial(n) * inverse_factorial(r) * inverse_factorial(n - r);
     }
 };
