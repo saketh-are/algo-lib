@@ -15,7 +15,8 @@ template<typename E> struct tree {
     vector<E> edge_list;
 
     int V, root;
-    vector<vector<E>> edges;
+    vector<E> par_edge;
+    vector<vector<E>> child_edges;
 
     vvi nbrs, children;
     vi par, depth, subt_sz;
@@ -27,17 +28,21 @@ template<typename E> struct tree {
 
     tree(int _V = 0) : V(_V) {}
     tree(const vector<E>& __edge_list, int _root = 0) : edge_list(__edge_list),
-            V(sz(__edge_list) + 1), root(_root), edges(V),
+            V(sz(__edge_list) + 1), root(_root), par_edge(V), child_edges(V),
             nbrs(V), children(V), par(V, -1), depth(V), subt_sz(V), erased(V) {
         for (E& e : edge_list) {
             assert(0 <= e.u && e.u < V && 0 <= e.v && e.v < V);
             nbrs[e.u].push_back(e.v);
             nbrs[e.v].push_back(e.u);
-            edges[e.u].pb(e);
-            edges[e.v].pb(e);
         }
 
         init(root);
+        for (E& e : edge_list) {
+            int child = depth[e.u] > depth[e.v] ? e.u : e.v;
+            par_edge[child] = e;
+            child_edges[e[child]].pb(e);
+        }
+
         build_preorder(root);
         reverse_preorder = preorder;
         reverse(all(reverse_preorder));
