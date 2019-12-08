@@ -1,98 +1,86 @@
-template<typename W=monostate> struct wedge {
-    int u, v, i; W w;
-    wedge<W>(int _u=-1, int _v=-1, int _i=-1, W _w = W{}) : u(_u), v(_v), i(_i), w(_w) {}
-    int operator()(int loc) const { return u ^ v ^ loc; }
-    friend void pr(const wedge& e) { pr(e.u, "<-", e.w, "->", e.v); }
-
-    template<bool FIRST_INDEX = 1>
-    friend void re(wedge& e) { re(e.u, e.v, e.w); if (FIRST_INDEX) --e.u, --e.v; }
-    template<bool FIRST_INDEX = 1>
-    friend void re(wedge& e, int _u) { e.u = _u; re(e.v, e.w); if (FIRST_INDEX) --e.v; }
+struct edge {
+    int uv;
+    edge (int _uv = 0, __attribute__((unused))monostate _ = ms) : uv(_uv) {}
+    int operator()(int u) const { assert(uv); return uv ^ u; }
+    monostate& wt() const { return ms; }
+    struct path { int len;
+        path operator+(const path& p) const { return {len+p.len}; }
+    }; explicit operator path() { return {1}; }
+};
+template<typename W> struct wedge : edge {
+    mutable W w;
+    wedge (int _uv = 0, W _w = {}) : edge(_uv), w(_w) {}
+    W& wt() const { return w; }
+    struct path { int len; W wt;
+        path operator+(const path& p) { return {len+p.len, wt+p.wt}; }
+    }; explicit operator path() { return {1, w}; }
 };
 
 enum INPUT_FORMAT { EDGE_LIST, PARENT_LIST };
 template<typename E> struct tree {
     int V, root;
-    vector<vector<E>> edges;
+    vector<vector<E>> nbrs, children;
 
-    vvi nbrs, children;
     vi par, depth, subt_sz;
-
     vi preorder, reverse_preorder;
 
-    vb erased;
-    void erase(int u) { erased[u] = true; }
+    tree(int _V = 0, int _root = 0) : V(_V), root(_root),
+        nbrs(V), children(V), par(V, -1), depth(V), subt_sz(V) {}
 
-    tree(int _V = 0) : V(_V) {}
-    tree(const vector<E>& edge_list, int _root = 0) :
-            V(sz(edge_list) + 1), root(_root), edges(V),
-            nbrs(V), children(V), par(V, -1), depth(V), subt_sz(V), erased(V) {
-        for (const E& e : edge_list) {
-            assert(0 <= e.u && e.u < V && 0 <= e.v && e.v < V);
-            edges[e.u].pb(e);
-            edges[e.v].pb(e);
-            nbrs[e.u].push_back(e.v);
-            nbrs[e.v].push_back(e.u);
-        }
-
-        init(root);
-        for (int u = 0; u < V; u++)
-            sort_by(edges[u], subt_sz[a(u)] > subt_sz[b(u)]);
-
-        build_preorder(root);
-        reverse_preorder = preorder;
-        reverse(all(reverse_preorder));
-    }
-
-    void init(int u) {
-        subt_sz[u] = 1;
-        for (int v : nbrs[u]) if (v != par[u]) {
-            par[v] = u;
-            depth[v] = depth[u] + 1;
-            init(v);
-            children[u].pb(v);
-            subt_sz[u] += subt_sz[v];
-        }
-        sort_by(children[u], subt_sz[a] > subt_sz[b]);
-    }
-
-    void build_preorder(int u) {
-        preorder.pb(u);
-        for (int v : children[u]) build_preorder(v);
+    void add_edge(int u, int v, E e = {}) {
+        assert(0 <= u && u < V && 0 <= v && v < V);
+        e.uv = u ^ v;
+        nbrs[u].pb(e);
+        nbrs[v].pb(e);
     }
 
     template<INPUT_FORMAT FMT = EDGE_LIST, bool FIRST_INDEX = 1>
     friend void re(tree& t) {
         assert(t.V > 0);
-        vector<E> __edge_list(t.V - 1);
-        for (int i = 0; i < t.V - 1; i++) {
-            E& e = __edge_list[i];
-            if (FMT == EDGE_LIST) re<FIRST_INDEX>(e);
-            else re<FIRST_INDEX>(e, i + 1);
-            e.i = i;
+        for (int i = 1; i < t.V; i++) {
+            int u, v;
+            re(u), u -= FIRST_INDEX;
+            if (FMT == PARENT_LIST) v = i;
+            else re(v), v -= FIRST_INDEX;
+            E e{}; re(e.wt());
+            t.add_edge(u, v, e);
         }
-        t = tree<E>(__edge_list);
-    }
-    friend void pr(const tree& t) { pr("{V=", t.V, " ", t.edge_list, "}"); }
-
-    mutable vi __subt_sz;
-    void __calc_subt_sz(int u, bool avoid_erased, int p) const {
-        __subt_sz[u] = 1;
-        for (int v : nbrs[u]) if (v != p && (!avoid_erased || !erased[v])) {
-            __calc_subt_sz(v, avoid_erased, u);
-            __subt_sz[u] += __subt_sz[v];
-        }
+        t.init();
     }
 
-    vi centroids(int r = 0, bool avoid_erased = 1) const {
-        if (__subt_sz.empty()) __subt_sz.resz(V);
-        __calc_subt_sz(r, avoid_erased, -1);
-        int c = r, p = -1;
-        FIND: for (int u : nbrs[c]) if (!avoid_erased || !erased[u]) {
-            if (subt_sz[u] < subt_sz[c] && 2 * subt_sz[u] >= subt_sz[r]) {
-                p = c, c = u; goto FIND;
-            }
+    void init() {
+        traverse(root);
+        for (int u = 0; u < V; u++)
+            sort_by(nbrs[u], subt_sz[a(u)] > subt_sz[b(u)]);
+        build_preorder(root);
+        reverse_preorder = preorder, reverse(all(reverse_preorder));
+    }
+
+    void traverse(int u) {
+        subt_sz[u] = 1;
+        for (E e : nbrs[u]) if (int v = e(u); v != par[u]) {
+            par[v] = u;
+            depth[v] = depth[u] + 1;
+            traverse(v);
+            children[u].pb(e);
+            subt_sz[u] += subt_sz[v];
         }
-        return subt_sz[c] * 2 == subt_sz[r] ? vi{c,p} : vi{c};
+        sort_by(children[u], subt_sz[a(u)] > subt_sz[b(u)]);
+    }
+
+    void build_preorder(int u) {
+        preorder.pb(u);
+        for (E e : children[u]) build_preorder(e(u));
+    }
+
+    friend void pr(const tree& t) {
+        pr("{V=", t.V, " root=", t.root, " |");
+        for (int u = 0; u < t.V; u++) {
+            pr(" ", u, "--{");
+            for (E e : t.children[u])
+                pr("(ch=", e(u), " wt=", e.wt(), ")");
+            pr("}");
+        }
+        pr("}");
     }
 };

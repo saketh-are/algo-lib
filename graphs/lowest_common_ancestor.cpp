@@ -21,8 +21,8 @@ template<typename E> struct lowest_common_ancestor {
         euler_tour.pb(u);
         adder.tour_depths.pb(t.depth[u]);
 
-        for (int v : t.children[u]) {
-            record_tour(v);
+        for (E e : t.children[u]) {
+            record_tour(e(u));
             euler_tour.pb(u);
             adder.tour_depths.pb(t.depth[u]);
         }

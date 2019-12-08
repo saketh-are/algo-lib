@@ -67,10 +67,14 @@ namespace __algorithm {
 }
 using namespace __algorithm;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 struct monostate {
-    friend istream& operator>>(istream& is, const __attribute__((unused))monostate& ms) { return is; }
-    friend ostream& operator<<(ostream& os, const __attribute__((unused))monostate& ms) { return os; }
+    friend istream& operator>>(istream& is, const monostate& ms) { return is; }
+    friend ostream& operator<<(ostream& os, const monostate& ms) { return os; }
+    friend monostate operator+(const monostate& a, const monostate& b) { return a; }
 } ms;
+#pragma GCC diagnostic pop
 
 namespace __io {
     void setIn(string s) { freopen(s.c_str(),"r",stdin); }
