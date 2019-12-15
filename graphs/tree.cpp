@@ -27,6 +27,11 @@ template<typename E> struct tree {
     tree(int _V = 0, int _root = 0) : V(_V), root(_root),
         nbrs(V), children(V), par(V, -1), depth(V), subt_sz(V) {}
 
+    const E& up_edge(int u) const {
+        assert(u != root);
+        return nbrs[u].front();
+    }
+
     void add_edge(int u, int v, E e = {}) {
         assert(0 <= u && u < V && 0 <= v && v < V);
         e.uv = u ^ v;
