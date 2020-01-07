@@ -1,21 +1,13 @@
 struct union_find {
     struct node {
-        int par, rnk, size; vi elts;
-        node(int id = 0) : par(id), rnk(0), size(1), elts({id}) {}
-        template<typename F> void merge(node& o, F proc) {
-            proc(par, o.par);
-            if (rnk == o.rnk) rnk++;
-            size += o.size;
-            if (sz(elts) < sz(o.elts)) swap(elts, o.elts);
-            elts.insert(elts.end(), all(o.elts));
-        }
+        int par, rnk, size;
+        node(int id = 0) : par(id), rnk(0), size(1) {}
     };
 
     vector<node> uf;
     union_find(int N = 0) : uf(N) {
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++)
             uf[i] = node(i);
-        }
     }
 
     int rep(int i) {
@@ -24,13 +16,13 @@ struct union_find {
         return uf[i].par;
     }
 
-    template<typename F = function<void(int, int)>>
-    bool unio(int a, int b, F proc = [](int a, int b) {}) {
+    bool unio(int a, int b) {
         a = rep(a), b = rep(b);
         if (a == b) return false;
         if (uf[a].rnk < uf[b].rnk) swap(a, b);
-        uf[a].merge(uf[b], proc);
         uf[b].par = a;
+        uf[a].size += uf[b].size;
+        if (uf[a].rnk == uf[b].rnk) uf[a].rnk++;
         return true;
     }
 
@@ -40,8 +32,7 @@ struct union_find {
         pr("{"); bool f = 1;
         for (int i = 0; i < sz(u.uf); i++) if (u.uf[i].par == i) {
             if (!f) pr(", "); else f = 0;
-            pr("[ ", i, " | rank=", u.uf[i].rnk, " size=", u.uf[i].size,
-                    " elts=", u.uf[i].elts, "]");
+            pr("[ ", i, " | rank=", u.uf[i].rnk, " size=", u.uf[i].size, " ]");
         }
         pr("}");
     }
