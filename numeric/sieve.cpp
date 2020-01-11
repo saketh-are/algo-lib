@@ -1,69 +1,72 @@
-template<size_t N> struct sieve {
+template<size_t MAXV> struct sieve {
     vi primes;
     struct num {
-        int lp;   // least prime divisor
-        char lpk; // multiplicity of least prime divisor
-        int pp;   // lp ** lpk
-        int pd;   // largest proper divisor (num / lp)
-        int wlp;  // largest divisor without the least prime (num / (lp ** lpk))
-        int phi;  // euler's totient function
-        char mu;  // mobius function
+        int  least_prime;       // least prime divisor
+        int  div_least_prime;   // num divided by least_prime
+        char lp_multiplicity;   // multiplicity of the least prime divisor
+        char mu;                // mobius function
+        int  phi;               // euler's totient function
+
+        static num ONE() { return { INT_MAX, 1, 0, 1, 1}; }
+
+        num prod(int my_value, int p) const {
+            if (p < least_prime)
+                return { p, my_value, 1, -mu, phi * (p - 1) };
+            assert(p == least_prime);
+            return { p, my_value, lp_multiplicity + 1, 0, phi * p };
+        }
     };
     vector<num> nums;
     const num& operator[](int i){ return nums[i]; }
 
-    sieve() : nums(N + 1) {
-        nums[1] = { -1, 0, 1, -1, -1, 1, 1 };
-        for (int i = 2; i <= N; i++) {
-            num& n = nums[i];
-            if (!n.lp) {
-                n = { i, 1, i, 1, 1, i-1, -1 };
-                primes.pb(i);
+    sieve() : nums(MAXV) {
+        nums[1] = num::ONE();
+        for (int v = 2; v < MAXV; v++) {
+            num& n = nums[v];
+            if (!n.least_prime) {
+                n = nums[1].prod(1, v);
+                primes.pb(v);
             }
             for (int p : primes) {
-                if (p > n.lp || p * i > N) break;
-                if (p < n.lp) nums[p * i] = { p, 1, p, i, i, n.phi * (p - 1), -n.mu };
-                else nums[p * i] = { p, n.lpk + 1, n.pp * p, i, n.wlp, n.phi * p, 0 };
+                if (p > n.least_prime || v * p >= MAXV) break;
+                nums[v * p] = n.prod(v, p);
             }
         }
     }
 
-    bool is_prime(int v) {
-        assert(0 < v && v <= N);
-        return nums[v].lp == v;
+    bool is_prime(int v) const {
+        assert(0 < v && v < MAXV);
+        return nums[v].least_prime == v;
     }
 
-    const vpii& factor(int v) {
-        assert(0 < v && v <= N);
+    int eliminate_least_prime(int v) const {
+        assert(1 < v && v < MAXV);
+        for (int m = nums[v].lp_multiplicity; m > 0; m--)
+            v = nums[v].div_least_prime;
+        return v;
+    }
+
+    const vpii& factor(int v) const {
+        assert(0 < v && v < MAXV);
         static vpii res; res.clear();
-        for (; v > 1; v = nums[v].wlp)
-            res.emplace_back(nums[v].lp, nums[v].lpk);
+        for (; v > 1; v = eliminate_least_prime(v))
+            res.emplace_back(nums[v].least_prime, nums[v].lp_multiplicity);
         reverse(all(res));
         return res;
     }
 
-    vi divisors(int v) {
-        assert(0 < v && v <= N);
-        if (v == 1) return {1};
-        vi res;
-        for (int d : divisors(nums[v].wlp))
-            for (int k = 0; k <= nums[v].lpk; k++, d *= nums[v].lp)
-                res.pb(d);
-        return res;
+    template<typename F> void for_each_divisor_unordered(int v, F f, int c = 1) const {
+        assert(0 < v && v < MAXV);
+        if (v == 1) { f(c); return; }
+        int w = eliminate_least_prime(v);
+        for (int m = 0; m <= nums[v].lp_multiplicity; m++, c *= nums[v].least_prime)
+            for_each_divisor_unordered(w, f, c);
     }
 
-    int gcd(int a, int b) {
-        if (a == 0) return b; else assert(0 < a && a <= N);
-        if (b == 0) return a; else assert(0 < b && b <= N);
-        int g = 1;
-        while (a > 1 && b > 1) {
-            const num &na = nums[a], &nb = nums[b];
-            if (na.lp == nb.lp) {
-                g *= min(na.pp, nb.pp);
-                a = na.wlp, b = nb.wlp;
-            } else if (na.lp < nb.lp) a = na.wlp;
-            else b = nb.wlp;
-        }
-        return g;
+    const vi& unordered_divisors(int v) const {
+        assert(0 < v && v < MAXV);
+        static vi res; res.clear();
+        for_each_divisor_unordered(v, [&](int d) { res.pb(d); });
+        return res;
     }
 };
