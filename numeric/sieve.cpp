@@ -1,3 +1,4 @@
+enum DIVISOR_TYPE { ALL, SQUARE_FREE };
 template<size_t MAXV> struct sieve {
     vi primes;
     struct num {
@@ -55,18 +56,21 @@ template<size_t MAXV> struct sieve {
         return res;
     }
 
-    template<typename F> void for_each_divisor_unordered(int v, F f, int c = 1) const {
+    template<typename F> void for_each_divisor_unordered(int v, F f,
+            DIVISOR_TYPE t = ALL, int d = 1) const {
         assert(0 < v && v < MAXV);
-        if (v == 1) { f(c); return; }
+        if (v == 1) { f(d); return; }
         int w = eliminate_least_prime(v);
-        for (int m = 0; m <= nums[v].lp_multiplicity; m++, c *= nums[v].least_prime)
-            for_each_divisor_unordered(w, f, c);
+        char M = min(nums[v].lp_multiplicity, char(t == ALL ? CHAR_MAX : 1));
+        for (int m = 0; m <= M; m++, d *= nums[v].least_prime) {
+            for_each_divisor_unordered(w, f, t, d);
+        }
     }
 
-    const vi& unordered_divisors(int v) const {
+    const vi& unordered_divisors(int v, DIVISOR_TYPE t = ALL) const {
         assert(0 < v && v < MAXV);
         static vi res; res.clear();
-        for_each_divisor_unordered(v, [&](int d) { res.pb(d); });
+        for_each_divisor_unordered(v, [&](int d) { res.pb(d); }, t);
         return res;
     }
 };
