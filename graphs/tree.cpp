@@ -24,8 +24,8 @@ template<typename E> struct tree {
     vi par, depth, subt_sz;
     vi preorder, reverse_preorder;
 
-    tree(int _V = 0, int _root = 0) : V(_V), root(_root),
-        nbrs(V), children(V), par(V, -1), depth(V), subt_sz(V) {}
+    tree() : V(0), root(-1) {}
+    tree(int _V, int _root) : V(_V), root(_root), nbrs(V) {}
 
     const E& up_edge(int u) const {
         assert(u != root);
@@ -54,12 +54,20 @@ template<typename E> struct tree {
     }
 
     void init() {
+        children.resz(V), par.resz(V), depth.resz(V), subt_sz.resz(V);
+        par[root] = -1, depth[root] = 0;
+
         traverse(root);
-        for (int u = 0; u < V; u++)
+        for (int u = 0; u < V; u++) {
             sort_by(nbrs[u], subt_sz[a(u)] > subt_sz[b(u)]);
-        build_preorder(root);
+            children[u].clear();
+            copy(nbrs[u].begin() + (u != root), nbrs[u].end(), back_inserter(children[u]));
+        }
+
+        preorder.clear(), preorder.reserve(V), build_preorder(root);
         reverse_preorder = preorder, reverse(all(reverse_preorder));
     }
+    void reroot(int _root) { root = _root; init(); }
 
     void traverse(int u) {
         subt_sz[u] = 1;
@@ -67,10 +75,8 @@ template<typename E> struct tree {
             par[v] = u;
             depth[v] = depth[u] + 1;
             traverse(v);
-            children[u].pb(e);
             subt_sz[u] += subt_sz[v];
         }
-        sort_by(children[u], subt_sz[a(u)] > subt_sz[b(u)]);
     }
 
     void build_preorder(int u) {
