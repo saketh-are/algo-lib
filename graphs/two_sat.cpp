@@ -2,7 +2,7 @@ struct two_sat {
     vvi graph;
     two_sat() {}
 
-    inline int neg(int a) { return a^1; }
+    static inline int neg(int a) { return a^1; }
 
     void implies(int a, int b) {
         if (a < 0 || b < 0) return;
@@ -53,12 +53,25 @@ struct two_sat {
         return v;
     }
 
-    vb solve() {
+    vb solve() const {
         int C; vi comp; tie(C, comp) = strongly_connected_components(graph);
         vb res(sz(graph));
         for (int v = 0; v < sz(res); v++) {
             if (comp[v] == comp[neg(v)]) return {};
             res[v] = comp[v] < comp[neg(v)];
+        }
+        return res;
+    }
+
+    // (2 * MAXV)^2 / machine word size
+    template<int MAXV> string classify() const {
+        auto reach = digraph_reachability<2 * MAXV>(graph);
+        string res(sz(graph), '?');
+        for (int v = 0; v < sz(graph); v++) {
+            bool n0 = reach[v][neg(v)];
+            bool n1 = reach[neg(v)][v];
+            if (n0 && n1) return "";
+            res[v] = n0 ? '0' : n1 ? '1' : '?';
         }
         return res;
     }
