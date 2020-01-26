@@ -23,35 +23,33 @@ template<typename F> struct dinic {
         return sz(dest) - 2;
     }
 
-    bool bfs(int s, int t, vi& level, vector<F>& flow) const {
-        level = vi(V, -1);
-        level[s] = 0;
+    mutable vi level;
+    void bfs(int s, vector<F>& flow) const {
+        level.resz(V), fill(all(level), -1), level[s] = 0;
         for (queue<int> q({s}); !q.empty(); q.pop()) {
-            int u = q.front();
-            for (int e : adj[u]) {
+            for (int e : adj[q.front()]) {
                 if (level[dest[e]] == -1 && flow[e] < cap[e]) {
-                    level[dest[e]] = level[u] + 1;
+                    level[dest[e]] = level[q.front()] + 1;
                     q.push(dest[e]);
                 }
             }
         }
-        return level[t] != -1;
     }
 
-    F augment(int s, int t, vi& level, vector<F>& flow, vi& inx, F cur) const {
+    mutable vi inx;
+    F augment(int s, int t, vector<F>& flow, F cur = inf) const {
         if (s == t) return cur;
-        for (int e; inx[s] < adj[s].size(); inx[s]++) {
-            e = adj[s][inx[s]];
+        for (; inx[s] < adj[s].size(); inx[s]++) {
+            int e = adj[s][inx[s]];
             if (level[dest[e]] != level[s] + 1) continue;
             if (flow[e] == cap[e]) continue;
-            F incr = augment(dest[e], t, level, flow, inx, min(cur, cap[e] - flow[e]));
-            if (incr > F(0)) {
+            if (F incr = augment(dest[e], t, flow, min(cur, cap[e] - flow[e]))) {
                 flow[e] += incr;
                 flow[e^1] -= incr;
                 return incr;
             }
         }
-        return F(0);
+        return 0;
     }
 
     /*
@@ -61,15 +59,19 @@ template<typename F> struct dinic {
      * Runs in O(min{ V^(2/3), E^(1/2) } * E) if all edges have unit capacity.
      * Runs in O(V^(1/2) * E) for bipartite matching.
      */
-    tuple<F, vector<F>> max_flow(int s, int t) const {
+    struct max_flow {
+        F res;
+        vector<F> flow;
+    };
+    max_flow solve(int s, int t) const {
         assert(s != t);
-        F res(0);
+        F res = 0;
         vector<F> flow(cap.size());
-        for (vi level; bfs(s, t, level, flow); ) {
-            for (vi inx(V, 0); F incr = augment(s, t, level, flow, inx, inf); )
+        while (bfs(s, flow), ~level[t]) {
+            inx.resz(V), fill(all(inx), 0);
+            while (F incr = augment(s, t, flow))
                 res += incr;
         }
-        return make_tuple(res, flow);
+        return max_flow{res, flow};
     }
 };
-
