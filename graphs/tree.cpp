@@ -1,5 +1,5 @@
 struct edge {
-    int uv;
+    int uv; //int id;
     edge (int _uv = 0, __attribute__((unused))monostate _ = ms) : uv(_uv) {}
     int operator()(int u) const { assert(uv); return uv ^ u; }
     monostate& wt() const { return ms; }
@@ -42,12 +42,12 @@ template<typename E> struct tree {
     template<INPUT_FORMAT FMT = EDGE_LIST, bool FIRST_INDEX = 1>
     friend void re(tree& t) {
         assert(t.V > 0);
-        for (int i = 1; i < t.V; i++) {
+        for (int i = 0; i < t.V - 1; i++) {
             int u, v;
             re(u), u -= FIRST_INDEX;
-            if (FMT == PARENT_LIST) v = i;
+            if (FMT == PARENT_LIST) v = i+1;
             else re(v), v -= FIRST_INDEX;
-            E e{}; re(e.wt());
+            E e{}; re(e.wt()); // e.id = i
             t.add_edge(u, v, e);
         }
         t.init();
