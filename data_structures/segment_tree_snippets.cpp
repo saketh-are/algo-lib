@@ -19,11 +19,22 @@ auto nn = [](node a, node b) {
 };
 segment_tree st(N, node{0,0,0}, nn);
 
+
 /*
- * Segment tree supporting:
- *     - Set value at index i
- *     - Add value to each element in [i, j)
- *     - Return the first minimum in [i, j) and its index
+ * Flip range, count zeros and ones
+ */
+using nv_t = int;
+struct node { nv_t off, on; };
+using upd = bool;
+auto nn = [](node a, node b) { return node{a.off+b.off, a.on+b.on}; };
+auto uu = [](upd a, upd b) { return a ^ b; };
+auto un = [](upd a, node b) { return a ? node{b.on, b.off} : b; };
+
+segment_tree_lazy st(N, node{0,0}, upd{0}, nn, uu, un);
+st.set_leaves([](int i){ return node{1, 0}; });
+
+/*
+ * Add to range, find min
  */
 using nv_t = ll;
 struct n { nv_t lo; int ix; };
@@ -36,10 +47,7 @@ segment_tree_lazy st(N, n{INF, -1}, 0ll, nn, uu, un);
 st.set_leaves([&](int i){ return n{0ll, i}; });
 
 /*
- * Segment tree supporting:
- *      - Set value at index i
- *      - Add value to each element in [i, j)
- *      - Compute the sum of the elements in [i, j)
+ * Add to range, get sum
  */
 using nv_t = ll;
 struct node { int elts; nv_t x; };
@@ -52,10 +60,7 @@ segment_tree_lazy st(N, node{0,0}, update{0}, nn, uu, un);
 st.set_leaves([](int i){ return node{1,0}; });
 
 /*
- * Segment tree supporting:
- *     - Set pair of values at index i
- *     - Add pair of values to each pair in [i, j)
- *     - Compute the sum of the pairs in [i, j)
+ * Add to range, get sum (2D vectors)
  */
 using nv_t = ll;
 struct node { int elts; nv_t x, y; };
@@ -66,3 +71,32 @@ auto un = [](update u, node n) { return node{n.elts, n.x + u.x * n.elts, n.y + u
 
 segment_tree_lazy st(N, node{0,0,0}, update{0,0}, nn, uu, un);
 st.set_leaves([](int i){ return node{1,0,0}; });
+
+/*
+ * Add to "active" elements in range, flip active status in range, get sum
+ */
+struct box {
+    int open = 0, closed = 0;
+    ll total = 0;
+};
+auto bb = [](box a, box b) {
+    return box{a.open + b.open, a.closed + b.closed, a.total + b.total};
+};
+struct update {
+    bool flip = 0;
+    ll add_to_open   = 0;
+    ll add_to_closed = 0;
+};
+auto uu = [](update a, update b) {
+    update r;
+    r.flip = a.flip ^ b.flip;
+    if (b.flip) swap(a.add_to_open, a.add_to_closed);
+    r.add_to_open = a.add_to_open + b.add_to_open;
+    r.add_to_closed = a.add_to_closed + b.add_to_closed;
+    return r;
+};
+auto ub = [](update u, box b) {
+    b.total += b.open * u.add_to_open + b.closed * u.add_to_closed;
+    if (u.flip) swap(b.open, b.closed);
+    return b;
+};
