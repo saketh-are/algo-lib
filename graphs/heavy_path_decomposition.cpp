@@ -52,11 +52,11 @@ template<typename E> struct heavy_path_decomposition {
         return index(anc) <= index(desc) && index(desc) < index(anc) + t.subt_sz[anc];
     }
 
-    int first_step(int u, int v) const {
+    E first_step(int u, int v) const {
         assert(u != v);
-        if (!is_ancestor(u, v)) return t.par[u];
+        if (!is_ancestor(u, v)) return t.up_edge(u);
         return *upper_bound(all(t.children[u]), v,
-            [&](int v, int c) { return index(v) < index(c) + t.subt_sz[c]; });
+            [&](int v, E c) { return index(v) < index(c(u)) + t.subt_sz[c(u)]; });
     }
 
     mutable int path_lca;
