@@ -59,6 +59,23 @@ template<typename E> struct heavy_path_decomposition {
             [&](int v, E c) { return index(v) < index(c(u)) + t.subt_sz[c(u)]; });
     }
 
+    int kth_ancestor(int u, int k) const {
+        assert(0 <= k && k <= t.depth[u]);
+        while (true) {
+            int dist_to_htop = t.depth[u] - t.depth[htop(u)];
+            if (k <= dist_to_htop)
+                return at_index(index(u) - k);
+            u = t.par[htop(u)];
+            k -= dist_to_htop + 1;
+        }
+    }
+
+    int kth_step(int u, int v, int k) const {
+        int w = lca(u, v), d = dist(u, v);
+        assert(d >= k);
+        return k <= t.depth[u] - t.depth[w] ? kth_ancestor(u, k) : kth_ancestor(v, d - k);
+    }
+
     mutable int path_lca;
     mutable ranges path_up, path_down;
     void decompose_path(int u, int v, bool include_lca) const {
