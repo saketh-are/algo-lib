@@ -71,7 +71,9 @@ template<typename E> struct tree {
 
     void traverse(int u) {
         subt_sz[u] = 1;
-        for (E e : nbrs[u]) if (int v = e(u); v != par[u]) {
+        for (E e : nbrs[u]) {
+            int v = e(u);
+            if (v == par[u]) continue;
             par[v] = u;
             depth[v] = depth[u] + 1;
             traverse(v);
