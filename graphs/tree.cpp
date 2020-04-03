@@ -1,8 +1,8 @@
 struct edge {
     int uv; //int id;
-    edge (int _uv = 0, __attribute__((unused))monostate _ = ms) : uv(_uv) {}
+    edge (int _uv = 0, __attribute__((unused))__monostate _ = ms) : uv(_uv) {}
     int operator()(int u) const { assert(uv); return uv ^ u; }
-    monostate& wt() const { return ms; }
+    __monostate& wt() const { return ms; }
     struct path { int len;
         path operator+(const path& p) const { return {len+p.len}; }
     }; explicit operator path() { return {1}; }

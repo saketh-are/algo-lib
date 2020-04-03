@@ -69,10 +69,10 @@ using namespace __algorithm;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-struct monostate {
-    friend istream& operator>>(istream& is, const monostate& ms) { return is; }
-    friend ostream& operator<<(ostream& os, const monostate& ms) { return os; }
-    friend monostate operator+(const monostate& a, const monostate& b) { return a; }
+struct __monostate {
+    friend istream& operator>>(istream& is, const __monostate& ms) { return is; }
+    friend ostream& operator<<(ostream& os, const __monostate& ms) { return os; }
+    friend __monostate operator+(const __monostate& a, const __monostate& b) { return a; }
 } ms;
 #pragma GCC diagnostic pop
 
