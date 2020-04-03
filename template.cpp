@@ -52,7 +52,7 @@ namespace __algorithm {
     template<typename T> void dedup(vector<T>& v) {
         sort(all(v)); v.erase(unique(all(v)), v.end());
     }
-    template<typename T> typename vector<T>::iterator find(vector<T>& v, const T& x) {
+    template<typename T> typename vector<T>::const_iterator find(vector<T>& v, const T& x) {
         auto it = lower_bound(all(v), x); return it != v.end() && *it == x ? it : v.end();
     }
     template<typename T> int index(vector<T>& v, const T& x) {
