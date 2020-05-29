@@ -6,12 +6,12 @@ struct segment_tree_lazy {
     vb has; vector<U> ops;
 
     segment_tree_lazy() {}
-    segment_tree_lazy(int _SZ, T _tid, U _uid, TT _tt, UU _uu, UT _ut)
-            : tid(_tid), uid(_uid), tt(_tt), uu(_uu), ut(_ut) {
-        init(_SZ);
+    segment_tree_lazy(int SZ_, T tid_, U uid_, TT tt_, UU uu_, UT ut_)
+            : tid(tid_), uid(uid_), tt(tt_), uu(uu_), ut(ut_) {
+        init(SZ_);
     }
-    void init(int _SZ) {
-        SZ = _SZ;
+    void init(int SZ_) {
+        SZ = SZ_;
         table.resize(2 * SZ, tid), has.resize(SZ), ops.resize(SZ, uid);
     }
     template<typename L> void set_leaves(L create) {

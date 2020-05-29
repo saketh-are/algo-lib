@@ -2,7 +2,7 @@ template<typename T> struct binary_indexed_tree {
     int S;
     vector<T> table;
 
-    binary_indexed_tree<T>(int _S = 0) : S(_S) {
+    binary_indexed_tree<T>(int S_ = 0) : S(S_) {
         table.resize(S+1);
     }
 

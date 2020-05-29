@@ -4,7 +4,7 @@ struct segment_tree_persistent {
     T id; F tt;
     vector<vector<pair<I, T>>> table;
 
-    segment_tree_persistent(int _SZ, T _id, F _tt) : SZ(_SZ), id(_id), tt(_tt) {
+    segment_tree_persistent(int SZ_, T id_, F tt_) : SZ(SZ_), id(id_), tt(tt_) {
         table.resize(2 * SZ);
     }
 

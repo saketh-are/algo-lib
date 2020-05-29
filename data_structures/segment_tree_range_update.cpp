@@ -4,7 +4,7 @@ template<typename T, typename F> struct segment_tree {
     vector<T> table;
 
     segment_tree() {}
-    segment_tree(size_t _SZ, T _id, F _tt) : SZ(_SZ), id(_id), tt(_tt) {
+    segment_tree(size_t SZ_, T id_, F tt_) : SZ(SZ_), id(id_), tt(tt_) {
         table.resize(2 * SZ, id);
     }
 

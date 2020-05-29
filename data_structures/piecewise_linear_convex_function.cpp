@@ -4,7 +4,7 @@ template<typename T> struct PWLC {
     min_heap<pair<T, T>> right;
     T left_offset = 0, right_offset = 0;
 
-    PWLC(T _y0 = 0) : y0(_y0) {}
+    PWLC(T y0_ = 0) : y0(y0_) {}
 
     /* __ : y = alpha */
     static PWLC constant(T alpha) { return PWLC(alpha); }
