@@ -4,14 +4,14 @@ template<typename T> struct matrix {
 
     matrix<T> () : N(0), M(0), data(nullptr) {}
 
-    matrix<T> (int _N, int _M, T f = 0, T d = 0) : N(_N), M(_M) {
+    matrix<T> (int N_, int M_, T f = 0, T d = 0) : N(N_), M(M_) {
         data = (T*) malloc(N * M * sizeof(T));
         fill(data, data + N * M, f);
         for (int i = 0; i < min(N, M); i++)
             (*this)[i][i] = d;
     }
 
-    matrix<T> (int _N, int _M, const initializer_list<T>& init) : N(_N), M(_M) {
+    matrix<T> (int N_, int M_, const initializer_list<T>& init) : N(N_), M(M_) {
         assert(sz(init) == N * M);
         data = (T*) malloc(N * M * sizeof(T));
         copy(all(init), data);
