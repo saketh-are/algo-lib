@@ -29,11 +29,12 @@ struct segment_tree_persistent {
 
     // Accumulates the elements at indices in [i, j) as they were before moment w
     T operator()(int i, int j, I w) const {
-        T left{}, right{};
+        T left = id, right = id;
         for (i += SZ, j += SZ; i < j; i /= 2, j /= 2) {
             if (i&1) left = tt(left, __get(i++, w));
             if (j&1) right = tt(__get(--j, w), right);
         }
         return tt(left, right);
     }
+    T operator[](int i) const { return __get(SZ + i); }
 };
