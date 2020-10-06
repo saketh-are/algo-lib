@@ -1,9 +1,12 @@
 using v_t = int;
 using vv_t = ll;
 template<v_t MOD> struct modnum {
+    static_assert(numeric_limits<v_t>::max() / 2 >= MOD, "Addition overflows v_t");
+    static_assert(numeric_limits<vv_t>::max() / MOD >= MOD, "Multiplication overflows vv_t");
+
     v_t v;
     modnum() : v(0) {}
-    modnum(vv_t _v) : v(_v % MOD) { if (v < 0) v += MOD; }
+    modnum(vv_t _v) : v(v_t(_v % MOD)) { if (v < 0) v += MOD; }
     explicit operator v_t() const { return v; }
     friend istream& operator >> (istream& i, modnum& n) { vv_t w; i >> w; n = modnum(w); return i; }
     friend ostream& operator << (ostream& o, const modnum& n) { return o << n.v; }
@@ -13,10 +16,10 @@ template<v_t MOD> struct modnum {
 
     static unsigned fast_mod(uint64_t x, unsigned m = MOD) {
 #if !defined(_WIN32) || defined(_WIN64)
-        return x % m;
+        return unsigned(x % m);
 #endif
         // x must be less than 2^32 * m so that x / m fits in a 32-bit integer.
-        unsigned x_high = x >> 32, x_low = (unsigned) x, quot, rem;
+        unsigned x_high = unsigned(x >> 32), x_low = unsigned(x), quot, rem;
         asm("divl %4\n"
                 : "=a" (quot), "=d" (rem)
                 : "d" (x_high), "a" (x_low), "r" (m));

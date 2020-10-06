@@ -1,5 +1,5 @@
 enum DIVISOR_TYPE { ALL, SQUARE_FREE };
-template<size_t MAXV> struct sieve {
+template<int MAXV> struct sieve {
     vi primes;
     struct num {
         int  least_prime;       // least prime divisor
@@ -12,9 +12,9 @@ template<size_t MAXV> struct sieve {
 
         num prod(int my_value, int p) const {
             if (p < least_prime)
-                return { p, my_value, 1, -mu, phi * (p - 1) };
+                return { p, my_value, 1, char(-mu), phi * (p - 1) };
             assert(p == least_prime);
-            return { p, my_value, lp_multiplicity + 1, 0, phi * p };
+            return { p, my_value, char(lp_multiplicity + 1), 0, phi * p };
         }
     };
     vector<num> nums;
@@ -73,4 +73,4 @@ template<size_t MAXV> struct sieve {
         for_each_divisor_unordered(v, [&](int d) { res.pb(d); }, t);
         return res;
     }
-};
+}
