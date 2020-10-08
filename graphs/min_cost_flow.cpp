@@ -7,13 +7,13 @@ template<typename F, typename C> struct min_cost_flow {
     vector<F> cap;
     vector<C> cost;
 
-    min_cost_flow(int V = 0) : V(V), E(0) {
+    min_cost_flow(int V_ = 0) : V(V_), E(0) {
         adj.resize(V);
     }
 
     void __arc(int u, int v, F f, C c) {
         E++;
-        adj[u].push_back(dest.size());
+        adj[u].push_back(sz(dest));
         dest.push_back(v);
         cap.push_back(f);
         cost.push_back(c);
@@ -39,7 +39,7 @@ template<typename F, typename C> struct min_cost_flow {
             if (ent[v] != -2) continue;
             dist[v] = -d; ent[v] = f;
             for (int e : adj[v]) if (cap[e] - flow[e] >= delta) {
-                double cd = dist[v] + (cost[e] + pot[v] - pot[dest[e]]);
+                C cd = dist[v] + (cost[e] + pot[v] - pot[dest[e]]);
                 if (cd < dist[dest[e]]) {
                     dist[dest[e]] = cd;
                     q.push(make_tuple(-cd, dest[e], e ));
@@ -63,7 +63,12 @@ template<typename F, typename C> struct min_cost_flow {
 
     // Computes the minimum cost to satisfy the specified imbalances.
     // Runs in O(E^2 * log V * log inf).
-    pair<bool, C> solve(vector<F> imb) const {
+	struct circulation {
+		bool feasible;
+		C cost;
+		vector<F> flow;
+	};
+    circulation solve(vector<F> imb) const {
         vector<F> flow(E);
         vector<C> pot(V);
         for (F delta = 1ll << bits; delta; delta >>= 1) {
@@ -84,6 +89,6 @@ template<typename F, typename C> struct min_cost_flow {
         for (int e = 0; e < E; e++) if (flow[e] > 0)  {
             ans += flow[e] * cost[e];
         }
-        return { imb == vector<F>(V, 0), ans };
+        return { imb == vector<F>(V, 0), ans, flow };
     }
 };
