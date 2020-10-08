@@ -3,11 +3,12 @@
  * such that v is congruent to n[i] modulo MODS[i] for all i.
  * Elements of MODS should be pairwise co-prime.
  */
-ll crt(const vi& MODS, const vi& n) {
-    auto inverse = [](int M, int n) {
-        int g = M, x = 0, y = 1;
-        for (int r = n; r != 0; ) {
-            int q = g / r;
+
+template<typename V> V crt(const vector<V> MODS, const vector<V> n) {
+    auto inverse = [](V M, V n) {
+        V g = M, x = 0, y = 1;
+        for (V r = n; r != 0; ) {
+            V q = g / r;
             g %= r; swap(g, r);
             x -= q * y; swap(x, y);
         }
@@ -19,16 +20,16 @@ ll crt(const vi& MODS, const vi& n) {
 
     const int M = sz(MODS);
 
-    vi x(M);
+    vector<V> x(M);
     for (int i = 0; i < M; i++) {
         x[i] = n[i];
         for (int j = 0; j < i; j++) {
-            x[i] = ll(x[i] - x[j]) * inverse(MODS[i], MODS[j] % MODS[i]) % MODS[i];
+            x[i] = V(x[i] - x[j]) * inverse(MODS[i], MODS[j] % MODS[i]) % MODS[i];
             if (x[i] < 0) x[i] += MODS[i];
         }
     }
 
-    ll v = 0;
+    V v = 0;
     for (int i = M - 1; i >= 0; i--)
         v = MODS[i] * v + x[i];
     return v;
