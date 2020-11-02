@@ -46,8 +46,8 @@ struct point {
     point dir() const { return point(*this) / len(); }
     point rotate(const double& ang) const { return *this * point(cos(ang), sin(ang)); }
 
-    T dist(const point& a) const { return (a - *this).len(); }
-    T dist(const point& a, const point& b) {
+    double dist(const point& a) const { return (a - *this).len(); }
+    double dist(const point& a, const point& b) {
         return abs(cross(*this, a, b)) / a.dist(b);
     }
     point reflect(const point& a, const point& b) const {
