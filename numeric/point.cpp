@@ -57,8 +57,8 @@ struct point {
         return (*this + this->reflect(a, b)) / 2;
     }
     friend point extension(const point& a, const point& b, const point& c, const point& d) {
-        T x = cross(a, b, c), y = cross(a, b, d);
-        return (d * x - c * y) / (x - y);
+        T u = cross(a, b, c), v = cross(a, b, d);
+        return (d * u - c * v) / (u - v);
     }
 
     using polygon = std::vector<point<T>>;
