@@ -130,4 +130,18 @@ struct point {
             a += cross(p[i], p[i+1 < sz(p) ? i+1 : 0]);
         return a;
     }
+
+    // sorts CCW for vectors in the same half-plane
+    template <typename U> static int sign(const U &v) { return (v > 0) - (v < 0); }
+    friend int compare_by_angle(const point &a, const point &b) { return sign(cross(b, a)); }
+    friend int compare_by_angle(const point &a, const point &b, const point &origin) { return sign(cross(origin, b, a)); }
+
+    // sorts by angle CCW from the positive x-axis
+    template <typename I> friend void sort_by_angle(I first, I last, const point<T> &origin = point<T>{}) {
+        first = partition(first, last, [&](const point<T> &p) { return p == origin; });
+        auto pivot = partition(first, last, [&](const point<T> &p) { return p > origin; });
+        auto compare = [&](const point<T> &l, const point<T> &r) { return compare_by_angle(l, r, origin) < 0; };
+        sort(first, pivot, compare);
+        sort(pivot, last, compare);
+    }
 };
