@@ -1,5 +1,5 @@
 /* Given vector<int> v with sum T <= MAXT, computes the
- * set of subset sums of v in O((T sqrt T) / machine_word_size).
+ * set of subset sums of v in O((MAXT sqrt T) / machine_word_size).
  */
 template<int MAXT>
 bitset<MAXT + 1> subset_sum(const vector<int> &v) {
