@@ -1,40 +1,60 @@
 template<typename T, typename F, typename I = int>
 struct segment_tree_persistent {
-    int SZ;
-    T id; F tt;
-    vector<vector<pair<I, T>>> table;
+    struct node {
+        T val;
+        int left, right;
+    };
 
-    segment_tree_persistent(int SZ_, T id_, F tt_) : SZ(SZ_), id(id_), tt(tt_) {
-        table.resize(2 * SZ);
+    int SZ; T tid; F tt;
+    vector<node> data;
+    vector<pair<I, int>> root;
+
+    segment_tree_persistent() {}
+    segment_tree_persistent(int SZ_, T tid_, F tt_) : tid(tid_), tt(tt_) {
+        SZ = 1 << (32 - __builtin_clz(SZ_ - 1));
+        data.resize(2 * SZ);
+        for (int i = 0; i < SZ; i++)
+            data[SZ + i] = { tid, -1, -1};
+        for (int i = SZ - 1; i; i--)
+            data[i] = { tt(data[2 * i].val, data[2 * i + 1].val), 2 * i, 2 * i + 1 };
     }
 
-    T __get(int i) const { return table[i].empty() ? id : table[i].back().s; }
-
-    // Reads table entry i as it was before moment w (excluding updates with w' >= w)
-    T __get(int i, I w) const {
-        static auto cmp = [](const pair<I, T>& a, const pair<I, T>& b) { return a.f < b.f; };
-        auto it = lb(all(table[i]), mp(w, id), cmp);
-        return it != table[i].begin() ? prev(it)->s : id;
+    // Assigns value v to the element at index i during moment w
+    void assign(int i, T v, I w, bool replace = true) {
+        assert(0 <= i && i < SZ && (root.empty() || root.back().first <= w));
+        root.emplace_back(w, __assign(i, v, w, root.empty() ? 1 : root.back().second, 0, SZ, replace));
     }
-
-    I w_last = numeric_limits<I>::min();
-    // Replaces the element at index i with v during moment w
-    void replace(int i, T v, I w) {
-        assert(w >= w_last), w_last = w;
-        table[i += SZ].eb(w, v);
-        for (i /= 2; i; i /= 2) {
-            table[i].eb(w, tt(__get(2 * i), __get(2 * i + 1)));
+    int __assign(int i, T v, I w, int loc, int L, int R, bool replace) {
+        if (R - L == 1) {
+            data.push_back({ replace ? v : tt(data[loc].val, v), -1, -1 });
+        } else {
+            int M = L + (R - L) / 2;
+            int left  = i <  M ? __assign(i, v, w, data[loc].left,  L, M, replace) : data[loc].left;
+            int right = M <= i ? __assign(i, v, w, data[loc].right, M, R, replace) : data[loc].right;
+            data.push_back({ tt(data[left].val, data[right].val), left, right });
         }
+        return data.size() - 1;
     }
 
     // Accumulates the elements at indices in [i, j) as they were before moment w
-    T operator()(int i, int j, I w) const {
-        T left = id, right = id;
-        for (i += SZ, j += SZ; i < j; i /= 2, j /= 2) {
-            if (i&1) left = tt(left, __get(i++, w));
-            if (j&1) right = tt(__get(--j, w), right);
-        }
-        return tt(left, right);
+    T accumulate(int i, int j, I w) const {
+        if (i >= j) return tid;
+        assert(0 <= i && j <= SZ);
+        return __accumulate(i, j, w, tid, root_before(w), 0, SZ);
     }
-    T operator[](int i) const { return __get(SZ + i); }
+    int root_before(I w) const {
+        static auto cmp = [](pair<I, int> a, pair<I, int> b) { return a.first < b.first; };
+        auto it = lower_bound(root.begin(), root.end(), make_pair(w, tid), cmp);
+        return it != root.begin() ? prev(it)->second : 1;
+    }
+    T __accumulate(int i, int j, I w, T init, int loc, int L, int R) const {
+        if (L == i && j == R) {
+            init = tt(init, data[loc].val);
+        } else {
+            int M = L + (R - L) / 2;
+            if (i < M) init = __accumulate(i, min(j, M), w, init, data[loc].left,  L, M);
+            if (M < j) init = __accumulate(max(i, M), j, w, init, data[loc].right, M, R);
+        }
+        return init;
+    }
 };
