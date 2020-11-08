@@ -10,23 +10,23 @@ struct count_distinct_in_range {
         uniq.erase(unique(uniq.begin(), uniq.end()), uniq.end());
 
         vector<vector<int>> occur(uniq.size());
-        for (int i = 0; i < vals.size(); i++) {
-            int v = lower_bound(uniq.begin(), uniq.end(), vals[i]) - uniq.begin();
+        for (int i = 0; i < int(vals.size()); i++) {
+            int v = int(lower_bound(uniq.begin(), uniq.end(), vals[i]) - uniq.begin());
             occur[v].push_back(i);
         }
 
-        st = segment_tree_persistent(vals.size(), 0, plus<int>());
+        st = segment_tree_persistent(int(vals.size()), 0, plus<int>());
 
         vector<int> successor(vals.size(), -1);
-        for (int i = 0; i < occur.size(); i++) {
+        for (int i = 0; i < int(occur.size()); i++) {
             for (int j = 0; j < min(copies_allowed, int(occur[i].size())); j++)
                 st.assign(occur[i][j], 1, -1);
 
-            for (int j = 0; j + copies_allowed < occur[i].size(); j++)
+            for (int j = 0; j + copies_allowed < int(occur[i].size()); j++)
                 successor[occur[i][j]] = occur[i][j + copies_allowed];
         }
 
-        for (int i = 0; i < vals.size(); i++)
+        for (int i = 0; i < int(vals.size()); i++)
             if (successor[i] != -1)
                 st.assign(successor[i], 1, i);
     }

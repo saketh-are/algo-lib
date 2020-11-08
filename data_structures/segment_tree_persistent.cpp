@@ -12,17 +12,16 @@ struct segment_tree_persistent {
     segment_tree_persistent() {}
     segment_tree_persistent(int SZ_, T tid_, F tt_) : tid(tid_), tt(tt_) {
         SZ = 1 << (32 - __builtin_clz(SZ_ - 1));
-        data.resize(2 * SZ);
-        for (int i = 0; i < SZ; i++)
-            data[SZ + i] = { tid, -1, -1};
-        for (int i = SZ - 1; i; i--)
-            data[i] = { tt(data[2 * i].val, data[2 * i + 1].val), 2 * i, 2 * i + 1 };
+
+        data.push_back({ tid, -1, -1 });
+        for (int sz = 2; sz <= SZ; sz *= 2)
+            data.push_back({ tt(data.back().val, data.back().val), int(data.size()), int(data.size()) });
     }
 
     // Assigns value v to the element at index i during moment w
     void assign(int i, T v, I w, bool replace = true) {
         assert(0 <= i && i < SZ && (root.empty() || root.back().first <= w));
-        root.emplace_back(w, __assign(i, v, w, root.empty() ? 1 : root.back().second, 0, SZ, replace));
+        root.emplace_back(w, __assign(i, v, w, root.empty() ? __builtin_ctz(SZ) : root.back().second, 0, SZ, replace));
     }
     int __assign(int i, T v, I w, int loc, int L, int R, bool replace) {
         if (R - L == 1) {
@@ -33,7 +32,7 @@ struct segment_tree_persistent {
             int right = M <= i ? __assign(i, v, w, data[loc].right, M, R, replace) : data[loc].right;
             data.push_back({ tt(data[left].val, data[right].val), left, right });
         }
-        return data.size() - 1;
+        return int(data.size()) - 1;
     }
 
     // Accumulates the elements at indices in [i, j) as they were before moment w
@@ -45,7 +44,7 @@ struct segment_tree_persistent {
     int root_before(I w) const {
         static auto cmp = [](pair<I, int> a, pair<I, int> b) { return a.first < b.first; };
         auto it = lower_bound(root.begin(), root.end(), make_pair(w, tid), cmp);
-        return it != root.begin() ? prev(it)->second : 1;
+        return it != root.begin() ? prev(it)->second : __builtin_ctz(SZ);
     }
     T __accumulate(int i, int j, I w, T init, int loc, int L, int R) const {
         if (L == i && j == R) {
