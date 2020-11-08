@@ -73,4 +73,4 @@ template<int MAXV> struct sieve {
         for_each_divisor_unordered(v, [&](int d) { res.pb(d); }, t);
         return res;
     }
-}
+};
