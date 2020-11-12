@@ -1,12 +1,13 @@
-template<typename V, int CT>
+template<typename V, int CT, int SIGMA>
 struct polynomial_hash {
-    static const int SIGMA = 256;
-
     static V pow(int xi, int e) {
         static vector<V> x(CT, 1);
-        while (int(x.size()) < 2 * CT)
-            x.push_back(rng() % SIGMA + SIGMA);
-        while (int(x.size()) <= e * CT + xi)
+        if (int(x.size()) == CT) {
+            x.push_back(SIGMA);
+            for (int i = 1; i < CT; i++)
+                x.push_back(rng() % max(256, SIGMA) + SIGMA);
+        }
+        while (e * CT + xi >= int(x.size()))
             for (int i = 0; i < CT; i++)
                 x.push_back(*(x.end() - CT) * x[CT + i]);
         return x[e * CT + xi];
@@ -34,10 +35,10 @@ struct polynomial_hash {
     }
 
     template<typename I>
-    static vector<polynomial_hash<V, CT>> get_prefixes(I begin, I end) {
-        vector<polynomial_hash<V, CT>> res(1);
+    static vector<polynomial_hash> get_prefixes(I begin, I end) {
+        vector<polynomial_hash> res(1);
         for (I iter = begin; iter != end; iter = next(iter))
-            res.push_back(res.back() + polynomial_hash<V, CT>(V(*iter)));
+            res.push_back(res.back() + polynomial_hash(V(*iter)));
         return res;
     }
 
