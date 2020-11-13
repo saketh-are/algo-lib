@@ -1,79 +1,74 @@
+enum BACKFILL { CYCLIC, NEG_INF, POS_INF };
+template<BACKFILL FILL>
 struct suffix_array {
-    const int INF = 0x7fffffff;
+    int SZ;
+    vector<vector<int>> rank_of;
+    vector<int> by_rank;
 
-    int L, D;
-    string str;
-    vector<vi> suff;
-    vi rank_of, at_rank;
-
-    pair<pair<int, int>, int> __make_rep(int l, int i, int p) {
-        if(!l) return {{str[i], INF}, i};
-        return {{suff[l-1][i], (i+p<L) ? suff[l-1][i+p] : INF}, i};
-    }
-
-    suffix_array(string _str) {
-        str = _str;
-        L = str.size();
-        D = 33 - __builtin_clz(L-1);
-        suff.resize(D);
-
-        vector<pair<pair<int, int>, int>> keys(L);
-        for (int l = 0; l < D; l++) {
-            for (int i = 0; i < L; i++)
-                keys[i] = __make_rep(l, i, 1<<(l-1));
-            sort(keys.begin(), keys.end());
-
-            suff[l].resize(L);
-            for (int i = 0, r = 0; i < L; i++) {
-                if(i > 0 && keys[i].first != keys[i-1].first) r++;
-                suff[l][keys[i].second] = r;
-            }
-        }
-
-        rank_of.resize(L);
-        at_rank.resize(L);
-        for (int i = 0; i < L; i++) {
-            rank_of[i] = suff.back()[i];
-            at_rank[rank_of[i]] = i;
+    int rank(int i) const {
+        if (i < SZ) {
+            return rank_of.back()[i];
+        } else switch (FILL) {
+            case CYCLIC:  return rank_of.back()[i - SZ];
+            case NEG_INF: return -1;
+            case POS_INF: return SZ;
         }
     }
 
-    // compare the string at [i, i+l1) to the string at [j, j+l2)
-    int comp(int i, int l1, int j, int l2) {
-        int cl = min(l1, l2);
-        for (int l = 0; l < D; l++)
-            if ((cl>>l)&1) {
-                if(suff[l][i] != suff[l][j])
-                    return suff[l][i] < suff[l][j] ? -1 : 1;
-                i += 1<<l, j += 1<<l;
-            }
+    template<typename I>
+    suffix_array(I begin, I end) {
+        vi input;
+        for (I iter = begin; iter != end; iter = next(iter))
+            input.push_back(*iter);
 
-        return (l1!=l2) ? (l1<l2) ? -1 : 1 : 0;
-    }
+        SZ = int(input.size());
 
-    // find the interval of suffix ranks corresponding to instances of the substring at [i, i+len)
-    pair<int, int> find_range(int i, int len) {
-        int left = rank_of[i];
-        for (int lo = 0, hi = left; lo <= hi; ) {
-            int mi = (lo + hi)/2;
-            if (comp(i, len, at_rank[mi], len) == 0) {
-                left = mi;
-                hi = mi-1;
+        vi uniq = input;
+        sort(uniq.begin(), uniq.end());
+        uniq.erase(unique(uniq.begin(), uniq.end()), uniq.end());
+        for (int &val : input)
+            val = (lower_bound(uniq.begin(), uniq.end(), val) - uniq.begin());
+
+        rank_of.push_back(input);
+
+        vi ct(SZ);
+        for (int i = 0; i < SZ; i++) ct[input[i]]++;
+        for (int i = 0; i < SZ - 1; i++) ct[i + 1] += ct[i];
+
+        by_rank.resize(SZ);
+        for (int i = SZ - 1; i >= 0; i--) by_rank[--ct[input[i]]] = i;
+
+        vector<int> by_rank_updated(SZ);
+        for (int len = 1; len < SZ; len *= 2) {
+            int tail = 0;
+            if (FILL == NEG_INF)
+                for (int i = SZ - len; i < SZ; i++)
+                    by_rank[tail++] = i;
+            for (int rank = 0; rank < SZ; rank++)
+                if (by_rank[rank] >= len)
+                    by_rank[tail++] = by_rank[rank] - len;
+                else if (FILL == CYCLIC)
+                    by_rank[tail++] = by_rank[rank] - len + SZ;
+            if (FILL == POS_INF)
+                for (int i = SZ - len; i < SZ; i++)
+                    by_rank[tail++] = i;
+
+            fill(ct.begin(), ct.end(), 0);
+            for (int i = 0; i < SZ; i++) ct[rank_of.back()[i]]++;
+            for (int i = 0; i < SZ - 1; i++) ct[i + 1] += ct[i];
+
+            for (int i = SZ - 1; i >= 0; i--)
+                by_rank_updated[--ct[rank_of.back()[by_rank[i]]]] = by_rank[i];
+            swap(by_rank, by_rank_updated);
+
+            vi new_ranks(SZ);
+            pair<int, int> prev = { rank(by_rank[0]), rank(by_rank[0] + len) };
+            for (int i = 1; i < SZ; i++) {
+                pair<int, int> cur = { rank(by_rank[i]), rank(by_rank[i] + len) };
+                new_ranks[by_rank[i]] = new_ranks[by_rank[i - 1]] + (prev != cur);
+                prev = cur;
             }
-            else lo = mi+1;
+            rank_of.push_back(new_ranks);
         }
-
-        int right = rank_of[i];
-        for (int lo = right, hi = L-1; lo <= hi; ) {
-            int mi = (lo + hi)/2;
-            if (comp(i, len, at_rank[mi], len) == 0) {
-                right = mi;
-                lo = mi+1;
-            }
-            else hi = mi-1;
-        }
-
-        return make_pair(left, right);
     }
 };
-
