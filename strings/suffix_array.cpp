@@ -5,15 +5,11 @@ struct suffix_array {
     vector<vector<int>> rank_of;
     vector<int> by_rank;
 
-    int rank(int i) const {
-        if (i < SZ) {
-            return rank_of.back()[i];
-        } else switch (FILL) {
-            case CYCLIC:  return rank_of.back()[i - SZ];
-            case NEG_INF: return -1;
-            case POS_INF: return SZ;
-        }
-    }
+    vector<int> lcp;
+    static struct smaller {
+        int operator()(int x, int y) const { return min(x, y); }
+    } lcp_cmp;
+    sparse_table<int, smaller> lcp_rmq;
 
     template<typename I>
     suffix_array(I begin, I end) {
@@ -43,15 +39,16 @@ struct suffix_array {
             int tail = 0;
             if (FILL == NEG_INF)
                 for (int i = SZ - len; i < SZ; i++)
-                    by_rank[tail++] = i;
+                    by_rank_updated[tail++] = i;
             for (int rank = 0; rank < SZ; rank++)
                 if (by_rank[rank] >= len)
-                    by_rank[tail++] = by_rank[rank] - len;
+                    by_rank_updated[tail++] = by_rank[rank] - len;
                 else if (FILL == CYCLIC)
-                    by_rank[tail++] = by_rank[rank] - len + SZ;
+                    by_rank_updated[tail++] = by_rank[rank] - len + SZ;
             if (FILL == POS_INF)
                 for (int i = SZ - len; i < SZ; i++)
-                    by_rank[tail++] = i;
+                    by_rank_updated[tail++] = i;
+            swap(by_rank, by_rank_updated);
 
             fill(ct.begin(), ct.end(), 0);
             for (int i = 0; i < SZ; i++) ct[rank_of.back()[i]]++;
@@ -70,5 +67,49 @@ struct suffix_array {
             }
             rank_of.push_back(new_ranks);
         }
+
+        lcp.resize(SZ - 1);
+        for (int i = 0, len = 0; i < SZ; i++) {
+            if (rank(i) == SZ - 1)
+                continue;
+            int j = by_rank[rank(i) + 1];
+            while (i + len < SZ && j + len < SZ && input[i + len] == input[j + len])
+                len++;
+            lcp[rank(i)] = len;
+            if (len) --len;
+        }
+        lcp_rmq = sparse_table<int, smaller>(int(lcp.size()), lcp_cmp,
+                [&](int i) { return lcp[i]; });
+    }
+
+    int rank(int i) const {
+        if (i < SZ) {
+            return rank_of.back()[i];
+        } else switch (FILL) {
+            case CYCLIC:  return rank_of.back()[i - SZ];
+            case NEG_INF: return -1;
+            case POS_INF: return SZ;
+        }
+    }
+
+    int suffix_at_rank(int r) const { return by_rank[r]; }
+
+    int longest_common_prefix(int i, int j) const {
+        assert(0 <= i && i < SZ && 0 <= j && j < SZ);
+        if (i == j) return SZ - i;
+        i = rank(i);
+        j = rank(j);
+        if (i > j) swap(i, j);
+        return lcp_rmq(i, j);
+    }
+
+    pair<int, int> ranks_with_prefix(int pos, int len) {
+        assert(0 <= pos && pos + len <= SZ);
+        auto less_than = [&](int other_pos, int arg) { return longest_common_prefix(pos, other_pos) < arg; };
+        auto geq       = [&](int other_pos, int arg) { return longest_common_prefix(pos, other_pos) >= arg; };
+        return make_pair(
+            lower_bound(by_rank.begin(), by_rank.begin() + rank(pos), len, less_than) - by_rank.begin(),
+            lower_bound(by_rank.begin() + rank(pos), by_rank.end(), len, geq) - by_rank.begin()
+        );
     }
 };
