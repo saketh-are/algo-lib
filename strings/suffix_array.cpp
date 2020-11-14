@@ -93,11 +93,9 @@ struct suffix_array {
         int operator()(int x, int y) const { return min(x, y); }
     } cmp;
 
-    mutable sparse_table<int, smaller> lcp_between_ranks_rmq;
     int longest_common_prefix(int i, int j) const {
-        if (!lcp_between_ranks_rmq.SZ)
-            lcp_between_ranks_rmq = sparse_table<int, smaller>(SZ - 1, cmp, [&](int r) { return lcp_between_ranks[r]; });
-
+        static sparse_table<int, smaller>lcp_between_ranks_rmq(SZ - 1, cmp,
+                [&](int r) { return lcp_between_ranks[r]; });
         assert(0 <= i && i < SZ && 0 <= j && j < SZ);
         if (i == j) return SZ - i;
         int ri = rank_of_suffix(i);
@@ -116,11 +114,9 @@ struct suffix_array {
         );
     }
 
-    mutable sparse_table<int, smaller> by_rank_rmq;
     int first_occurence_of(int pos, int len) const {
-        if (!by_rank_rmq.SZ)
-            by_rank_rmq = sparse_table<int, smaller>(SZ, cmp, [&](int r) { return by_rank[r]; });
-        pair<int, int> occurences = ranks_with_prefix(pos, len);
-        return by_rank_rmq(occurences.first, occurences.second);
+        static sparse_table<int, smaller> by_rank_rmq(SZ, cmp, [&](int r) { return by_rank[r]; });
+        pair<int, int> ranks_of_occurences = ranks_with_prefix(pos, len);
+        return by_rank_rmq(ranks_of_occurences.first, ranks_of_occurences.second);
     }
 };
