@@ -96,7 +96,7 @@ struct suffix_array {
     int longest_common_prefix(int i, int j) const {
         static sparse_table<int, smaller>lcp_between_ranks_rmq(SZ - 1, cmp,
                 [&](int r) { return lcp_between_ranks[r]; });
-        assert(0 <= i && i < SZ && 0 <= j && j < SZ);
+        assert(FILL != CYCLIC && 0 <= i && i < SZ && 0 <= j && j < SZ);
         if (i == j) return SZ - i;
         int ri = rank_of_suffix(i);
         int rj = rank_of_suffix(j);
