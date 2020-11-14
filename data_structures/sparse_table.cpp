@@ -3,7 +3,7 @@ template<typename T, typename F> struct sparse_table {
     F tt; // idempotent
     vector<vector<T>> table;
 
-    sparse_table() {}
+    sparse_table() : SZ(0) {}
     template<typename I> sparse_table(int SZ_, F tt_, I init) : SZ(SZ_), tt(tt_) {
         const int L = 32 - __builtin_clz(max(SZ - 1, 1));
         table.resz(L, vector<T>(SZ));
