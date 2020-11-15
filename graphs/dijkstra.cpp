@@ -3,11 +3,11 @@ struct dijkstra {
     using PATH_WT = int;
 
     PATH_WT add(PATH_WT p, EDGE_WT w) {
-        // ...
+        static_assert(false, "Implement me! (p + w)");
     }
 
     bool less_than(PATH_WT x, PATH_WT y) {
-        // ...
+        static_assert(false, "Implement me! (x < y)");
     }
 
     int N;
