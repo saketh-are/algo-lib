@@ -1,122 +1,185 @@
-template<char MIN_CHAR, int SIGMA> struct trie {
+template<int MIN_CHAR, int SIGMA>
+struct trie {
     struct node {
-        // link: contains trie links + failure links
-        // suff: link to longest proper suffix that exists in the trie
-        // dict: link to longest suffix that exists in the dictionary
-        // wct: number of suffixes that are words in the dictionary
-        // wid: index of this node's word in the dictionary
-        array<int, SIGMA> link;
-        int depth, suff, dict, wct, wid;
-        node(int _depth) : depth(_depth), suff(0), dict(0), wct(0), wid(-1) {
-            fill(all(link), 0);
+        int depth;
+        array<int, SIGMA> child_links;
+
+        int dict_index = -1;
+
+        int suffix_link = 0;
+        int dict_suffix_link = 0;
+        int count_suffixes_in_dict = 0;
+
+        node(int depth_) : depth(depth_) {
+            child_links.fill(0);
         }
-        int& operator[](char c) { return link[c - MIN_CHAR]; }
-        int operator[](char c) const { return link[c - MIN_CHAR]; }
     };
 
-    vector<node> nodes;
-    vi wloc, defer;
-    vpii tour;
+    vector<node> data;
+    vector<int> dictionary_word_links;
 
-    /*
-     * Builds a trie over the given word set and calculates Aho-Corasick links.
-     * Runs in O(sum of word lengths).
-     */
+    int& child_link(int loc, int c) { return data[loc].child_links[c - MIN_CHAR]; }
+    int child_link(int loc, int c) const { return data[loc].child_links[c - MIN_CHAR]; }
+
+    int dict_proper_suffix_link(int loc) const {
+        return data[data[loc].suffix_link].dict_suffix_link;
+    }
+
     trie() {}
-    const node& operator[](int i) const { return nodes[i]; }
 
-    trie(auto begin, auto end) : nodes({ node(0) }) {
-        for (auto it = begin; it != end; it++) {
-            int loc = 0;
-            for (char c : *it) {
-                assert(MIN_CHAR <= c && c < MIN_CHAR + SIGMA);
-                if (!nodes[loc][c]) {
-                    nodes[loc][c] = sz(nodes);
-                    nodes.push_back(nodes[loc].depth + 1);
-                }
-                loc = nodes[loc][c];
+    template<typename I>
+    trie(I begin, I end) : data(1, node(0)) {
+        for (I iter = begin; iter != end; iter++)
+            __add_dictionary_word(*iter);
+        __build_suffix_link_tree();
+    }
+
+    template<typename S>
+    void __add_dictionary_word(const S& s) {
+        int loc = 0;
+        for (auto c_ : s) {
+            int c = c_;
+            assert(MIN_CHAR <= c && c < MIN_CHAR + SIGMA);
+            if (!child_link(loc, c)) {
+                child_link(loc, c) = int(data.size());
+                data.push_back(node(data[loc].depth + 1));
             }
-            if (!nodes[loc].wct++) {
-                nodes[loc].dict = loc;
-                nodes[loc].wid = int(wloc.size());
+            loc = child_link(loc, c);
+        }
+        if (data[loc].count_suffixes_in_dict == 0) {
+            data[loc].dict_suffix_link = loc;
+            data[loc].dict_index = int(dictionary_word_links.size());
+        }
+        data[loc].count_suffixes_in_dict++;
+        dictionary_word_links.push_back(loc);
+    }
+
+    vector<vector<int>> children;
+    vector<pair<int, int>> dfs_ranges;
+    void __build_suffix_link_tree() {
+        children.resize(data.size());
+
+        queue<int> bfs;
+        for (int child : data[0].child_links)
+            if (child) bfs.push(child);
+        for (; !bfs.empty(); bfs.pop()) {
+            int loc = bfs.front();
+            int parent = data[loc].suffix_link;
+
+            children[parent].push_back(loc);
+            if (data[loc].dict_suffix_link == 0)
+                data[loc].dict_suffix_link = data[parent].dict_suffix_link;
+            data[loc].count_suffixes_in_dict += data[parent].count_suffixes_in_dict;
+
+            for (int c = MIN_CHAR; c < MIN_CHAR + SIGMA; c++) {
+                int &trie_child = child_link(loc, c);
+                if (trie_child) {
+                    bfs.push(trie_child);
+                    data[trie_child].suffix_link = child_link(parent, c);
+                } else trie_child = child_link(parent, c);
             }
-            wloc.push_back(loc);
-            defer.push_back(nodes[loc].wid);
         }
 
-        vvi ch(sz(nodes));
-        for (queue<int> bfs({0}); !bfs.empty(); bfs.pop()) {
-            int loc = bfs.front(), fail = nodes[loc].suff;
-            if (loc) ch[fail].pb(loc);
-            if (!nodes[loc].dict) nodes[loc].dict = nodes[fail].dict;
-            nodes[loc].wct += nodes[fail].wct;
+        dfs_ranges.resize(data.size());
 
-            for (char c = MIN_CHAR; c < MIN_CHAR + SIGMA; c++) {
-                int& succ = nodes[loc][c];
-                if (succ) {
-                    nodes[succ].suff = loc ? nodes[fail][c] : 0;
-                    bfs.push(succ);
-                } else succ = nodes[fail][c];
-            }
-        }
-
-        int e = 0;
-        tour.resz(sz(nodes));
+        int visited = 0;
         auto dfs = [&](auto self, int loc) -> void {
-            tour[loc].first = e++;
-            for (int cloc : ch[loc]) self(self, cloc);
-            tour[loc].second = e;
+            dfs_ranges[loc].first = visited++;
+            for (int child : children[loc])
+                self(self, child);
+            dfs_ranges[loc].second = visited;
         };
         dfs(dfs, 0);
     }
 
-    /*
-     * Computes and returns the number of appearances of each word in the dictionary
-     * as a substring of the given string.
-     *
-     * Runs in O(length of string to be searched + number of words in the dictionary).
-     */
-    vi matches(const string& text) const {
-        vi res(sz(wloc));
-        priority_queue<pair<int, int>> found;
-
-        int cloc = 0;
-        for (char c : text) {
-            cloc = nodes[cloc].link[c - MIN_CHAR];
-            int match = nodes[cloc].dict;
-            if (match) {
-                if (!res[nodes[match].wid]++)
-                    found.push({ nodes[match].depth, match });
+    template<typename V>
+    void copy_results_for_duplicate_dictionary_entries(vector<V> &results) const {
+        for (int dict_index = 0; dict_index < int(dictionary_word_links.size()); dict_index++) {
+            int loc = dictionary_word_links[dict_index];
+            if (data[loc].dict_index != dict_index) {
+                results[dict_index] = results[data[loc].dict_index];
             }
         }
-
-        while (!found.empty()) {
-            int loc = found.top().second; found.pop();
-            int nxt = nodes[nodes[loc].suff].dict;
-            if (nxt) {
-                if (!res[nodes[nxt].wid]) found.push({ nodes[nxt].depth, nxt });
-                res[nodes[nxt].wid] += res[nodes[loc].wid];
-            }
-        }
-
-        for (int i = 0; i < sz(defer); i++)
-            if (defer[i] != i) res[i] = res[defer[i]];
-        return res;
     }
 
-    /*
-     * Computes and returns the total number of appearances of all words in the
-     * dictionary as substrings of the given string.
-     *
-     * Runs in O(length of string to be searched).
+    /* Returns the number of matches of each dictionary word.
+     * Linear in text length and number of dictionary words.
      */
-    ll search(const string& text) const {
-        ll res = 0;
+    template<typename S>
+    vector<int> count_matches(const S& text) const {
+        vector<int> count(dictionary_word_links.size());
+        vector<vector<int>> found_with_length;
+
+        auto record_match = [&](int loc, int quantity) {
+            int dict_index = data[loc].dict_index;
+            if (dict_index == -1) return;
+
+            if (count[dict_index] == 0) {
+                if (data[loc].depth >= found_with_length.size())
+                    found_with_length.resize(data[loc].depth + 1);
+                found_with_length[data[loc].depth].push_back(loc);
+            }
+            count[dict_index] += quantity;
+        };
+
         int loc = 0;
-        for (char c : text) {
-            loc = nodes[loc].link[c - MIN_CHAR];
-            res += nodes[loc].wct;
+        for (auto c_ : text) {
+            int c = c_;
+            assert(MIN_CHAR <= c && c < MIN_CHAR + SIGMA);
+            loc = child_link(loc, c);
+            record_match(data[loc].dict_suffix_link, 1);
         }
-        return res;
+        for (int match_length = int(found_with_length.size()) - 1; match_length > 0; match_length--) {
+            for (int loc : found_with_length[match_length])
+                record_match(dict_proper_suffix_link(loc), count[data[loc].dict_index]);
+        }
+
+        copy_results_for_duplicate_dictionary_entries(count);
+        return count;
+    }
+
+    /* Returns the starting index of every match of each dictionary word.
+     * Linear in the text length, number of dictionary words, and total number of matches.
+     */
+    template<typename S>
+    vector<vector<int>> indices_of_matches(const S& text) const {
+        vector<vector<int>> indices(dictionary_word_links.size());
+
+        int loc = 0;
+        for (int pos = 0; pos < int(text.size()); pos++) {
+            int c = text[pos];
+            assert(MIN_CHAR <= c && c < MIN_CHAR + SIGMA);
+            loc = child_link(loc, c);
+            for (int par = data[loc].dict_suffix_link; par != 0; par = dict_proper_suffix_link(par)) {
+                indices[data[par].dict_index].push_back(pos + 1 - data[par].depth);
+            }
+        }
+
+        /* Notable fact: before duplication, the total number of matches is at most
+         * (text length) * (number of distinct dictionary word lengths), which is
+         * O(text length * sqrt(sum of dictionary word lengths)).
+         */
+        copy_results_for_duplicate_dictionary_entries(indices);
+        return indices;
+    }
+
+    /* Returns the total number of matches over all dictionary words.
+     * Duplicate dictionary entries each contribute to the total match count.
+     * Linear in the text length.
+     */
+    template<typename S>
+    int64_t count_total_matches(const S& text) const {
+        int64_t count = 0;
+
+        int loc = 0;
+        for (int pos = 0; pos < int(text.size()); pos++) {
+            int c = text[pos];
+            assert(MIN_CHAR <= c && c < MIN_CHAR + SIGMA);
+            loc = child_link(loc, c);
+
+            count += data[loc].count_suffixes_in_dict;
+        }
+
+        return count;
     }
 };
