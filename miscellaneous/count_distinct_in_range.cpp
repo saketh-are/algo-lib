@@ -20,7 +20,7 @@ struct count_distinct_in_range {
         vector<int> successor(vals.size(), -1);
         for (int i = 0; i < int(occur.size()); i++) {
             for (int j = 0; j < min(copies_allowed, int(occur[i].size())); j++)
-                st.assign(occur[i][j], 1, -1);
+                st.replace(occur[i][j], 1, -1);
 
             for (int j = 0; j + copies_allowed < int(occur[i].size()); j++)
                 successor[occur[i][j]] = occur[i][j + copies_allowed];
@@ -28,7 +28,7 @@ struct count_distinct_in_range {
 
         for (int i = 0; i < int(vals.size()); i++)
             if (successor[i] != -1)
-                st.assign(successor[i], 1, i);
+                st.replace(successor[i], 1, i);
     }
 
     /* Returns the number of distinct elements appearing at indices in [L, R) of 'vals'.
