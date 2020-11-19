@@ -68,22 +68,36 @@ struct suffix_automaton {
     }
 
     vector<int> ct_end_pos;
+    vector<int64_t> paths_from;
     vector<vector<int>> children; // suffix link tree
 
     void __initialize_auxiliary_data() {
-        children.resize(data.size());
-        vector<vector<int>> states_with_length(SZ + 1);
-        for (int loc = 1; loc < int(data.size()); loc++) {
-            children[data[loc].suffix_link].push_back(loc);
-            states_with_length[data[loc].len].push_back(loc);
-        }
+        vector<int> ct_with_length(SZ + 1);
+        for (int loc = 0; loc < int(data.size()); loc++)
+            ct_with_length[data[loc].len]++;
+        for (int len = 0; len < SZ; len++)
+            ct_with_length[len + 1] += ct_with_length[len];
+
+        vector<int> length_order(data.size());
+        for (int loc = int(data.size()) - 1; loc >= 0; loc--)
+            length_order[--ct_with_length[data[loc].len]] = loc;
+        reverse(length_order.begin(), length_order.end());
 
         ct_end_pos.resize(data.size());
-        for (int len = SZ; len > 0; len--) {
-            for (int loc : states_with_length[len]) {
+        paths_from.resize(data.size());
+        children.resize(data.size());
+
+        for (int loc : length_order) {
+            if (loc) {
+                children[data[loc].suffix_link].push_back(loc);
                 ct_end_pos[loc] += !is_clone[loc];
                 ct_end_pos[data[loc].suffix_link] += ct_end_pos[loc];
-            }
+            } else ct_end_pos[loc] = 0;
+
+            paths_from[loc] = ct_end_pos[loc];
+            for (int nbr : data[loc].transitions)
+                if (nbr != -1)
+                    paths_from[loc] += paths_from[nbr];
         }
     }
 
