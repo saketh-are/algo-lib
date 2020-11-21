@@ -23,7 +23,17 @@ struct suffix_automaton {
     suffix_automaton() : SZ(0) { last = create_state(); }
 
     template<typename I>
-    suffix_automaton(I begin, I end) : suffix_automaton() {
+    suffix_automaton(I begin, I end) {
+        initialize(begin, end);
+    }
+
+    template<typename I>
+    void initialize(I begin, I end) {
+        SZ = 0;
+        data.clear();
+        is_clone.clear();
+        last = create_state();
+
         for (I iter = begin; iter != end; iter++)
             __append(*iter);
         __initialize_auxiliary_data();
@@ -68,41 +78,22 @@ struct suffix_automaton {
     }
 
     vector<int> ct_end_pos;
-    vector<int64_t> paths_from;
-    vector<vector<int>> children; // suffix link tree
-
     void __initialize_auxiliary_data() {
-        vector<int> ct_with_length(SZ + 1);
-        for (int loc = 0; loc < int(data.size()); loc++)
-            ct_with_length[data[loc].len]++;
-        for (int len = 0; len < SZ; len++)
-            ct_with_length[len + 1] += ct_with_length[len];
+        const vector<int> &reverse_length_order =
+            stable_counting_sort::permutation(data.size(), SZ + 1,
+                    [&](int loc) { return SZ - data[loc].len; });
 
-        vector<int> length_order(data.size());
-        for (int loc = int(data.size()) - 1; loc >= 0; loc--)
-            length_order[--ct_with_length[data[loc].len]] = loc;
-        reverse(length_order.begin(), length_order.end());
-
-        ct_end_pos.resize(data.size());
-        paths_from.resize(data.size());
-        children.resize(data.size());
-
-        for (int loc : length_order) {
+        ct_end_pos.assign(data.size(), 0);
+        for (int loc : reverse_length_order) {
             if (loc) {
-                children[data[loc].suffix_link].push_back(loc);
                 ct_end_pos[loc] += !is_clone[loc];
                 ct_end_pos[data[loc].suffix_link] += ct_end_pos[loc];
             } else ct_end_pos[loc] = 0;
-
-            paths_from[loc] = ct_end_pos[loc];
-            for (int nbr : data[loc].transitions)
-                if (nbr != -1)
-                    paths_from[loc] += paths_from[nbr];
         }
     }
 
     int transition(int loc, int c) const {
-        assert(loc != -1);
+        assert(loc != -1 && MIN_CHAR <= c && c < MIN_CHAR + SIGMA);
         return data[loc].transitions[c - MIN_CHAR];
     }
 

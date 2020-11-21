@@ -1,40 +1,53 @@
-template<typename T> struct kmp {
-    size_t P;
-    vector<T> word;
-    vector<size_t> fail;
+struct knuth_morris_pratt {
+    int SZ;
+    vector<int> pattern;
+    vector<int> suffix_link;
 
-    size_t adv(size_t len, const T& nxt) const {
-        while (len > 0 && word[len] != nxt)
-            len = fail[len];
-        return len + size_t(word[len] == nxt);
+    size_t append(int matched, int c) const {
+        while (matched > 0 && pattern[matched] != c)
+            matched = suffix_link[matched];
+        return matched + int(pattern[matched] == c);
     }
 
-    /*
-     * Initializes the "failure table" for the search word.
-     * For i > 0, fail[i] is the length of the longest proper
-     * suffix of word[0, i) that is a prefix of word.
-     */
-    template<typename I> kmp(I begin, I end) : word(begin, end) {
-        P = sz(word);
-        fail.resize(P + 1);
-        for (size_t i = 2; i <= P; i++)
-            fail[i] = adv(fail[i - 1], word[i - 1]);
+    knuth_morris_pratt() : SZ(0) { }
+
+    template<typename I>
+    knuth_morris_pratt(I begin, I end) { initialize(begin, end); }
+
+    template<typename I>
+    void initialize(I begin, I end) {
+        pattern.resize(end - begin);
+        copy(begin, end, pattern.begin());
+        SZ = int(pattern.size());
+        suffix_link.resize(SZ + 1);
+        for (int matched = 1; matched < SZ; matched++)
+            suffix_link[matched + 1] = append(suffix_link[matched], pattern[matched]);
     }
 
-    /*
-     * Finds all occurences of the search word in the given text.
-     * match[i] indicates whether there exists a match starting at
-     * index i of text.
-     */
-    template<typename C> vb find(const C& text) const {
-        vb match(text.size());
-        for (size_t i = 0, len = 0; i < text.size(); i++) {
-            len = adv(len, text[i]);
-            if (len == P) {
-                match[i - len + 1] = true;
-                len = fail[len];
+    template<typename I, typename F>
+    void find_matches(I begin, I end, F consume) const {
+        int i = 0;
+        int matched = 0;
+        for (I iter = begin; iter != end; iter++, i++) {
+            matched = append(matched, *iter);
+            if (matched == SZ) {
+                consume(i - SZ + 1);
+                matched = suffix_link[matched];
             }
         }
-        return match;
+    }
+
+    template<typename I>
+    int count_matches(I begin, I end) const {
+        int count = 0;
+        find_matches(begin, end, [&](int i) { count++; });
+        return count;
+    }
+
+    template<typename I>
+    vector<int> indices_of_matches(I begin, I end) const {
+        vector<int> indices;
+        find_matches(begin, end, [&](int i) { indices.push_back(i); });
+        return indices;
     }
 };
