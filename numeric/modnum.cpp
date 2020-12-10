@@ -1,18 +1,29 @@
+#include <cstdint>
+#include <cassert>
+#include <limits>
+#include <iostream>
+#include <vector>
+#include <numeric>
+#include <cmath>
+#include <unordered_map>
+
 using v_t = int;
-using vv_t = ll;
+using vv_t = int64_t;
+
 template<v_t MOD> struct modnum {
-    static_assert(numeric_limits<v_t>::max() / 2 >= MOD, "Addition overflows v_t");
-    static_assert(numeric_limits<vv_t>::max() / MOD >= MOD, "Multiplication overflows vv_t");
+    static_assert(std::numeric_limits<v_t>::max() / 2 >= MOD, "Addition overflows v_t");
+    static_assert(std::numeric_limits<vv_t>::max() / MOD >= MOD, "Multiplication overflows vv_t");
 
     v_t v;
     modnum() : v(0) {}
     modnum(vv_t _v) : v(v_t(_v % MOD)) { if (v < 0) v += MOD; }
     explicit operator v_t() const { return v; }
-    friend istream& operator >> (istream& i, modnum& n) { vv_t w; i >> w; n = modnum(w); return i; }
-    friend ostream& operator << (ostream& o, const modnum& n) { return o << n.v; }
+    friend std::istream& operator >> (std::istream& i, modnum& n) { vv_t w; i >> w; n = modnum(w); return i; }
+    friend std::ostream& operator << (std::ostream& o, const modnum& n) { return o << n.v; }
 
     friend bool operator == (const modnum& a, const modnum& b) { return a.v == b.v; }
     friend bool operator != (const modnum& a, const modnum& b) { return a.v != b.v; }
+    friend bool operator <  (const modnum& a, const modnum& b) { return a.v <  b.v; }
 
     static unsigned fast_mod(uint64_t x, unsigned m = MOD) {
 #if !defined(_WIN32) || defined(_WIN64)
@@ -45,8 +56,8 @@ template<v_t MOD> struct modnum {
         v_t g = MOD, x = 0, y = 1;
         for (v_t r = v; r != 0; ) {
             v_t q = g / r;
-            g %= r; swap(g, r);
-            x -= q * y; swap(x, y);
+            g %= r; std::swap(g, r);
+            x -= q * y; std::swap(x, y);
         }
 
         assert(g == 1);
@@ -71,14 +82,14 @@ template<v_t MOD> struct modnum {
         if (MOD == 2) return 1;
 
         v_t tot = totient(), tmp = tot;
-        vi tot_pr;
+        std::vector<int> tot_pr;
         for (v_t p = 2; p * p <= tmp; p++) if (tot % p == 0) {
             tot_pr.push_back(p);
             while (tmp % p == 0) tmp /= p;
         }
         if (tmp > 1) tot_pr.push_back(tmp);
 
-        for (v_t r = 2; r < MOD; r++) if (__gcd(r, MOD) == 1) {
+        for (v_t r = 2; r < MOD; r++) if (std::gcd(r, MOD) == 1) {
             bool root = true;
             for (v_t p : tot_pr) root &= modnum(r).pow(tot / p) != 1;
             if (root) return r;
@@ -88,8 +99,8 @@ template<v_t MOD> struct modnum {
 
     static modnum generator() { static modnum g = primitive_root(); return g; }
     static v_t discrete_log(modnum v) {
-        static const v_t M = ceil(sqrt(MOD));
-        static unordered_map<v_t, v_t> table;
+        static const v_t M = ceil(std::sqrt(MOD));
+        static std::unordered_map<v_t, v_t> table;
         if (table.empty()) {
             modnum e = 1;
             for (v_t i = 0; i < M; i++) { table[e.v] = i; e *= generator(); }
@@ -109,10 +120,10 @@ template<v_t MOD> struct modnum {
     }
 
     static modnum unity_root(int deg, int pow) {
-        static vector<modnum> table{ 0, 1 };
-        while (sz(table) <= deg) {
-            modnum w = unity_root(sz(table));
-            for (int i = sz(table)/2, s = sz(table); i < s; i++) {
+        static std::vector<modnum> table{ 0, 1 };
+        while (int(table.size()) <= deg) {
+            modnum w = unity_root(int(table.size()));
+            for (int s = int(table.size()), i = s / 2; i < s; i++) {
                 table.push_back(table[i]);
                 table.push_back(table[i] * w);
             }
@@ -121,20 +132,20 @@ template<v_t MOD> struct modnum {
     }
 
     static modnum factorial(int n) {
-        static vector<modnum> fact = {1};
+        static std::vector<modnum> fact = {1};
         assert(n >= 0);
-        if (sz(fact) <= n) {
-            int had = sz(fact);
+        if (int(fact.size()) <= n) {
+            int had = fact.size();
             fact.resize(n + 1);
             for (int i = had; i <= n; i++) fact[i] = fact[i-1] * i;
         }
         return fact[n];
     }
     static modnum inverse_factorial(int n) {
-        static vector<modnum> finv = {1};
+        static std::vector<modnum> finv = {1};
         assert(n >= 0);
-        if (sz(finv) <= n) {
-            int had = sz(finv);
+        if (int(finv.size()) <= n) {
+            int had = finv.size();
             finv.resz(n + 1), finv[n] = factorial(n).inv();
             for (int i = n - 1; i >= had; i--) finv[i] = finv[i+1] * (i+1);
         }

@@ -63,11 +63,11 @@ template<typename F, typename C> struct min_cost_flow {
 
     // Computes the minimum cost to satisfy the specified imbalances.
     // Runs in O(E^2 * log V * log inf).
-	struct circulation {
-		bool feasible;
-		C cost;
-		vector<F> flow;
-	};
+    struct circulation {
+        bool feasible;
+        C cost;
+        vector<F> flow;
+    };
     circulation solve(vector<F> imb) const {
         vector<F> flow(E);
         vector<C> pot(V);

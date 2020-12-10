@@ -1,99 +1,136 @@
+#include <cassert>
+#include <vector>
+#include <iostream>
+#include <algorithm>
+
 struct edge {
-    int uv; //int id;
-    edge (int _uv = 0, __attribute__((unused))__monostate _ = ms) : uv(_uv) {}
-    int operator()(int u) const { assert(uv); return uv ^ u; }
-    __monostate& wt() const { return ms; }
-    struct path { int len;
-        path operator+(const path& p) const { return {len+p.len}; }
-    }; explicit operator path() { return {1}; }
-};
-template<typename W> struct wedge : edge {
-    mutable W w;
-    wedge (int _uv = 0, W _w = {}) : edge(_uv), w(_w) {}
-    W& wt() const { return w; }
-    struct path { int len; W wt;
-        path operator+(const path& p) { return {len+p.len, wt+p.wt}; }
-    }; explicit operator path() { return {1, w}; }
+    int u_xor_v;
+
+    edge() : u_xor_v(0) {}
+
+    edge(int _u_xor_v) : u_xor_v(_u_xor_v) {}
+
+    int get_nbr(int u) const {
+        assert(u_xor_v);
+        return u ^ u_xor_v;
+    }
 };
 
-enum INPUT_FORMAT { EDGE_LIST, PARENT_LIST };
-template<typename E> struct tree {
+template<typename Data>
+struct edge_with_data : edge {
+    Data data;
+
+    edge_with_data() : edge() {}
+
+    edge_with_data(int _u_xor_v, Data _data) : edge(_u_xor_v), data(_data) {}
+};
+
+enum TreeInputFormat { EDGE_LIST, PARENT_LIST };
+template<typename Edge>
+struct tree {
     int V, root;
-    vector<vector<E>> nbrs, children;
+    std::vector<std::vector<Edge>> neighbors;
 
-    vi par, depth, subt_sz;
-    vi preorder, reverse_preorder;
+    std::vector<int> parent, depth, subtree_size, preorder, reverse_preorder;
 
     tree() : V(0), root(-1) {}
-    tree(int _V, int _root) : V(_V), root(_root), nbrs(V) {}
 
-    const E& up_edge(int u) const {
-        assert(u != root);
-        return nbrs[u].front();
-    }
+    tree(int _V, int _root) : V(_V), root(_root), neighbors(V) {}
 
-    void add_edge(int u, int v, E e = {}) {
+    void add_edge(int u, int v, Edge e = {}) {
         assert(0 <= u && u < V && 0 <= v && v < V);
-        e.uv = u ^ v;
-        nbrs[u].pb(e);
-        nbrs[v].pb(e);
+        e.u_xor_v = u ^ v;
+        neighbors[u].push_back(e);
+        neighbors[v].push_back(e);
     }
 
-    template<INPUT_FORMAT FMT = EDGE_LIST, bool FIRST_INDEX = 1>
-    friend void re(tree& t) {
+    const Edge& parent_edge(int u) const {
+        assert(u != root);
+        return neighbors[u].front();
+    }
+
+    template<typename Function>
+    void for_each_child(int u, Function fn) const {
+        for (int i = u != root; i < int(neighbors[u].size()); i++)
+            fn(neighbors[u][i]);
+    }
+
+    static void DefaultEdgeDataReader(__attribute((unused)) Edge &e) {}
+
+    template<typename EdgeDataReader = void(*)(Edge&)>
+    friend void re(tree &t, TreeInputFormat Format, int FirstIndex,
+			EdgeDataReader read = DefaultEdgeDataReader) {
         assert(t.V > 0);
         for (int i = 0; i < t.V - 1; i++) {
             int u, v;
-            re(u), u -= FIRST_INDEX;
-            if (FMT == PARENT_LIST) v = i+1;
-            else re(v), v -= FIRST_INDEX;
-            E e{}; re(e.wt()); // e.id = i
+            std::cin >> u, u -= FirstIndex;
+            if (Format == PARENT_LIST) v = i + 1;
+            else std::cin >> v, v -= FirstIndex;
+            Edge e;
+            read(e);
             t.add_edge(u, v, e);
         }
         t.init();
     }
 
+    void reroot(int _root) {
+        root = _root;
+        init();
+    }
+
     void init() {
-        children.resz(V), par.resz(V), depth.resz(V), subt_sz.resz(V);
-        par[root] = -1, depth[root] = 0;
+        parent.resize(V), depth.resize(V), subtree_size.resize(V);
+
+        parent[root] = -1;
+        depth[root] = 0;
 
         traverse(root);
+
         for (int u = 0; u < V; u++) {
-            sort_by(nbrs[u], subt_sz[a(u)] > subt_sz[b(u)]);
-            children[u].clear();
-            copy(nbrs[u].begin() + (u != root), nbrs[u].end(), back_inserter(children[u]));
+            sort(neighbors[u].begin(), neighbors[u].end(), [&](const Edge &a, const Edge &b) {
+                return subtree_size[a.get_nbr(u)] > subtree_size[b.get_nbr(u)];
+            });
         }
 
-        preorder.clear(), preorder.reserve(V), build_preorder(root);
-        reverse_preorder = preorder, reverse(all(reverse_preorder));
+        preorder.clear();
+        build_preorder(root);
+
+        reverse_preorder = preorder;
+        std::reverse(reverse_preorder.begin(), reverse_preorder.end());
     }
-    void reroot(int _root) { root = _root; init(); }
 
     void traverse(int u) {
-        subt_sz[u] = 1;
-        for (E e : nbrs[u]) {
-            int v = e(u);
-            if (v == par[u]) continue;
-            par[v] = u;
+        subtree_size[u] = 1;
+        for (Edge e : neighbors[u]) {
+            int v = e.get_nbr(u);
+            if (v == parent[u]) continue;
+
+            parent[v] = u;
             depth[v] = depth[u] + 1;
             traverse(v);
-            subt_sz[u] += subt_sz[v];
+            subtree_size[u] += subtree_size[v];
         }
     }
 
     void build_preorder(int u) {
-        preorder.pb(u);
-        for (E e : children[u]) build_preorder(e(u));
+        preorder.push_back(u);
+        for_each_child(u, [&](Edge e) { build_preorder(e.get_nbr(u)); });
     }
 
-    friend void pr(const tree& t) {
-        pr("{V=", t.V, " root=", t.root, " |");
+    static void DefaultEdgeDataWriter(__attribute((unused)) Edge &e) {}
+
+    template<typename EdgeDataWriter = void(*)(Edge&)>
+    friend void pr(const tree& t, EdgeDataWriter write = DefaultEdgeDataWriter) {
+        std::cout << "{V=" << t.V << " root=" << t.root << " |";
         for (int u = 0; u < t.V; u++) {
-            pr(" ", u, "--{");
-            for (E e : t.children[u])
-                pr("(ch=", e(u), " wt=", e.wt(), ")");
-            pr("}");
+            std::cout << " " << u << "--{";
+            t.for_each_child(u, [&](Edge e) {
+                std::cout << "(ch=" << e.get_nbr(u);
+                write(e);
+                std::cout << ")";
+            });
+            std::cout << "}";
         }
-        pr("}");
+        std::cout << "}";
     }
 };

@@ -1,52 +1,66 @@
-struct dijkstra {
-    using EDGE_WT = int;
-    using PATH_WT = int;
+#include <cstdlib>
+#include <queue>
+#include <cassert>
+#include <algorithm>
+#include <cstring>
 
-    PATH_WT add(PATH_WT p, EDGE_WT w) {
-        static_assert(false, "Implement me! (p + w)");
-    }
-
-    bool less_than(PATH_WT x, PATH_WT y) {
-        static_assert(false, "Implement me! (x < y)");
-    }
+template<typename EdgeWeight>
+struct WeightedDirectedGraph {
+    struct Edge {
+        int neighbor;
+        EdgeWeight weight;
+    };
 
     int N;
-    vector<vector<pair<int, EDGE_WT>>> adj;
+    std::vector<std::vector<Edge>> adj;
 
-    dijkstra (int N_) : N(N_), adj(N_) { }
+    WeightedDirectedGraph (int _N) : N(_N), adj(_N) {}
 
-    void add_directed_edge(int u, int v, EDGE_WT w) {
-        adj[u].emplace_back(v, w);
+    void add_directed_edge(int u, int v, EdgeWeight w) {
+        adj[u].push_back({v, w});
     }
+};
 
-    vector<int> parent;
-    vector<PATH_WT> shortest_path_wt;
+template<typename PathWeight>
+struct ShortestPathTree {
+    std::vector<int> parent;
+    std::vector<PathWeight> shortest_path_wt;
 
-    void compute(const vector<int> &sources, PATH_WT zero) {
-        parent.assign(N, -1);
-        shortest_path_wt.assign(N, zero);
+    template<typename EdgeWeight, typename JoinPathAndEdge, typename PathWeightLessThan>
+    ShortestPathTree(WeightedDirectedGraph<EdgeWeight> g, const std::vector<int> &sources,
+            PathWeight init, JoinPathAndEdge join, PathWeightLessThan less_than) {
+        struct Path {
+            int destination;
+            PathWeight weight;
 
-        auto cmp = [&](pair<PATH_WT, int> x, pair<PATH_WT, int> y) { return less_than(y.first, x.first); };
-        priority_queue<pair<PATH_WT, int>, vector<pair<PATH_WT, int>>, decltype(cmp)> pq(cmp);
+            bool operator < (const Path &p) const {
+                return weight > p.weight;
+            }
+        };
 
-        for (int src : sources) {
-            parent[src] = src;
-            pq.push(make_pair(shortest_path_wt[src], src));
+        std::priority_queue<Path> pq;
+
+        parent.assign(g.N, -1);
+        shortest_path_wt.assign(g.N, init);
+
+        for (int source : sources) {
+            parent[source] = source;
+            pq.push({ source, shortest_path_wt[source] });
         }
 
         while (!pq.empty()) {
-            PATH_WT path_wt = pq.top().first;
-            int loc = pq.top().second;
+            Path path = pq.top();
             pq.pop();
-            if (memcmp(&path_wt, &shortest_path_wt[loc], sizeof(PATH_WT))) continue;
 
-            for (pair<int, EDGE_WT> edge : adj[loc]) {
-                int nbr = edge.first;
-                PATH_WT combined = add(path_wt, edge.second);
-                if (parent[nbr] == -1 || less_than(combined, shortest_path_wt[nbr])) {
-                    shortest_path_wt[nbr] = combined;
-                    parent[nbr] = loc;
-                    pq.push(make_pair(shortest_path_wt[nbr], nbr));
+            if (memcmp(&path.weight, &shortest_path_wt[path.destination], sizeof(PathWeight)))
+                continue;
+
+            for (auto edge : g.adj[path.destination]) {
+                PathWeight candidate = join(path.weight, edge.weight);
+                if (parent[edge.neighbor] == -1 || less_than(candidate, shortest_path_wt[edge.neighbor])) {
+                    parent[edge.neighbor] = path.destination;
+                    shortest_path_wt[edge.neighbor] = candidate;
+                    pq.push({ edge.neighbor, shortest_path_wt[edge.neighbor] });
                 }
             }
         }
@@ -56,20 +70,22 @@ struct dijkstra {
         return parent[destination] != -1;
     }
 
-    PATH_WT distance(int destination) const {
+    PathWeight distance(int destination) const {
         if (!is_reachable(destination)) assert(false);
         return shortest_path_wt[destination];
     }
 
-    vector<int> list_vertices_on_path(int destination) const {
+    std::vector<int> list_vertices_on_path(int destination) const {
         if (!is_reachable(destination)) assert(false);
-        vector<int> path;
+
+        std::vector<int> path;
         while (parent[destination] != destination) {
             path.push_back(destination);
             destination = parent[destination];
         }
         path.push_back(destination);
-        reverse(all(path));
+
+        std::reverse(path.begin(), path.end());
         return path;
     }
 };

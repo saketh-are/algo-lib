@@ -1,21 +1,36 @@
+// {{{ graphs/strongly_connected_components.cpp }}}
+
+#include <vector>
+#include <bitset>
+#include <cassert>
+#include <numeric>
+#include <algorithm>
+
 template<int MAXV>
-vector<bitset<MAXV>> digraph_reachability(const vvi& graph) {
-    int V = sz(graph);
+std::vector<std::bitset<MAXV>> digraph_reachability(
+        const std::vector<std::vector<int>> &graph) {
+    int V = int(graph.size());
     assert(V <= MAXV);
 
-    int C; vi comp; tie(C, comp) = strongly_connected_components(graph);
+    scc s = strongly_connected_components(graph);
 
-    vector<bitset<MAXV>> comp_reach(C);
-    for (int v = 0; v < V; v++) comp_reach[comp[v]][v] = 1;
+    std::vector<std::bitset<MAXV>> component_reachability(s.components);
 
-    vi order(V);
-    for (int v = 0; v < V; v++) order[v] = v;
-    sort(all(order), [&](int u, int v) { return comp[u] < comp[v]; });
-    for (int u : order) for (int v : graph[u]) {
-        comp_reach[comp[u]] |= comp_reach[comp[v]];
-    }
+    for (int v = 0; v < s.components; v++)
+        component_reachability[s.label[v]][v] = true;
 
-    vector<bitset<MAXV>> reach(V);
-    for (int v = 0; v < V; v++) reach[v] = comp_reach[comp[v]];
+    std::vector<int> order;
+    std::iota(order.begin(), order.end(), 0);
+    sort(order.begin(), order.end(),
+            [&](int u, int v) { return s.label[u] < s.label[v]; });
+
+    for (int u : order)
+        for (int v : graph[u])
+            component_reachability[s.label[u]]
+                |= component_reachability[s.label[v]];
+
+    std::vector<std::bitset<MAXV>> reach(V);
+    for (int v = 0; v < V; v++)
+        reach[v] = component_reachability[s.label[v]];
     return reach;
 }

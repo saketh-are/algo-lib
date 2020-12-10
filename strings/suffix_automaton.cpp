@@ -1,16 +1,22 @@
+// {{{ misc/stable_counting_sort.cpp }}}
+
+#include <array>
+#include <vector>
+#include <cassert>
+
 template<int MIN_CHAR, int SIGMA>
 struct suffix_automaton {
     struct state {
         int len = 0;
         int suffix_link = -1;
         int first_end_pos = -1;
-        array<int, SIGMA> transitions;
+        std::array<int, SIGMA> transitions;
         state() { transitions.fill(-1); }
     };
 
     int SZ, last;
-    vector<state> data;
-    vector<bool> is_clone;
+    std::vector<state> data;
+    std::vector<bool> is_clone;
 
     const state& operator [] (int loc) const { return data[loc]; }
 
@@ -22,24 +28,24 @@ struct suffix_automaton {
 
     suffix_automaton() : SZ(0) { last = create_state(); }
 
-    template<typename I>
-    suffix_automaton(I begin, I end) {
+    template<typename InputIterator>
+    suffix_automaton(InputIterator begin, InputIterator end) {
         initialize(begin, end);
     }
 
-    template<typename I>
-    void initialize(I begin, I end) {
+    template<typename InputIterator>
+    void initialize(InputIterator begin, InputIterator end) {
         SZ = 0;
         data.clear();
         is_clone.clear();
         last = create_state();
 
-        for (I iter = begin; iter != end; iter++)
-            __append(*iter);
-        __initialize_auxiliary_data();
+        for (InputIterator iter = begin; iter != end; iter++)
+            append(*iter);
+        initialize_auxiliary_data();
     }
 
-    void __append(int c) {
+    void append(int c) {
         assert(MIN_CHAR <= c && c < MIN_CHAR + SIGMA);
         c -= MIN_CHAR;
 
@@ -77,11 +83,11 @@ struct suffix_automaton {
         data[last].suffix_link = pc;
     }
 
-    vector<int> ct_end_pos;
-    void __initialize_auxiliary_data() {
-        const vector<int> &reverse_length_order =
-            stable_counting_sort::permutation(data.size(), SZ + 1,
-                    [&](int loc) { return SZ - data[loc].len; });
+    std::vector<int> reverse_length_order;
+    std::vector<int> ct_end_pos;
+    void initialize_auxiliary_data() {
+        reverse_length_order = stable_counting_sort::permutation(
+                int(data.size()), SZ + 1, [&](int loc) { return SZ - data[loc].len; });
 
         ct_end_pos.assign(data.size(), 0);
         for (int loc : reverse_length_order) {
@@ -97,22 +103,22 @@ struct suffix_automaton {
         return data[loc].transitions[c - MIN_CHAR];
     }
 
-    template<typename I>
-    int state_associated_with(I begin, I end) const {
+    template<typename InputIterator>
+    int state_associated_with(InputIterator begin, InputIterator end) const {
         int loc = 0;
         for (auto iter = begin; iter != end && loc != -1; iter++)
             loc = transition(loc, *iter);
         return loc;
     }
 
-    template<typename I>
-    int first_occurence(I begin, I end) const {
+    template<typename InputIterator>
+    int first_occurrence(InputIterator begin, InputIterator end) const {
         int loc = state_associated_with(begin, end);
         return loc == -1 ? -1 : data[loc].first_end_pos - distance(begin, end) + 1;
     }
 
-    template<typename I>
-    int count_occurences(I begin, I end) const {
+    template<typename InputIterator>
+    int count_occurrences(InputIterator begin, InputIterator end) const {
         int loc = state_associated_with(begin, end);
         return loc == -1 ? 0 : ct_end_pos[loc];
     }

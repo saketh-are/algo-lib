@@ -1,8 +1,13 @@
+#include <array>
+#include <vector>
+#include <cassert>
+#include <queue>
+
 template<int MIN_CHAR, int SIGMA>
 struct trie {
     struct node {
         int depth;
-        array<int, SIGMA> child_links;
+        std::array<int, SIGMA> child_links;
 
         int dict_index = -1;
 
@@ -15,8 +20,8 @@ struct trie {
         }
     };
 
-    vector<node> data;
-    vector<int> dictionary_word_links;
+    std::vector<node> data;
+    std::vector<int> dictionary_word_links;
 
     int& child_link(int loc, int c) { return data[loc].child_links[c - MIN_CHAR]; }
     int child_link(int loc, int c) const { return data[loc].child_links[c - MIN_CHAR]; }
@@ -27,19 +32,22 @@ struct trie {
 
     trie() {}
 
-    template<typename I>
-    trie(I begin, I end) : data(1, node(0)) {
-        for (I iter = begin; iter != end; iter++)
-            __add_dictionary_word(*iter);
-        __build_suffix_link_tree();
+    template<typename InputIterator>
+    trie(InputIterator first, InputIterator last) : data(1, node(0)) {
+        for (InputIterator iter = first; iter != last; iter++)
+            add_dictionary_word(iter->begin(), iter->end());
+        build_suffix_link_tree();
     }
 
-    template<typename S>
-    void __add_dictionary_word(const S& s) {
+private:
+
+    template<typename InputIterator>
+    void add_dictionary_word(InputIterator first, InputIterator last) {
         int loc = 0;
-        for (auto c_ : s) {
-            int c = c_;
+        for (InputIterator iter = first; iter != last; iter++) {
+            int c = *iter;
             assert(MIN_CHAR <= c && c < MIN_CHAR + SIGMA);
+
             if (!child_link(loc, c)) {
                 child_link(loc, c) = int(data.size());
                 data.push_back(node(data[loc].depth + 1));
@@ -54,12 +62,12 @@ struct trie {
         dictionary_word_links.push_back(loc);
     }
 
-    vector<vector<int>> children;
-    vector<pair<int, int>> dfs_ranges;
-    void __build_suffix_link_tree() {
-        children.resize(data.size());
+    std::vector<std::vector<int>> children;
+    std::vector<std::pair<int, int>> dfs_ranges;
+    void build_suffix_link_tree() {
+        children.resize(int(data.size()));
 
-        queue<int> bfs;
+        std::queue<int> bfs;
         for (int child : data[0].child_links)
             if (child) bfs.push(child);
         for (; !bfs.empty(); bfs.pop()) {
@@ -93,22 +101,23 @@ struct trie {
     }
 
     template<typename V>
-    void copy_results_for_duplicate_dictionary_entries(vector<V> &results) const {
+    void copy_results_for_duplicate_dictionary_entries(std::vector<V> &results) const {
         for (int dict_index = 0; dict_index < int(dictionary_word_links.size()); dict_index++) {
             int loc = dictionary_word_links[dict_index];
-            if (data[loc].dict_index != dict_index) {
+            if (data[loc].dict_index != dict_index)
                 results[dict_index] = results[data[loc].dict_index];
-            }
         }
     }
 
-    /* Returns the number of matches of each dictionary word.
-     * Linear in text length and number of dictionary words.
+public:
+
+    /* Processes the given text and returns the number of matches of each dictionary word.
+     * Linear in text length and the number of dictionary words.
      */
-    template<typename S>
-    vector<int> count_matches(const S& text) const {
-        vector<int> count(dictionary_word_links.size());
-        vector<vector<int>> found_with_length;
+    template<typename InputIterator>
+    std::vector<int> count_matches(InputIterator first, InputIterator last) const {
+        std::vector<int> count(dictionary_word_links.size());
+        std::vector<std::vector<int>> found_with_length;
 
         auto record_match = [&](int loc, int quantity) {
             int dict_index = data[loc].dict_index;
@@ -123,15 +132,17 @@ struct trie {
         };
 
         int loc = 0;
-        for (auto c_ : text) {
-            int c = c_;
+        for (InputIterator iter = first; iter != last; iter++) {
+            int c = *iter;
             assert(MIN_CHAR <= c && c < MIN_CHAR + SIGMA);
+
             loc = child_link(loc, c);
             record_match(data[loc].dict_suffix_link, 1);
         }
+
         for (int match_length = int(found_with_length.size()) - 1; match_length > 0; match_length--) {
-            for (int loc : found_with_length[match_length])
-                record_match(dict_proper_suffix_link(loc), count[data[loc].dict_index]);
+            for (int match_loc : found_with_length[match_length])
+                record_match(dict_proper_suffix_link(match_loc), count[data[match_loc].dict_index]);
         }
 
         copy_results_for_duplicate_dictionary_entries(count);
@@ -141,17 +152,20 @@ struct trie {
     /* Returns the starting index of every match of each dictionary word.
      * Linear in the text length, number of dictionary words, and total number of matches.
      */
-    template<typename S>
-    vector<vector<int>> indices_of_matches(const S& text) const {
-        vector<vector<int>> indices(dictionary_word_links.size());
+    template<typename InputIterator>
+    std::vector<std::vector<int>> indices_of_matches(InputIterator first, InputIterator last) const {
+        std::vector<std::vector<int>> indices(int(dictionary_word_links.size()));
 
         int loc = 0;
-        for (int pos = 0; pos < int(text.size()); pos++) {
-            int c = text[pos];
+        int index = 0;
+        for (InputIterator iter = first; iter != last; iter++) {
+            int c = *iter;
+            index++;
             assert(MIN_CHAR <= c && c < MIN_CHAR + SIGMA);
+
             loc = child_link(loc, c);
             for (int par = data[loc].dict_suffix_link; par != 0; par = dict_proper_suffix_link(par)) {
-                indices[data[par].dict_index].push_back(pos + 1 - data[par].depth);
+                indices[data[par].dict_index].push_back(index + 1 - data[par].depth);
             }
         }
 
@@ -167,16 +181,16 @@ struct trie {
      * Duplicate dictionary entries each contribute to the total match count.
      * Linear in the text length.
      */
-    template<typename S>
-    int64_t count_total_matches(const S& text) const {
+    template<typename InputIterator>
+    int64_t count_total_matches(InputIterator first, InputIterator last) const {
         int64_t count = 0;
 
         int loc = 0;
-        for (int pos = 0; pos < int(text.size()); pos++) {
-            int c = text[pos];
+        for (InputIterator iter = first; iter != last; iter++) {
+            int c = *iter;
             assert(MIN_CHAR <= c && c < MIN_CHAR + SIGMA);
-            loc = child_link(loc, c);
 
+            loc = child_link(loc, c);
             count += data[loc].count_suffixes_in_dict;
         }
 

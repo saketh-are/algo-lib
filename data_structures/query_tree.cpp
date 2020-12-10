@@ -1,3 +1,6 @@
+#include <vector>
+#include <map>
+
 /*
  * Accepts a sequence of operations inserting and deleting
  * elements of type T in a data structure of type D, and
@@ -11,11 +14,11 @@
  * of arbitrary elements. Breaks amortized complexity.
  */
 template<typename D, typename T, typename V>
-vector<V> query_tree(D& ds, const vector<pair<bool, T>>& ops,
+std::vector<V> query_tree(D& ds, const std::vector<std::pair<bool, T>>& ops,
         const auto& apply, const auto& eval) {
-    vi match(sz(ops), sz(ops));
-    map<T, int> inserted;
-    for (int op = 0; op < sz(ops); op++) {
+    std::vector<int> match(ops.size(), ops.size());
+    std::map<T, int> inserted;
+    for (int op = 0; op < int(ops.size()); op++) {
         const auto &[ins, t] = ops[op];
         if (ins) inserted[t] = op;
         else {
@@ -26,7 +29,7 @@ vector<V> query_tree(D& ds, const vector<pair<bool, T>>& ops,
         }
     }
 
-    vector<V> results(sz(ops) + 1);
+    std::vector<V> results(ops.size() + 1);
     results[0] = eval(ds);
 
     auto dfs = [&](auto& self, int l, int r) -> void {
@@ -54,7 +57,7 @@ vector<V> query_tree(D& ds, const vector<pair<bool, T>>& ops,
             ds.rewind(before);
         }
     };
-    dfs(dfs, 0, sz(ops));
+    dfs(dfs, 0, int(ops.size()));
 
     return results;
 }

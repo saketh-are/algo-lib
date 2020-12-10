@@ -1,51 +1,76 @@
-template<typename V, int CT, int SIGMA>
+// {{{ numeric/modnum.cpp }}}
+
+#include <vector>
+#include <chrono>
+#include <random>
+#include <array>
+#include <cassert>
+#include <iostream>
+
+template<typename x_t, int EvaluationPoints, int AlphabetSize>
 struct polynomial_hash {
-    static V pow(int xi, int e) {
-        static vector<V> x(CT, 1);
-        if (int(x.size()) == CT) {
-            x.push_back(SIGMA);
-            for (int i = 1; i < CT; i++)
-                x.push_back(rng() % max(256, SIGMA) + SIGMA);
+    static x_t pow(int point, int exponent) {
+        static std::vector<x_t> x(EvaluationPoints, 1);
+
+        if (int(x.size()) == EvaluationPoints) {
+            x.push_back(AlphabetSize);
+
+            std::mt19937_64 rng(std::chrono::steady_clock::now().time_since_epoch().count());
+
+            for (int i = 1; i < EvaluationPoints; i++)
+                x.push_back(AlphabetSize + rng() % std::max(256, AlphabetSize));
         }
-        while (e * CT + xi >= int(x.size()))
-            for (int i = 0; i < CT; i++)
-                x.push_back(*(x.end() - CT) * x[CT + i]);
-        return x[e * CT + xi];
+
+        while (exponent * EvaluationPoints + point >= int(x.size()))
+            for (int i = 0; i < EvaluationPoints; i++)
+                x.push_back(*(x.end() - EvaluationPoints) * x[EvaluationPoints + i]);
+
+        return x[exponent * EvaluationPoints + point];
     }
 
     int N;
-    array<V, CT> data;
-    polynomial_hash () : N(0) { data.fill(0); }
-    polynomial_hash (V v) : N(1) { assert(v.v < SIGMA); data.fill(v); }
-    polynomial_hash (int N_, array<V, CT> data_) : N(N_), data(data_) {}
+    std::array<x_t, EvaluationPoints> data;
 
-    polynomial_hash operator+(const polynomial_hash &o) const {
-        array<V, CT> res;
-        for (int i = 0; i < CT; i++)
-            res[i] = data[i] * pow(i, o.N) + o.data[i];
-        return polynomial_hash { N + o.N, res };
+    polynomial_hash () : N(0) { data.fill(0); }
+
+    polynomial_hash (x_t v) : N(1) { assert(v.v < AlphabetSize); data.fill(v); }
+
+    polynomial_hash (int _N, std::array<x_t, EvaluationPoints> _data) : N(_N), data(_data) {}
+
+    friend polynomial_hash concatenate(polynomial_hash a, polynomial_hash b) {
+        std::array<x_t, EvaluationPoints> res;
+        for (int i = 0; i < EvaluationPoints; i++)
+            res[i] = a.data[i] * pow(i, b.N) + b.data[i];
+        return { a.N + b.N, res };
     }
-    bool operator==(const polynomial_hash &o) const {
+
+    bool operator == (const polynomial_hash &o) const {
         return N == o.N && data == o.data;
     }
-    friend ostream& operator << (ostream& o, const polynomial_hash& h) {
+
+    bool operator < (const polynomial_hash &o) const {
+        return N != o.N ? N < o.N : data < o.data;
+    }
+
+    friend std::ostream& operator << (std::ostream& o, const polynomial_hash& h) {
         o << h.N;
-        for (int i = 0; i < CT; i++) o << " " << h.data[i];
+        for (int i = 0; i < EvaluationPoints; i++)
+            o << " " << h.data[i];
         return o;
     }
 
-    template<typename I>
-    static vector<polynomial_hash> get_prefixes(I begin, I end) {
-        vector<polynomial_hash> res(1);
-        for (I iter = begin; iter != end; iter = next(iter))
-            res.push_back(res.back() + polynomial_hash(V(*iter)));
+    template<typename InputIterator>
+    static std::vector<polynomial_hash> get_prefixes(InputIterator begin, InputIterator end) {
+        std::vector<polynomial_hash> res = { polynomial_hash{} };
+        for (InputIterator iter = begin; iter != end; iter = next(iter))
+            res.push_back(concatenate(res.back(), polynomial_hash(x_t(*iter))));
         return res;
     }
 
-    static polynomial_hash get_substr(const vector<polynomial_hash> &prefixes, int pos, int len) {
-        array<V, CT> res;
-        for (int i = 0; i < CT; i++)
-            res[i] = prefixes[pos + len].data[i] - pow(i, len) * prefixes[pos].data[i];
-        return polynomial_hash { len, res };
+    static polynomial_hash get_substring(const std::vector<polynomial_hash> &prefixes, int first, int last) {
+        std::array<x_t, EvaluationPoints> res;
+        for (int i = 0; i < EvaluationPoints; i++)
+            res[i] = prefixes[last].data[i] - pow(i, last - first) * prefixes[first].data[i];
+        return { last - first, res };
     }
 };

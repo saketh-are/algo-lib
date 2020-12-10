@@ -1,9 +1,13 @@
-template<typename T> struct point {
+#include <iostream>
+#include <vector>
+
+template<typename T>
+struct point {
     T x, y;
     point() : x(0), y(0) {}
     point(T _x, T _y) : x(_x), y(_y) {}
-    friend istream& operator >> (istream& i, point& p) { return i >> p.x >> p.y; }
-    friend ostream& operator << (ostream& o, const point& p) {
+    friend std::istream& operator >> (std::istream& i, point& p) { return i >> p.x >> p.y; }
+    friend std::ostream& operator << (std::ostream& o, const point& p) {
         return o << "(" << p.x << ", " << p.y << ")";
     }
 
@@ -57,7 +61,9 @@ template<typename T> struct point {
         return (d * x - c * y) / (x - y);
     }
 
-    friend vector<point> seg_intersect(point a, point b, point c, point d) {
+    using polygon = std::vector<point<T>>;
+
+    friend polygon seg_intersect(point a, point b, point c, point d) {
         if (a > b) swap(a, b);
         if (c > d) swap(c, d);
 
@@ -78,14 +84,13 @@ template<typename T> struct point {
         return {};
     }
 
-    using polygon = vector<point<T>>;
-    friend ostream& operator << (ostream& o, const polygon& poly) {
+    friend std::ostream& operator << (std::ostream& o, const polygon& poly) {
         o << "{";
         for (auto pt : poly) o << " " << pt;
         return o << " }";
     }
 
-    string classify(const polygon& p) const {
+    std::string classify(const polygon& p) const {
         bool ans = 0;
         for (int i = 0; i < p.size(); i++) {
             point<T> a = p[i], b = p[(i + 1) % p.size()];
@@ -97,7 +102,7 @@ template<typename T> struct point {
         return ans ? "in" : "out";
     }
 
-    friend polygon convex_hull(const vector<point>& pts) {
+    friend polygon convex_hull(const std::vector<point>& pts) {
         point pivot = *min_element(all(pts));
         auto sorted = pts;
         sort(all(sorted), [&pivot](const point& p, const point& q) {
@@ -120,7 +125,7 @@ template<typename T> struct point {
     // twice the signed area
     friend T area(const polygon& p) {
         T a = 0;
-        for (int i = 0; i < sz(p); i++)
+        for (int i = 0; i < int(p.size()); i++)
             a += cross(p[i], p[i+1 < sz(p) ? i+1 : 0]);
         return a;
     }

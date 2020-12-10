@@ -1,54 +1,59 @@
-template<typename T> struct binary_indexed_tree {
-    int S;
-    vector<T> table;
+#include <iterator>
+#include <vector>
+#include <cassert>
+#include <functional>
 
-    binary_indexed_tree<T>(int S_ = 0) : S(S_) {
-        table.resize(S+1);
+template<typename T, typename AssociativeOperation>
+struct binary_indexed_tree {
+    int SZ;
+    T identity;
+    AssociativeOperation TT;
+    std::vector<T> data;
+
+    binary_indexed_tree() {}
+
+    binary_indexed_tree(int _SZ, T _identity, AssociativeOperation _TT)
+			: SZ(_SZ), identity(_identity), TT(_TT) {
+        data.assign(2 * SZ, identity);
     }
 
-    // Adds v to the element at index i
+    // Replaces the current value at index i with TT(current value, v)
     void add(int i, T v) {
-        for (i++; i <= S; i += i&-i)
-            table[i] = table[i] + v;
+        for (i++; i <= SZ; i += i & -i)
+            data[i] = TT(data[i], v);
     }
 
-    // Replaces the element at index i with v
-    void replace(int i, T v) {
-        add(i, v - sum(i, i+1));
-    }
-
-    // Returns the sum of the elements at indices in [0, i)
-    T sum(int i) const {
-        T res{};
-        for (; i; i -= i&-i)
-            res = res + table[i];
+    // Returns the result of accumulating the elements at indices in [0, len)
+    T accumulate_prefix(int len) const {
+        assert(0 <= len && len <= SZ);
+        T res = identity;
+        for (; len; len -= len & -len)
+            res = TT(res, data[len]);
         return res;
     }
 
-    // Returns the sum of the elements at indices in [l, r)
-    T sum(int l, int r) const {
-        return l > r ? T{} : sum(r) - sum(l);
-    }
-
-    /*
-     * Returns the first i in [0, S] such that comp(sum(i)) is true.
-     * Returns -1 if no such i exists.
-     * Requires that comp(sum(i)) is non-decreasing in i.
-     * The empty prefix is considered to have sum equal to T().
+    /* Returns the smallest len in [0, S] such that p(accumulate_prefix(len)) returns true.
+     * Returns S + 1 if no such len exists.
+     * Requires that p(accumulate_prefix(len)) is non-decreasing in len.
      */
-    int lower_bound(const auto& comp) const {
-        T cur = T{};
-        if (comp(cur)) return 0;
+    template<typename Predicate>
+    int binary_search(Predicate p) const {
+        if (p(identity)) return 0;
 
-        int inx = 0;
-        for (int i = 31 - __builtin_clz(S); i >= 0; i--) {
-            int nxt = inx + (1 << i);
-            if (nxt <= S && !comp(cur + table[nxt])) {
-                inx = nxt;
-                cur = cur + table[nxt];
+        int len = 0;
+        T accumulator = identity;
+
+        for (int bit = 31 - __builtin_clz(SZ); bit >= 0; bit--) {
+            int next = len + (1 << bit);
+            if (next > SZ) continue;
+
+            T combined = TT(accumulator, data[next]);
+            if (!p(combined)) {
+                len = next;
+                accumulator = combined;
             }
         }
 
-        return inx < S ? inx + 1 : -1;
+        return len + 1;
     }
 };

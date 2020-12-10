@@ -1,0 +1,101 @@
+version: 2.1
+
+orbs:
+  python: circleci/python@0.2.1
+
+jobs:
+  build-and-test:
+    working_directory: ~/clib
+    executor: python/default
+    steps:
+      - checkout
+
+      # DATA STRUCTURES
+      - run:
+          name: Point Add Range Sum (data_structures/segment_tree)
+          command: python2 ./.circleci/run_tests.py ./test/data_structures/segment_tree/point_add_range_sum/point_add_range_sum.cpp
+      - run:
+          name: Point Add Range Sum (data_structures/binary_indexed_tree)
+          command: python2 ./.circleci/run_tests.py ./test/data_structures/binary_indexed_tree/point_add_range_sum/point_add_range_sum.cpp
+      - run:
+          name: Point Set Range Composite (data_structures/segment_tree, numeric/modnum)
+          command: python2 ./.circleci/run_tests.py ./test/data_structures/segment_tree/point_set_range_composite/point_set_range_composite.cpp
+      - run:
+          name: Static RMQ (data_structures/sparse_table)
+          command: python2 ./.circleci/run_tests.py ./test/data_structures/sparse_table/static_rmq/static_rmq.cpp
+
+      # GRAPHS
+      - run:
+          name: Weighted Tree Diameter (graphs/tree.cpp)
+          command: python2 ./.circleci/run_tests.py ./test/graphs/tree/weighted_tree_diameter/weighted_tree_diameter.cpp
+      - run:
+          name: Lowest Common Ancestor (graphs/lowest_common_ancestor)
+          command: python2 ./.circleci/run_tests.py ./test/graphs/lowest_common_ancestor/lowest_common_ancestor/lowest_common_ancestor.cpp
+      - run:
+          name: Vertex Add Path Sum (graphs/heavy_path_decomposition, data_structures/binary_indexed_tree)
+          command: python2 ./.circleci/run_tests.py ./test/graphs/heavy_path_decomposition/vertex_add_path_sum/vertex_add_path_sum.cpp
+      - run:
+          name: Shortest Path (graphs/dijkstra.cpp)
+          command: python2 ./.circleci/run_tests.py ./test/graphs/dijkstra/shortest_path/shortest_path.cpp
+      - run:
+          name: Two Sat (graphs/two_sat)
+          command: python2 ./.circleci/run_tests.py ./test/graphs/two_sat/two_sat/two_sat.cpp
+
+      # MISC
+      - run:
+          name: PolandBall And Gifts (misc/subset_sum)
+          command: python2 ./.circleci/run_tests.py ./test/misc/subset_sum/polandball_and_gifts/polandball_and_gifts.cpp
+
+      # NUMERIC
+      - run:
+          name: Exponentiation (numeric/modnum)
+          command: python2 ./.circleci/run_tests.py ./test/numeric/modnum/exponentiation/exponentiation.cpp
+      - run:
+          name: Convolution Mod 998244353 (numeric/ntt)
+          command: python2 ./.circleci/run_tests.py ./test/numeric/ntt/convolution_mod_998244353/convolution_mod_998244353.cpp
+      - run:
+          name: Convolution Mod 1000000007 (numeric/complex_fft)
+          command: python2 ./.circleci/run_tests.py ./test/numeric/complex_fft/convolution_mod_1000000007/convolution_mod_1000000007.cpp
+      - run:
+          name: Discrete Logarithm (numeric/discrete_logarithm)
+          command: python2 ./.circleci/run_tests.py ./test/numeric/discrete_logarithm/discrete_logarithm/discrete_logarithm.cpp
+      - run:
+          name: Sqrt Mod (numeric/tonelli-shanks)
+          command: python2 ./.circleci/run_tests.py ./test/numeric/tonelli-shanks/sqrt_mod/sqrt_mod.cpp
+
+      # STRINGS
+      - run:
+          name: Pattern Find (strings/knuth_morris_pratt)
+          command: python2 ./.circleci/run_tests.py ./test/strings/knuth_morris_pratt/pattern_find/pattern_find.cpp
+      - run:
+          name: Z Algorithm (strings/z_algorithm)
+          command: python2 ./.circleci/run_tests.py ./test/strings/z_algorithm/z_algorithm/z_algorithm.cpp
+      - run:
+          name: Enumerate Palindromes (strings/palindromes)
+          command: python2 ./.circleci/run_tests.py ./test/strings/palindromes/enumerate_palindromes/enumerate_palindromes.cpp
+      - run:
+          name: Good Substrings (strings/polynomial_hash)
+          command: python2 ./.circleci/run_tests.py ./test/strings/polynomial_hash/good_substrings/good_substrings.cpp
+      - run:
+          name: Suffix Array (strings/suffix_array)
+          command: python2 ./.circleci/run_tests.py ./test/strings/suffix_array/suffix_array/suffix_array.cpp
+      - run:
+          name: Count Distinct Substrings (strings/suffix_array)
+          command: python2 ./.circleci/run_tests.py ./test/strings/suffix_array/count_distinct_substrings/count_distinct_substrings.cpp
+      - run:
+          name: Count Distinct Substrings (strings/suffix_automaton)
+          command: python2 ./.circleci/run_tests.py ./test/strings/suffix_automaton/count_distinct_substrings/count_distinct_substrings.cpp
+      - run:
+          name: Minimum Length Substring With K Occurrences (strings/trie)
+          command: python2 ./.circleci/run_tests.py ./test/strings/trie/minimum_length_substring_with_k_occurrences/minimum_length_substring_with_k_occurrences.cpp
+      - run:
+          name: Count Matches in Mutable Text (strings/mutable_string)
+          command: python2 ./.circleci/run_tests.py ./test/strings/mutable_string/count_matches_in_mutable_text/count_matches_in_mutable_text.cpp
+      - run:
+          name: Count Matches in Mutable Text (strings/mutable_string_bitset)
+          command: python2 ./.circleci/run_tests.py ./test/strings/mutable_string_bitset/count_matches_in_mutable_text/count_matches_in_mutable_text.cpp
+
+workflows:
+  main:
+    jobs:
+      - build-and-test

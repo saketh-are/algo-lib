@@ -1,24 +1,30 @@
+// {{{ strings/suffix_automaton.cpp }}}
+// {{{ strings/knuth_morris_pratt.cpp }}}
+
+#include <vector>
+#include <cmath>
+
 template<int MIN_CHAR, int SIGMA>
 struct mutable_string {
     int SZ;
-    vector<int> data;
+    std::vector<int> data;
 
     int BLOCK_SZ;
-    vector<suffix_automaton<MIN_CHAR, SIGMA>> blocks;
+    std::vector<suffix_automaton<MIN_CHAR, SIGMA>> blocks;
 
-    template<typename I>
-    mutable_string(I begin, I end) : data(begin, end) {
-        SZ = data.size();
-        BLOCK_SZ = ceil(sqrt(data.size()));
+    template<typename InputIterator>
+    mutable_string(InputIterator begin, InputIterator end) : data(begin, end) {
+        SZ = int(data.size());
+        BLOCK_SZ = int(ceil(std::sqrt(data.size())));
         for (int i = 0; i < SZ; i += BLOCK_SZ)
-            blocks.emplace_back(data.begin() + i, data.begin() + min(i + BLOCK_SZ, SZ));
+            blocks.emplace_back(data.begin() + i, data.begin() + std::min(i + BLOCK_SZ, SZ));
     }
 
-    vector<int>::iterator block_start(int block_id) {
-        return data.begin() + min(block_id * BLOCK_SZ, SZ);
+    std::vector<int>::iterator block_start(int block_id) {
+        return data.begin() + std::min(block_id * BLOCK_SZ, SZ);
     }
-    vector<int>::const_iterator block_start(int block_id) const {
-        return data.begin() + min(block_id * BLOCK_SZ, SZ);
+    std::vector<int>::const_iterator block_start(int block_id) const {
+        return data.begin() + std::min(block_id * BLOCK_SZ, SZ);
     }
 
     // O(sqrt(SZ))
@@ -29,23 +35,28 @@ struct mutable_string {
     }
 
     // O(min(|end - begin| * sqrt(SZ), |end - begin| + len))
-    template<typename I>
-    int count_matches_in_substring(I begin, I end, int pos, int len) const {
+    template<typename InputIterator>
+    int count_matches_in_substring(InputIterator begin, InputIterator end, int L, int R) const {
         static knuth_morris_pratt kmp;
         kmp.initialize(begin, end);
 
-        int first_block_id = (pos + BLOCK_SZ - 1) / BLOCK_SZ;
-        int last_block_id  = (pos + len) / BLOCK_SZ;
+        int first_block_id = (L + BLOCK_SZ - 1) / BLOCK_SZ;
+        int last_block_id  = R / BLOCK_SZ;
 
-        if (kmp.SZ * 3 >= BLOCK_SZ || first_block_id >= last_block_id)
-            return kmp.count_matches(data.begin() + pos, data.begin() + pos + len);
+        int expected_work =
+            first_block_id * BLOCK_SZ - L
+            + (last_block_id - first_block_id) * 3 * kmp.SZ
+            + R - last_block_id * BLOCK_SZ;
+
+        if (first_block_id >= last_block_id || kmp.SZ > BLOCK_SZ || expected_work >= R - L)
+            return kmp.count_matches(data.begin() + L, data.begin() + R);
 
         int count = 0;
 
-        count += kmp.count_matches(data.begin() + pos, block_start(first_block_id) + kmp.SZ - 1);
+        count += kmp.count_matches(data.begin() + L, block_start(first_block_id) + kmp.SZ - 1);
 
         for (int block_id = first_block_id; block_id < last_block_id; block_id++) {
-            count += blocks[block_id].count_occurences(begin, end);
+            count += blocks[block_id].count_occurrences(begin, end);
 
             if (block_id != first_block_id) {
                 auto boundary = block_start(block_id);
@@ -53,13 +64,13 @@ struct mutable_string {
             }
         }
 
-        count += kmp.count_matches(block_start(last_block_id) - kmp.SZ + 1, data.begin() + pos + len);
+        count += kmp.count_matches(block_start(last_block_id) - kmp.SZ + 1, data.begin() + R);
 
         return count;
     }
 
-    template<typename I>
-    int count_matches(I begin, I end) const {
+    template<typename InputIterator>
+    int count_matches(InputIterator begin, InputIterator end) const {
         return count_matches_in_substring(begin, end, 0, SZ);
     }
 };
