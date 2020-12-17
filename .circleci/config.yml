@@ -45,6 +45,9 @@ jobs:
       - run:
           name: PolandBall And Gifts (misc/subset_sum)
           command: python2 ./.circleci/run_tests.py ./test/misc/subset_sum/polandball_and_gifts/polandball_and_gifts.cpp
+      - run:
+          name: Range Set Query (misc/count_distinct_in_range)
+          command: python2 ./.circleci/run_tests.py ./test/misc/count_distinct_in_range/range_set_query/range_set_query.cpp
 
       # NUMERIC
       - run:

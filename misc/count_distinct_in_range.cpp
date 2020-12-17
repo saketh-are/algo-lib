@@ -1,38 +1,50 @@
+// {{{ data_structures/segment_tree_persistent.cpp }}}
+
+#include <functional>
+#include <vector>
+#include <algorithm>
+#include <cassert>
+
 template<typename T>
 struct count_distinct_in_range {
-    segment_tree_persistent<int, decltype(plus<int>())> st;
+    segment_tree_persistent<int, std::plus<int>> st;
 
-    count_distinct_in_range(const vector<T> &vals, int copies_allowed = 1) {
+    template<typename InputIterator>
+    count_distinct_in_range(InputIterator first, InputIterator last, int copies_allowed = 1) {
         assert(copies_allowed >= 1);
 
-        vector<T> uniq = vals;
-        sort(uniq.begin(), uniq.end());
-        uniq.erase(unique(uniq.begin(), uniq.end()), uniq.end());
+        std::vector<std::remove_reference_t<decltype(*first)>> universe(first, last);
+        std::sort(universe.begin(), universe.end());
+        universe.erase(std::unique(universe.begin(), universe.end()), universe.end());
 
-        vector<vector<int>> occur(uniq.size());
-        for (int i = 0; i < int(vals.size()); i++) {
-            int v = int(lower_bound(uniq.begin(), uniq.end(), vals[i]) - uniq.begin());
-            occur[v].push_back(i);
+        std::vector<std::vector<int>> occurrences(universe.size());
+
+        int SZ = 0;
+        for (InputIterator iter = first; iter != last; iter++) {
+            int val = int(lower_bound(universe.begin(), universe.end(), *iter) - universe.begin());
+            occurrences[val].push_back(SZ);
+            SZ++;
         }
 
-        st = segment_tree_persistent(int(vals.size()), 0, plus<int>());
+        st = decltype(st)(SZ, 0, std::plus<int>());
 
-        vector<int> successor(vals.size(), -1);
-        for (int i = 0; i < int(occur.size()); i++) {
-            for (int j = 0; j < min(copies_allowed, int(occur[i].size())); j++)
-                st.replace(occur[i][j], 1, -1);
+        std::vector<int> successor(SZ, -1);
 
-            for (int j = 0; j + copies_allowed < int(occur[i].size()); j++)
-                successor[occur[i][j]] = occur[i][j + copies_allowed];
+        for (int i = 0; i < universe.size(); i++) {
+            for (int j = 0; j < std::min(copies_allowed, int(occurrences[i].size())); j++)
+                st.assign(occurrences[i][j], 1, -1);
+
+            for (int j = 0; j + copies_allowed < int(occurrences[i].size()); j++)
+                successor[occurrences[i][j]] = occurrences[i][j + copies_allowed];
         }
 
-        for (int i = 0; i < int(vals.size()); i++)
+        for (int i = 0; i < SZ; i++)
             if (successor[i] != -1)
-                st.replace(successor[i], 1, i);
+                st.assign(successor[i], 1, i);
     }
 
-    /* Returns the number of distinct elements appearing at indices in [L, R) of 'vals'.
-     * The first 'copies_allowed' copies of each distinct value are counted.
+    /* Number of elements at indices in [L, R) counting only
+     * the first 'copies_allowed' appearances of each distinct value.
      */
     int get_count(int L, int R) {
         return st.accumulate(L, R, L);

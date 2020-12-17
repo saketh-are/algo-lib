@@ -14,6 +14,7 @@
   * [Two Sat](https://github.com/saketh-are/algo-lib/tree/readme#two-sat)
 * [Misc](https://github.com/saketh-are/algo-lib/tree/readme#misc)
   * [Subset Sum](https://github.com/saketh-are/algo-lib/tree/readme#subset-sum)
+  * [Count Distinct In Range](https://github.com/saketh-are/algo-lib/tree/readme#count-distinct-in-range)
 * [Numeric](https://github.com/saketh-are/algo-lib/tree/readme#numeric)
   * [ModNum](https://github.com/saketh-are/algo-lib/tree/readme#modnum)
   * [Number Theoretic Transform](https://github.com/saketh-are/algo-lib/tree/readme#number-theoretic-transform)
@@ -195,6 +196,12 @@ Given a set of integers with sum `T`, computes its set of subset sums in `O(T sq
 
 __Usage Examples:__
  * [PolandBall and Gifts](https://github.com/saketh-are/algo-lib/blob/readme/test/misc/subset_sum/polandball_and_gifts/polandball_and_gifts.cpp)
+
+### [Count Distinct In Range](https://github.com/saketh-are/algo-lib/blob/readme/misc/count_distinct_in_range.cpp)
+Processes a sequence of comparable elements and a parameter `copies_allowed`. Supports queries for the number of elements in a specified range of the sequence if only the first `copies_allowed` appearances of each distinct value are counted.
+
+__Usage Examples:__
+ * [Range Set Query](https://github.com/saketh-are/algo-lib/blob/readme/test/misc/count_distinct_in_range/range_set_query/range_set_query.cpp)
 
 ## Numeric
 
