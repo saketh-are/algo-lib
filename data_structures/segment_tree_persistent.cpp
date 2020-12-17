@@ -29,7 +29,7 @@ struct segment_tree_persistent {
 
         data.push_back({ identity, -1, -1 });
         for (int loc = 1; loc <= __builtin_ctz(SZ); loc++)
-            data.push_back({ tt(data[loc - 1].val, data[loc - 1].val), loc - 1, loc - 1 });
+            data.push_back({ TT(data[loc - 1].v, data[loc - 1].v), loc - 1, loc - 1 });
 
         history.push_back({ std::numeric_limits<Timestamp>::min(), int(data.size()) - 1, int(data.size()) });
     }
@@ -72,7 +72,7 @@ private:
             int M = L + (R - L) / 2;
             int left  = i <  M ? modify_leaf(i, v, data[loc].left,  L, M, immutable, overwrite) : data[loc].left;
             int right = M <= i ? modify_leaf(i, v, data[loc].right, M, R, immutable, overwrite) : data[loc].right;
-            updated = { tt(data[left].v, data[right].v), left, right };
+            updated = { TT(data[left].v, data[right].v), left, right };
         }
         if (loc < immutable) {
             loc = int(data.size());
@@ -85,7 +85,7 @@ private:
 
     T accumulate(int i, int j, T init, int loc, int L, int R) const {
         if (L == i && j == R) {
-            init = TT(init, data[loc].val);
+            init = TT(init, data[loc].v);
         } else {
             int M = L + (R - L) / 2;
             if (i < M) init = accumulate(i, std::min(j, M), init, data[loc].left,  L, M);

@@ -8,7 +8,7 @@ namespace stable_counting_sort {
 
     template<typename T_extract_key = int(*)(const int&)>
     const std::vector<int>& permutation(int SZ, int MAX_KEY,
-			const T_extract_key &extract_key = identity) {
+            const T_extract_key &extract_key = identity) {
 
         static std::vector<int> p;
         p.resize(SZ);
