@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/saketh-are/algo-lib.svg?style=shield)](https://circleci.com/gh/saketh-are/algo-lib)
+
 ## Contents
 * [Usage](https://github.com/saketh-are/algo-lib/tree/readme#Usage)
   * [Passing function objects as arguments](https://github.com/saketh-are/algo-lib/tree/readme#passing-function-objects-as-arguments)
