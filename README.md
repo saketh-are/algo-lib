@@ -119,6 +119,7 @@ Maintains an array of `N` elements supporting:
  __Usage Examples:__
 * [Point Add Range Sum](https://github.com/saketh-are/algo-lib/blob/readme/test/data_structures/segment_tree/point_add_range_sum/point_add_range_sum.cpp)
 * [Point Set Range Composite](https://github.com/saketh-are/algo-lib/blob/readme/test/data_structures/segment_tree/point_set_range_composite/point_set_range_composite.cpp)
+* [Distinct Characters Queries](https://github.com/saketh-are/algo-lib/blob/master/test/data_structures/segment_tree/distinct_characters_queries/distinct_characters_queries.cpp)
 
 ### [Binary Indexed Tree](https://github.com/saketh-are/algo-lib/blob/readme/data_structures/binary_indexed_tree.cpp)
 Maintains an array of `N` elements supporting:
