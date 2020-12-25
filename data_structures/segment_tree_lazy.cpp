@@ -1,78 +1,117 @@
-template<typename T, typename U, typename TT, typename UU, typename UT>
+#include <vector>
+#include <cassert>
+
+template<typename T, typename U,
+    typename TAssociativeCombineFunction,
+    typename UAssociativeCombineFunction,
+    typename UApplicator>
 struct segment_tree_lazy {
     int SZ;
-    T tid; U uid; TT tt; UU uu; UT ut;
-    vector<T> table;
-    vb has; vector<U> ops;
+    T t_identity;
+    U u_identity;
+    TAssociativeCombineFunction TT;
+    UAssociativeCombineFunction UU;
+    UApplicator UT;
+
+    std::vector<T> data;
+    std::vector<bool> has_update;
+    std::vector<U> updates;
 
     segment_tree_lazy() {}
-    segment_tree_lazy(int SZ_, T tid_, U uid_, TT tt_, UU uu_, UT ut_)
-            : tid(tid_), uid(uid_), tt(tt_), uu(uu_), ut(ut_) {
-        init(SZ_);
-    }
-    void init(int SZ_) {
-        SZ = SZ_;
-        table.resize(2 * SZ, tid), has.resize(SZ), ops.resize(SZ, uid);
-    }
-    template<typename L> void set_leaves(L create) {
-        F0R (i, SZ) table[SZ + i] = create(i);
-        FORd (i, 1, SZ) table[i] = tt(table[2 * i], table[2 * i + 1]);
+
+    segment_tree_lazy(int _SZ, T _t_identity, U _u_identity,
+            TAssociativeCombineFunction _TT, UAssociativeCombineFunction _UU, UApplicator _UT)
+            : SZ(_SZ), t_identity(_t_identity), u_identity(_u_identity), TT(_TT), UU(_UU), UT(_UT) {
+        data.assign(2 * SZ, t_identity);
+        has_update.assign(SZ, false);
+        updates.assign(SZ, u_identity);
     }
 
-    void _apply(int i, const U &op) {
-        table[i] = ut(op, table[i]);
-        if (i < SZ) has[i] = true, ops[i] = uu(op, ops[i]);
+    template<typename Function>
+    void assign(Function fn) {
+        for (int i = 0; i < SZ; i++)
+            data[SZ + i] = fn(i);
+        for (int i = SZ - 1; i; i--)
+            data[i] = TT(data[2 * i], data[2 * i + 1]);
+        has_update.assign(SZ, false);
+        updates.assign(SZ, u_identity);
     }
-    void _rebuild(int i) {
-        for (i /= 2; i; i /= 2)
-            table[i] = ut(ops[i], tt(table[2 * i], table[2 * i + 1]));
+
+private:
+    void apply_update(int i, const U &u) {
+        data[i] = UT(u, data[i]);
+        if (i < SZ) {
+            has_update[i] = true;
+            updates[i] = UU(u, updates[i]);
+        }
     }
-    void _propagate(int i) {
-        for (int j = 31 - __builtin_clz(i); j > 0; j--) {
-            int k = i >> j;
-            if (has[k]) {
-                _apply(2 * k, ops[k]);
-                _apply(2 * k + 1, ops[k]);
-                has[k] = false, ops[k] = uid;
+
+    void propagate_ancestor_updates(int i) {
+        for (int ht = 31 - __builtin_clz(i); ht > 0; ht--) {
+            int anc = i >> ht;
+            if (has_update[anc]) {
+                apply_update(2 * anc, updates[anc]);
+                apply_update(2 * anc + 1, updates[anc]);
+                has_update[anc] = false;
+                updates[anc] = u_identity;
             }
         }
     }
 
-    // Replaces the element at index i with v
-    void replace(int i, T v) {
+    void recompute_ancestors(int i) {
+        for (i /= 2; i; i /= 2)
+            data[i] = UT(updates[i], TT(data[2 * i], data[2 * i + 1]));
+    }
+
+    void modify_leaf(int i, T v, bool overwrite) {
         i += SZ;
-        _propagate(i);
-        table[i] = v;
-        _rebuild(i);
+        propagate_ancestor_updates(i);
+        data[i] = overwrite ? v : TT(data[i], v);
+        recompute_ancestors(i);
     }
 
-    // Applies op to the elements at indices in [i, j)
-    void operator()(int i, int j, U op) {
-        i += SZ, j += SZ;
-        _propagate(i), _propagate(j - 1);
-        for (int l = i, r = j; l < r; l /= 2, r /= 2) {
-            if (l&1) _apply(l++, op);
-            if (r&1) _apply(--r, op);
+public:
+    // Assigns v at index i
+    void assign(int i, T v) {
+        modify_leaf(i, v, true);
+    }
+
+    // Replaces the current value at index i with TT(current value, v)
+    void combine_and_assign(int i, T v) {
+        modify_leaf(i, v, false);
+    }
+
+    // Applies update u to the elements at indices in [first, last)
+    void apply_update(int first, int last, U u) {
+        first += SZ, last += SZ;
+        propagate_ancestor_updates(first);
+        propagate_ancestor_updates(last - 1);
+        for (int f = first, l = last; f < l; f /= 2, l /= 2) {
+            if (f&1) apply_update(f++, u);
+            if (l&1) apply_update(--l, u);
         }
-        _rebuild(i), _rebuild(j - 1);
+        recompute_ancestors(first);
+        recompute_ancestors(last - 1);
     }
 
-    // Returns the element at index i
-    const T& operator[](int i) {
+    // Accumulates the elements at indices in [first, last)
+    T accumulate(int first, int last) {
+        first += SZ, last += SZ;
+        propagate_ancestor_updates(first);
+        propagate_ancestor_updates(last - 1);
+
+        T left = t_identity, right = t_identity;
+        for (int f = first, l = last; f < l; f /= 2, l /= 2) {
+            if (f&1) left = TT(left, data[f++]);
+            if (l&1) right = TT(data[--l], right);
+        }
+        return TT(left, right);
+    }
+
+    // Returns the current value at index i
+    T read(int i) {
         i += SZ;
-        _propagate(i);
-        return table[i];
-    }
-
-    // Accumulates the elements at indices in [i, j)
-    T operator()(int i, int j) {
-        i += SZ, j += SZ;
-        _propagate(i), _propagate(j - 1);
-        T left = tid, right = tid;
-        for (; i < j; i /= 2, j /= 2) {
-            if (i&1) left = tt(left, table[i++]);
-            if (j&1) right = tt(table[--j], right);
-        }
-        return tt(left, right);
+        propagate_ancestor_updates(i);
+        return data[i];
     }
 };

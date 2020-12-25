@@ -6,6 +6,7 @@
   * [Passing iterators as arguments](https://github.com/saketh-are/algo-lib#passing-iterators-as-arguments)
 * [Data Structures](https://github.com/saketh-are/algo-lib#data-structures)
   * [Segment Tree](https://github.com/saketh-are/algo-lib#segment-tree)
+  * [Segment Tree (Lazy Propagation)](https://github.com/saketh-are/algo-lib/blob/master/README.md#segment-tree-lazy-propagation)
   * [Binary Indexed Tree](https://github.com/saketh-are/algo-lib#binary-indexed-tree)
   * [Sparse Table](https://github.com/saketh-are/algo-lib#sparse-table)
 * [Graphs](https://github.com/saketh-are/algo-lib#graphs)
@@ -120,6 +121,14 @@ Maintains an array of `N` elements supporting:
 * [Point Add Range Sum](https://github.com/saketh-are/algo-lib/blob/master/test/data_structures/segment_tree/point_add_range_sum/point_add_range_sum.cpp)
 * [Point Set Range Composite](https://github.com/saketh-are/algo-lib/blob/master/test/data_structures/segment_tree/point_set_range_composite/point_set_range_composite.cpp)
 * [Distinct Characters Queries](https://github.com/saketh-are/algo-lib/blob/master/test/data_structures/segment_tree/distinct_characters_queries/distinct_characters_queries.cpp)
+
+### [Segment Tree (Lazy Propagation)](https://github.com/saketh-are/algo-lib/blob/master/data_structures/segment_tree_lazy.cpp)
+Maintains an array of `N` elements supporting:
+* Modification of a range of elements in `O(log(N))`
+* Accumulation of a range of elements in `O(log(N))`
+
+ __Usage Examples:__
+* [Range Add Range Sum](https://github.com/saketh-are/algo-lib/blob/master/test/data_structures/segment_tree_lazy/range_add_range_min/range_add_range_min.cpp)
 
 ### [Binary Indexed Tree](https://github.com/saketh-are/algo-lib/blob/master/data_structures/binary_indexed_tree.cpp)
 Maintains an array of `N` elements supporting:
