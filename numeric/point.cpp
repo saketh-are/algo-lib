@@ -93,7 +93,7 @@ struct point {
     enum class Classification { in, out, on };
     Classification classify(const polygon& p) const {
         bool ans = 0;
-        for (int i = 0; i < p.size(); i++) {
+        for (int i = 0; i < int(p.size()); i++) {
             point<T> a = p[i], b = p[(i + 1) % p.size()];
             if (cross(a, b, *this) == 0 && min(a, b) <= *this && *this <= max(a, b))
                 return Classification::on;
