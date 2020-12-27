@@ -7,6 +7,12 @@ from expand_dependencies import expand
 from test_harness import build_and_run
 
 def run_tests(infile, clib_root):
+    if os.path.isdir(infile):
+        infile = os.path.normpath(infile)
+        test_name = os.path.basename(infile)
+
+        infile += "/" + test_name + ".cpp"
+
     infile = canonical_path(infile)
 
     dirname = os.path.dirname(infile)

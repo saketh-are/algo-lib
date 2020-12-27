@@ -7,7 +7,7 @@ from util import canonical_path
 def expand(infile, outfile, clib_root = "~/clib/"):
     deps = {}
     file_contents = {}
-    unique_files = [ canonical_path(sys.argv[1]) ]
+    unique_files = [ infile ]
 
     dependency_re = re.compile("//\s*{{{(.*)}}}\s*")
 
