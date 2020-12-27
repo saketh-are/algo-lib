@@ -43,10 +43,10 @@ struct count_distinct_in_range {
                 st.assign(successor[i], 1, i);
     }
 
-    /* Number of elements at indices in [L, R) counting only
+    /* Returns the number of elements at indices in [first, last) counting only
      * the first 'copies_allowed' appearances of each distinct value.
      */
-    int get_count(int L, int R) {
-        return st.accumulate(L, R, L);
+    int get_count(int first, int last) {
+        return st.accumulate(first, last, first);
     }
 };

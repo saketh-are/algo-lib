@@ -227,6 +227,7 @@ Processes a sequence of comparable elements and a parameter `copies_allowed`. Su
 
 __Usage Examples:__
  * [Range Set Query](https://github.com/saketh-are/algo-lib/blob/master/test/misc/count_distinct_in_range/range_set_query/range_set_query.cpp)
+ * [Army Creation](https://github.com/saketh-are/algo-lib/blob/master/test/misc/count_distinct_in_range/army_creation/army_creation.cpp)
 
 ## Numeric
 

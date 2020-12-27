@@ -57,6 +57,9 @@ jobs:
       - run:
           name: Range Set Query (misc/count_distinct_in_range)
           command: python2 ./.circleci/run_tests.py ./test/misc/count_distinct_in_range/range_set_query/range_set_query.cpp
+      - run:
+          name: Army Creation (misc/count_distinct_in_range)
+          command: python2 ./.circleci/run_tests.py ./test/misc/count_distinct_in_range/army_creation/army_creation.cpp
 
       # NUMERIC
       - run:
