@@ -12,6 +12,9 @@ jobs:
 
       # DATA STRUCTURES
       - run:
+          name: Roads not only in Berland (data_structures/union_find)
+          command: python2 .circleci/run_tests.py test/data_structures/union_find/roads_not_only_in_berland
+      - run:
           name: Point Add Range Sum (data_structures/segment_tree)
           command: python2 .circleci/run_tests.py test/data_structures/segment_tree/point_add_range_sum
       - run:

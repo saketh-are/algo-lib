@@ -1,39 +1,63 @@
+#include <vector>
+#include <numeric>
+#include <iostream>
+
 struct union_find {
     struct node {
-        int par, rnk, size;
-        node(int id = 0) : par(id), rnk(0), size(1) {}
+        int parent, rank, size;
+        node (int id = 0) : parent(id), rank(0), size(1) {}
     };
 
-    vector<node> uf;
-    union_find(int N = 0) : uf(N) {
-        for (int i = 0; i < N; i++)
-            uf[i] = node(i);
+    mutable std::vector<node> data;
+
+    union_find(int SZ = 0) : data(SZ) {
+        iota(data.begin(), data.end(), 0);
     }
 
-    int rep(int i) {
-        if (i != uf[i].par)
-            uf[i].par = rep(uf[i].par);
-        return uf[i].par;
+    // Returns the root of the component containing i
+    int find(int i) const {
+        if (i != data[i].parent)
+            data[i].parent = find(data[i].parent);
+        return data[i].parent;
     }
 
-    bool unio(int a, int b) {
-        a = rep(a), b = rep(b);
+    bool is_root(int i) const {
+        return i == find(i);
+    }
+
+    node& root_node(int i) const {
+        return data[find(i)];
+    }
+
+    /* Unites the components containing a and b if they are different.
+     * Returns a boolean indicating whether a and b were in different components.
+     */
+    bool unite(int a, int b) {
+        a = find(a), b = find(b);
         if (a == b) return false;
-        if (uf[a].rnk < uf[b].rnk) swap(a, b);
-        uf[b].par = a;
-        uf[a].size += uf[b].size;
-        if (uf[a].rnk == uf[b].rnk) uf[a].rnk++;
+
+        if (data[a].rank < data[b].rank)
+            std::swap(a, b);
+
+        data[b].parent = a;
+        data[a].size += data[b].size;
+        if (data[a].rank == data[b].rank)
+            data[a].rank++;
+
         return true;
     }
 
-    node& operator[](int i) { return uf[rep(i)]; }
-
     friend void pr(const union_find& u) {
-        pr("{"); bool f = 1;
-        for (int i = 0; i < sz(u.uf); i++) if (u.uf[i].par == i) {
-            if (!f) pr(", "); else f = 0;
-            pr("[ ", i, " | rank=", u.uf[i].rnk, " size=", u.uf[i].size, " ]");
+        std::cout << "{";
+        bool first = 1;
+        for (int i = 0; i < int(u.data.size()); i++) {
+            if (u.is_root(i)) {
+                if (!first) std::cout << ", ";
+                else first = 0;
+                std::cout << "[ " << i << " | rank=" << u.data[i].rank
+                    << " size=" << u.data[i].size << " ]";
+            }
         }
-        pr("}");
+        std::cout << "}";
     }
 };

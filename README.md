@@ -5,6 +5,7 @@
   * [Passing function objects as arguments](https://github.com/saketh-are/algo-lib#passing-function-objects-as-arguments)
   * [Passing iterators as arguments](https://github.com/saketh-are/algo-lib#passing-iterators-as-arguments)
 * [Data Structures](https://github.com/saketh-are/algo-lib#data-structures)
+  * [Union Find](https://github.com/saketh-are/algo-lib#union-find)
   * [Segment Tree](https://github.com/saketh-are/algo-lib#segment-tree)
   * [Segment Tree (Lazy Propagation)](https://github.com/saketh-are/algo-lib/blob/master/README.md#segment-tree-lazy-propagation)
   * [Segment Tree (Persistent)](https://github.com/saketh-are/algo-lib/blob/master/README.md#segment-tree-persistent)
@@ -112,6 +113,16 @@ knuth_morris_pratt kmp(s.begin(), s.end());
 ```
 
 ## Data Structures
+
+### [Union Find](https://github.com/saketh-are/algo-lib/blob/master/data_structures/union_find.cpp)
+Maintains a partition of the set `{0, 1, ..., N-1}` supporting:
+* Retrieval of an identifier for the subset containing a specified element
+* Replacement of two specified subsets with their union
+
+Amortized runtime complexity is near constant for both operations.
+
+ __Usage Examples:__
+* [Roads not only in Berland](https://github.com/saketh-are/algo-lib/blob/master/test/data_structures/union_find/roads_not_only_in_berland/roads_not_only_in_berland.cpp)
 
 ### [Segment Tree](https://github.com/saketh-are/algo-lib/blob/master/data_structures/segment_tree.cpp)
 Maintains an array of `N` elements supporting:
