@@ -3,7 +3,7 @@
 #include <cassert>
 #include <algorithm>
 
-template<typename T, typename BinaryOperation, typename Timestamp = int>
+template<typename T, typename AssociativeOperation, typename Timestamp = int>
 struct segment_tree_persistent {
     struct node {
         T v;
@@ -18,14 +18,15 @@ struct segment_tree_persistent {
 
     int SZ;
     T identity;
-    BinaryOperation TT;
+    AssociativeOperation TT;
     std::vector<node> data;
     std::vector<snapshot> history;
 
     segment_tree_persistent() {}
 
-    segment_tree_persistent(int _SZ, T _identity, BinaryOperation _TT) : identity(_identity), TT(_TT) {
+    segment_tree_persistent(int _SZ, T _identity, AssociativeOperation _TT) : identity(_identity), TT(_TT) {
         SZ = 1 << (32 - __builtin_clz(_SZ - 1));
+        assert(SZ >= _SZ && __builtin_popcount(SZ) == 1);
 
         data.push_back({ identity, -1, -1 });
         for (int loc = 1; loc <= __builtin_ctz(SZ); loc++)
@@ -34,36 +35,7 @@ struct segment_tree_persistent {
         history.push_back({ std::numeric_limits<Timestamp>::min(), int(data.size()) - 1, int(data.size()) });
     }
 
-    // Assigns v at index i during moment t
-    void assign(int i, T v, Timestamp t) {
-        modify_leaf(i, v, t, true);
-    }
-
-    // Replaces the current value at index i with TT(current value, v) during moment t
-    void combine_and_assign(int i, T v, Timestamp t) {
-        modify_leaf(i, v, t, false);
-    }
-
-    // Accumulates the elements at indices in [i, j) as they were before t (after all assignments with t' < t)
-    T accumulate(int i, int j, Timestamp t) const {
-        if (i >= j) return identity;
-        assert(0 <= i && j <= SZ);
-        int root_before_t = std::prev(std::lower_bound(history.begin(), history.end(), snapshot{ t, -1, -1 }))->root;
-        return accumulate(i, j, identity, root_before_t, 0, SZ);
-    }
-
 private:
-    void modify_leaf(int i, T v, Timestamp t, bool overwrite) {
-        assert(0 <= i && i < SZ && history.back().t <= t);
-
-        int current_root = history.back().root;
-        if (history.back().t == t) history.pop_back();
-
-        int immutable = history.back().data_size;
-        int updated_root = modify_leaf(i, v, current_root, 0, SZ, immutable, overwrite);
-        history.push_back({ t, updated_root, int(data.size()) });
-    }
-
     int modify_leaf(int i, T v, int loc, int L, int R, int immutable, bool overwrite) {
         node updated;
         if (R - L == 1) {
@@ -83,6 +55,15 @@ private:
         return loc;
     }
 
+    void modify_leaf(int i, T v, Timestamp t, bool overwrite) {
+        int current_root = history.back().root;
+        if (history.back().t == t) history.pop_back();
+
+        int immutable = history.back().data_size;
+        int updated_root = modify_leaf(i, v, current_root, 0, SZ, immutable, overwrite);
+        history.push_back({ t, updated_root, int(data.size()) });
+    }
+
     T accumulate(int i, int j, T init, int loc, int L, int R) const {
         if (L == i && j == R) {
             init = TT(init, data[loc].v);
@@ -92,5 +73,26 @@ private:
             if (M < j) init = accumulate(std::max(i, M), j, init, data[loc].right, M, R);
         }
         return init;
+    }
+
+public:
+    // Assigns v at index i during moment t
+    void assign(int i, T v, Timestamp t) {
+        assert(0 <= i && i < SZ && history.back().t <= t);
+        modify_leaf(i, v, t, true);
+    }
+
+    // Replaces the current value at index i with TT(current value, v) during moment t
+    void combine_and_assign(int i, T v, Timestamp t) {
+        assert(0 <= i && i < SZ && history.back().t <= t);
+        modify_leaf(i, v, t, false);
+    }
+
+    // Accumulates the elements at indices in [first, last) as they were before t (after all assignments with t' < t)
+    T accumulate(int first, int last, Timestamp t) const {
+        if (first >= last) return identity;
+        assert(0 <= first && last <= SZ);
+        int root_before_t = std::prev(std::lower_bound(history.begin(), history.end(), snapshot{ t, -1, -1 }))->root;
+        return accumulate(first, last, identity, root_before_t, 0, SZ);
     }
 };

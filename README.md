@@ -7,6 +7,7 @@
 * [Data Structures](https://github.com/saketh-are/algo-lib#data-structures)
   * [Segment Tree](https://github.com/saketh-are/algo-lib#segment-tree)
   * [Segment Tree (Lazy Propagation)](https://github.com/saketh-are/algo-lib/blob/master/README.md#segment-tree-lazy-propagation)
+  * [Segment Tree (Persistent)](https://github.com/saketh-are/algo-lib/blob/master/README.md#segment-tree-persistent)
   * [Binary Indexed Tree](https://github.com/saketh-are/algo-lib#binary-indexed-tree)
   * [Sparse Table](https://github.com/saketh-are/algo-lib#sparse-table)
 * [Graphs](https://github.com/saketh-are/algo-lib#graphs)
@@ -129,6 +130,18 @@ Maintains an array of `N` elements supporting:
 
  __Usage Examples:__
 * [Range Add Range Sum](https://github.com/saketh-are/algo-lib/blob/master/test/data_structures/segment_tree_lazy/range_add_range_min/range_add_range_min.cpp)
+
+### [Segment Tree (Persistent)](https://github.com/saketh-are/algo-lib/blob/master/data_structures/segment_tree_persistent.cpp)
+Maintains an array of `N` elements supporting:
+* Modification of a specific element at a specified point in time in `O(log(N))`
+* Accumulation of a range of elements as they were at a specified point in time in `O(log(N))`
+
+Writes must be made with non-decreasing timestamps; there is no restriction on reads. Reads and writes can be interspersed in an arbitrary fashion.
+
+Consumes `O(log(N))` additional memory on each write.
+
+ __Usage Examples:__
+* [K-Query](https://github.com/saketh-are/algo-lib/blob/master/test/data_structures/segment_tree_persistent/k-query/k-query.cpp)
 
 ### [Binary Indexed Tree](https://github.com/saketh-are/algo-lib/blob/master/data_structures/binary_indexed_tree.cpp)
 Maintains an array of `N` elements supporting:

@@ -27,6 +27,9 @@ jobs:
           name: Range Add Range Min (data_structures/segment_tree_lazy)
           command: python2 ./.circleci/run_tests.py ./test/data_structures/segment_tree_lazy/range_add_range_min/range_add_range_min.cpp
       - run:
+          name: K-Query (data_structures/segment_tree_persistent)
+          command: python2 ./.circleci/run_tests.py ./test/data_structures/segment_tree_persistent/k-query/k-query.cpp
+      - run:
           name: Static RMQ (data_structures/sparse_table)
           command: python2 ./.circleci/run_tests.py ./test/data_structures/sparse_table/static_rmq/static_rmq.cpp
 
