@@ -6,6 +6,7 @@
   * [Passing iterators as arguments](https://github.com/saketh-are/algo-lib#passing-iterators-as-arguments)
 * [Data Structures](https://github.com/saketh-are/algo-lib#data-structures)
   * [Union Find](https://github.com/saketh-are/algo-lib#union-find)
+  * [Union Find (Bipartite)](https://github.com/saketh-are/algo-lib#union-find-bipartite)
   * [Segment Tree](https://github.com/saketh-are/algo-lib#segment-tree)
   * [Segment Tree (Lazy Propagation)](https://github.com/saketh-are/algo-lib/blob/master/README.md#segment-tree-lazy-propagation)
   * [Segment Tree (Persistent)](https://github.com/saketh-are/algo-lib/blob/master/README.md#segment-tree-persistent)
@@ -123,6 +124,19 @@ Amortized runtime complexity is near constant for both operations.
 
  __Usage Examples:__
 * [Roads not only in Berland](https://github.com/saketh-are/algo-lib/blob/master/test/data_structures/union_find/roads_not_only_in_berland/roads_not_only_in_berland.cpp)
+
+### [Union Find (Bipartite)](https://github.com/saketh-are/algo-lib/blob/master/data_structures/union_find_bipartite.cpp)
+Maintains information about bipartitions of the set `{0, 1, ..., N-1}` supporting:
+ * Constrainment of two specified elements to appearing in opposite subsets
+ * Constrainment of two specified elements to appearing in the same subset
+ * Constrainment of a specified element to a specified subset
+ * Counting the number of bipartitions satisfying all configured constraints
+ * Computing the smallest size of a particular subset over all satisfying bipartitions
+
+Amortized runtime complexity is near constant for all operations.
+
+ __Usage Examples:__
+* [Prefix Enlightenment](https://github.com/saketh-are/algo-lib/blob/master/test/data_structures/union_find_bipartite/prefix_enlightenment/prefix_enlightenment.cpp)
 
 ### [Segment Tree](https://github.com/saketh-are/algo-lib/blob/master/data_structures/segment_tree.cpp)
 Maintains an array of `N` elements supporting:

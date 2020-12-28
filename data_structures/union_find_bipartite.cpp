@@ -1,129 +1,166 @@
+#include <vector>
+#include <cassert>
+#include <numeric>
+
 struct union_find_bipartite {
     struct node {
-        int parent;
-        int size = 1, root_status = -1, same_as_root = 1;
-        bool root_path_parity = 0, consistent = 1;
-        node(int id) : parent(id) {}
+        int parent, rank, size, status;
+        bool parent_edge_parity;
+        bool is_bipartite;
+        int ct_nodes_on_root_side;
 
-        int choices() const {
-            return !consistent ? 0 : root_status == -1 ? 2 : 1;
+        node() {}
+
+        node(int id) : parent(id), rank(0), size(1), status(-1),
+                parent_edge_parity(0), is_bipartite(true), ct_nodes_on_root_side(1) {}
+
+        int count_bipartitions() const {
+            return !is_bipartite ? 0 : status == -1 ? 2 : 1;
         }
-        int minimum_size() const {
-            if (root_status == 1) return same_as_root;
-            else if (root_status == 0) return size - same_as_root;
-            return min(same_as_root, size - same_as_root);
+
+        int min_nodes_on_side_1() const {
+            switch (status) {
+                case  1: return ct_nodes_on_root_side;
+                case  0: return size - ct_nodes_on_root_side;
+                case -1: return std::min(ct_nodes_on_root_side, size - ct_nodes_on_root_side);
+                default: assert(false);
+            }
         }
     };
-    vector<node> uf;
-    int components, bipartite_components, rank, minimum_size;
 
-    union_find_bipartite(int N = 0) : components(N), bipartite_components(N), rank(N), minimum_size(0) {
-        for (int v = 0; v < N; v++) {
-            uf.emplace_back(v);
-        }
+    int ct_components, ct_bipartite_components, degrees_of_freedom, min_nodes_on_side_1;
+    mutable std::vector<node> data;
+
+    union_find_bipartite(int N = 0) : ct_components(N), ct_bipartite_components(N),
+            degrees_of_freedom(N), min_nodes_on_side_1(0), data(N) {
+        iota(data.begin(), data.end(), 0);
     }
 
-    int rep(int u) {
-        if (uf[u].parent == u) return u;
-        int root = rep(uf[u].parent);
-        uf[u].root_path_parity ^= uf[uf[u].parent].root_path_parity;
-        return uf[u].parent = root;
-    }
-
+private:
     void subtract_component(int u) {
-        components--;
-        if (uf[u].consistent) {
-            bipartite_components--;
-            rank -= uf[u].root_status == -1;
-            minimum_size -= uf[u].minimum_size();
+        ct_components--;
+        if (data[u].is_bipartite) {
+            ct_bipartite_components--;
+            degrees_of_freedom -= data[u].status == -1;
+            min_nodes_on_side_1 -= data[u].min_nodes_on_side_1();
         }
     }
 
     void add_component(int u) {
-        components++;
-        if (uf[u].consistent) {
-            bipartite_components++;
-            rank += uf[u].root_status == -1;
-            minimum_size += uf[u].minimum_size();
+        ct_components++;
+        if (data[u].is_bipartite) {
+            ct_bipartite_components++;
+            degrees_of_freedom += data[u].status == -1;
+            min_nodes_on_side_1 += data[u].min_nodes_on_side_1();
         }
     }
 
-    bool set_status(int u, bool u_status) {
-        int u_root = rep(u);
-        subtract_component(u_root);
-
-        const bool implied_root_status = u_status ^ uf[u].root_path_parity;
-        if (uf[u_root].root_status == -1) {
-            uf[u_root].root_status = implied_root_status;
-        } else if (uf[u_root].root_status != implied_root_status) {
-            uf[u_root].consistent = false;
-        }
-
-        add_component(u_root);
-        return uf[u_root].consistent;
+public:
+    int find(int u) const {
+        if (u == data[u].parent) return u;
+        find(data[u].parent);
+        data[u].parent_edge_parity ^= data[data[u].parent].parent_edge_parity;
+        return data[u].parent = data[data[u].parent].parent;
     }
 
-    struct result { bool added_connectivity, is_consistent; };
-    result unite(int u, int v, bool edge_parity) {
-        int u_root = rep(u), v_root = rep(v);
-        if (u_root == v_root) {
-            subtract_component(u_root);
-            if (edge_parity != (uf[u].root_path_parity ^ uf[v].root_path_parity)) {
-                uf[u_root].consistent = false;
-            }
-            add_component(u_root);
-            return {false, uf[u_root].consistent};
-        }
+    bool can_constrain_node_to_side(int u, bool side) const {
+        find(u);
+        side ^= data[u].parent_edge_parity;
+        u = data[u].parent;
 
-        edge_parity ^= uf[u].root_path_parity ^ uf[v].root_path_parity;
-        u = u_root;
-        v = v_root;
-        if (uf[u].size < uf[v].size)
-            swap(u, v);
+        return data[u].is_bipartite &&
+            (data[u].status == -1 || data[u].status == side);
+    }
 
-        subtract_component(u), subtract_component(v);
+    bool constrain_node_to_side(int u, bool side) {
+        find(u);
+        side ^= data[u].parent_edge_parity;
+        u = data[u].parent;
 
-        uf[v].parent = u;
-        uf[v].root_path_parity = edge_parity;
-        uf[u].size += uf[v].size;
-        uf[u].consistent &= uf[v].consistent;
+        subtract_component(u);
 
-        if (edge_parity)
-            uf[u].same_as_root += uf[v].size - uf[v].same_as_root;
-        else
-            uf[u].same_as_root += uf[v].same_as_root;
-
-        if (uf[v].root_status != -1) {
-            bool implied_u_status = uf[v].root_status ^ edge_parity;
-            uf[u].consistent &= (uf[u].root_status == -1 || uf[u].root_status == implied_u_status);
-            uf[u].root_status = implied_u_status;
+        if (data[u].status == -1) {
+            data[u].status = side;
+        } else {
+            data[u].is_bipartite &= data[u].status == side;
         }
 
         add_component(u);
-        return {true, uf[u].consistent};
+        return data[u].is_bipartite;
     }
-    result constrain_to_be_same     (int u, int v) { return unite(u, v, 0); }
-    result constrain_to_be_different(int u, int v) { return unite(u, v, 1); }
 
-    // check consistency without recording constraint
-    bool is_consistent(int u, bool u_status) {
-        int u_root = rep(u);
-        if (!uf[u_root].consistent) return false;
-        if (uf[u_root].root_status == -1) return true;
-        return u_status == (uf[u].root_path_parity ^ uf[u_root].root_status);
+    bool can_add_constraint_on_nodes(int u, int v, bool edge_parity) const {
+        find(u);
+        edge_parity ^= data[u].parent_edge_parity;
+        u = data[u].parent;
+
+        find(v);
+        edge_parity ^= data[v].parent_edge_parity;
+        v = data[v].parent;
+
+        return data[u].is_bipartite && data[v].is_bipartite &&
+            (data[u].status == -1 || data[v].status == -1 || (data[u].status ^ data[v].status) == edge_parity);
     }
-    // check consistency of resulting component without recording constraint
-    bool is_consistent(int u, int v, bool edge_parity) {
-        int u_root = rep(u), v_root = rep(v);
-        if (!uf[u_root].consistent || !uf[v_root].consistent) {
-            return false;
-        } else if (u_root == v_root) {
-            return edge_parity == (uf[u].root_path_parity ^ uf[v].root_path_parity);
-        } else if (uf[u_root].root_status == -1 || uf[v_root].root_status == -1) {
-            return true;
-        } else {
-            return (uf[u].root_path_parity ^ uf[u_root].root_status
-                  ^ uf[v].root_path_parity ^ uf[v_root].root_status) == edge_parity;
+
+    struct result {
+        bool added_connectivity;
+        bool component_is_bipartite;
+    };
+
+    result unite(int u, int v, bool edge_parity) {
+        find(u);
+        edge_parity ^= data[u].parent_edge_parity;
+        u = data[u].parent;
+
+        find(v);
+        edge_parity ^= data[v].parent_edge_parity;
+        v = data[v].parent;
+
+        if (u == v) {
+            subtract_component(u);
+            if (edge_parity)
+                data[u].is_bipartite = false;
+            add_component(u);
+            return {false, data[u].is_bipartite};
         }
+
+        if (data[u].rank < data[v].rank)
+            std::swap(u, v);
+
+        subtract_component(u);
+        subtract_component(v);
+
+        data[v].parent = u;
+
+        data[v].parent_edge_parity = edge_parity;
+
+        if (data[u].rank == data[v].rank)
+            data[u].rank++;
+
+        data[u].size += data[v].size;
+
+        data[u].is_bipartite &= data[v].is_bipartite;
+
+        if (edge_parity)
+            data[u].ct_nodes_on_root_side += data[v].size - data[v].ct_nodes_on_root_side;
+        else
+            data[u].ct_nodes_on_root_side += data[v].ct_nodes_on_root_side;
+
+        if (data[v].status != -1) {
+            bool implied_u_status = data[v].status ^ edge_parity;
+            if (data[u].status == -1)
+                data[u].status = implied_u_status;
+            else
+                data[u].is_bipartite &= data[u].status == implied_u_status;
+        }
+
+        add_component(u);
+        return {true, data[u].is_bipartite};
     }
+
+    bool can_constrain_to_be_same      (int u, int v) const { return can_add_constraint_on_nodes(u, v, 0); }
+    bool can_constrain_to_be_different (int u, int v) const { return can_add_constraint_on_nodes(u, v, 1); }
+
+    result constrain_to_be_same        (int u, int v) { return unite(u, v, 0); }
+    result constrain_to_be_different   (int u, int v) { return unite(u, v, 1); }
 };
