@@ -11,7 +11,7 @@ struct segment_tree {
     segment_tree() {}
 
     segment_tree(int _SZ, T _identity, AssociativeOperation _TT)
-			: SZ(_SZ), identity(_identity), TT(_TT) {
+            : SZ(_SZ), identity(_identity), TT(_TT) {
         data.resize(2 * SZ, identity);
     }
 

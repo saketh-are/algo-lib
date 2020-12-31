@@ -59,7 +59,7 @@ struct tree {
 
     template<typename EdgeDataReader = void(*)(Edge&)>
     friend void re(tree &t, TreeInputFormat Format, int FirstIndex,
-			EdgeDataReader read = DefaultEdgeDataReader) {
+            EdgeDataReader read = DefaultEdgeDataReader) {
         assert(t.V > 0);
         for (int i = 0; i < t.V - 1; i++) {
             int u, v;

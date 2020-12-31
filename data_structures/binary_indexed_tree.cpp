@@ -13,7 +13,7 @@ struct binary_indexed_tree {
     binary_indexed_tree() {}
 
     binary_indexed_tree(int _SZ, T _identity, AssociativeOperation _TT)
-			: SZ(_SZ), identity(_identity), TT(_TT) {
+            : SZ(_SZ), identity(_identity), TT(_TT) {
         data.assign(2 * SZ, identity);
     }
 
