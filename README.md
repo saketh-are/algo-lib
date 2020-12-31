@@ -7,6 +7,7 @@
 * [Data Structures](#data-structures)
   * [Union Find](#union-find)
   * [Union Find (Bipartite)](#union-find-bipartite)
+  * [Union Find (Rewindable)](#union-find-rewindable)
   * [Segment Tree](#segment-tree)
   * [Segment Tree (Lazy Propagation)](README.md#segment-tree-lazy-propagation)
   * [Segment Tree (Persistent)](README.md#segment-tree-persistent)
@@ -137,6 +138,17 @@ Amortized runtime complexity is near constant for all operations.
 
  __Usage Examples:__
 * [Prefix Enlightenment](test/data_structures/union_find_bipartite/prefix_enlightenment/prefix_enlightenment.cpp)
+
+### [Union Find (Rewindable)](data_structures/union_find_rewindable.cpp)
+Maintains a partition of the set `{0, 1, ..., N-1}` supporting:
+* Retrieval of an identifier for the subset containing a specified element in `O(log(N))`
+* Replacement of two specified subsets with their union in `O(1)`
+* Reversion of the most recent "union" operation in `O(1)`
+
+Can process a sequence of `E` edge insertions and deletions in `O(E log(E) log(N))`.
+
+ __Usage Examples:__
+* [Connect and Disconnect](test/data_structures/union_find_bipartite/connect_and_disconnect/connect_and_disconnect.cpp)
 
 ### [Segment Tree](data_structures/segment_tree.cpp)
 Maintains an array of `N` elements supporting:

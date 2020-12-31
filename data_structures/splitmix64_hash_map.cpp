@@ -11,7 +11,7 @@ struct sp64_hash {
         return x ^ (x >> 31);
     }
 
-	static uint64_t random_address() { char *p = new char; delete p; return uint64_t(p); }
+    static uint64_t random_address() { char *p = new char; delete p; return uint64_t(p); }
 
     size_t operator()(uint64_t x) const {
         static const uint64_t FIXED_RANDOM = splitmix64((random_address() | 1)
