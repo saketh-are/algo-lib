@@ -38,6 +38,9 @@ jobs:
       - run:
           name: Static RMQ (data_structures/sparse_table)
           command: python2 .circleci/run_tests.py test/data_structures/sparse_table/static_rmq
+      - run:
+          name: String Set Queries (data_structures/static_to_dynamic_transformation)
+          command: python2 .circleci/run_tests.py test/data_structures/static_to_dynamic_transformation/string_set_queries
 
       # GRAPHS
       - run:

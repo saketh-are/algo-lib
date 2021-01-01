@@ -13,6 +13,7 @@
   * [Segment Tree (Persistent)](README.md#segment-tree-persistent)
   * [Binary Indexed Tree](#binary-indexed-tree)
   * [Sparse Table](#sparse-table)
+  * [Static to Dynamic Transformation](#static-to-dynamic-transformation)
 * [Graphs](#graphs)
   * [Tree](#tree)
   * [Lowest Common Ancestor](#lowest-common-ancestor)
@@ -194,10 +195,18 @@ Less general than a [Segment Tree](#segment-tree); offers better constant factor
 Accepts a static array of `N` elements and an idempotent binary operation `f`. Supports:
 * Accumulation of a range of elements in `O(1)`
 
-Precomputation is `O(N log(N)`. Typically used with `f = min<T>` or `f = max<T>`.
+Precomputation is `O(N log(N))`. Typically used with `f = min<T>` or `f = max<T>`.
 
  __Usage Examples:__
 * [Static RMQ](test/data_structures/sparse_table/static_rmq/static_rmq.cpp)
+
+### [Static to Dynamic Transformation](data_structures/static_to_dynamic_transformation.cpp)
+Adds the ability to insert new elements into a static data structure. Requires that queries to the data structure are decomposable; for any pair of disjoint sets of elements, the answer to a query over their union must be computable from answers to the query over the individual sets.
+
+Over a sequence of `N` insertions, the K-th most recently inserted element is involved in `log(K)` constructions of the static data structure. A query made after `N` elements have been inserted is decomposed into `log(N)` queries on disjoint subsets of the inserted elements.
+
+ __Usage Examples:__
+* [String Set Queries](test/data_structures/static_to_dynamic_transformation/string_set_queries/string_set_queries.cpp)
 
 ## Graphs
 

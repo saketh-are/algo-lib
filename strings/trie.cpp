@@ -30,7 +30,7 @@ struct trie {
         return data[data[loc].suffix_link].dict_suffix_link;
     }
 
-    trie() {}
+    trie() : data(1, node(0)) {}
 
     template<typename InputIterator>
     trie(InputIterator first, InputIterator last) : data(1, node(0)) {
