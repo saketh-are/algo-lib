@@ -11,6 +11,7 @@
   * [Segment Tree](#segment-tree)
   * [Segment Tree (Lazy Propagation)](README.md#segment-tree-lazy-propagation)
   * [Segment Tree (Persistent)](README.md#segment-tree-persistent)
+  * [Segment Tree (Searchable)](README.md#segment-tree-searchable)
   * [Binary Indexed Tree](#binary-indexed-tree)
   * [Sparse Table](#sparse-table)
   * [Static to Dynamic Transformation](#static-to-dynamic-transformation)
@@ -180,6 +181,14 @@ Consumes `O(log(N))` additional memory on each write.
 
  __Usage Examples:__
 * [K-Query](test/data_structures/segment_tree_persistent/k-query/k-query.cpp)
+
+### [Segment Tree (Searchable)](data_structures/segment_tree_searchable.cpp)
+Adds a binary search feature to the Segment Tree class which accepts an index `first` and a predicate `p`, returning the first index `last` such that `p(accumulate(first, last))` evaluates to true. Requires that the predicate is non-decreasing as `last` increases.
+
+Rounds up internal size to the next power of 2. For a segment tree over `N` elements, search is `O(log(N))`.
+
+ __Usage Examples:__
+* [Deda](test/data_structures/segment_tree_searchable/deda/deda.cpp)
 
 ### [Binary Indexed Tree](data_structures/binary_indexed_tree.cpp)
 Maintains an array of `N` elements supporting:
