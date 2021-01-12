@@ -83,27 +83,33 @@ public:
 
     // Applies update u to the elements at indices in [first, last)
     void apply_update(int first, int last, U u) {
+        assert(0 <= first && last <= SZ);
         first += SZ, last += SZ;
+
         propagate_ancestor_updates(first);
         propagate_ancestor_updates(last - 1);
-        for (int f = first, l = last; f < l; f /= 2, l /= 2) {
-            if (f&1) apply_update(f++, u);
-            if (l&1) apply_update(--l, u);
+
+        for (int i = first, j = last; i < j; i /= 2, j /= 2) {
+            if (i&1) apply_update(i++, u);
+            if (j&1) apply_update(--j, u);
         }
+
         recompute_ancestors(first);
         recompute_ancestors(last - 1);
     }
 
     // Accumulates the elements at indices in [first, last)
     T accumulate(int first, int last) {
+        assert(0 <= first && last <= SZ);
         first += SZ, last += SZ;
+
         propagate_ancestor_updates(first);
         propagate_ancestor_updates(last - 1);
 
         T left = t_identity, right = t_identity;
-        for (int f = first, l = last; f < l; f /= 2, l /= 2) {
-            if (f&1) left = TT(left, data[f++]);
-            if (l&1) right = TT(data[--l], right);
+        for (int i = first, j = last; i < j; i /= 2, j /= 2) {
+            if (i&1) left = TT(left, data[i++]);
+            if (j&1) right = TT(data[--j], right);
         }
         return TT(left, right);
     }
