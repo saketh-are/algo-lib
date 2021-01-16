@@ -30,6 +30,7 @@
   * [Complex FFT](#complex-fft)
   * [Discrete Logarithm](#discrete-logarithm)
   * [Tonelli-Shanks](#tonelli-shanks)
+  * [BigNum (Add Power of 2, Compare)](#bignum-add-power-of-2-compare)
 * [Strings](#strings)
   * [Knuth-Morris-Pratt](#knuth-morris-pratt)
   * [Z Algorithm](#z-algorithm)
@@ -336,6 +337,17 @@ Performs modular arithmetic:
  
  __Usage Examples:__
  * [Sqrt Mod](test/numeric/tonelli-shanks/sqrt_mod/sqrt_mod.cpp)
+ 
+ ### [BigNum (Add Power of 2, Compare)](numeric/bignum_addpow2_compare.cpp)
+ 
+Large integer representation. Starts with a representation of `0` and supports:
+ * Representation of the sum of a represented integer with an arbitrary power of 2
+ * Comparison of two represented integers
+ 
+ Runtime complexity for both operations is logarithmic in the number of digits of precision. Constructing a sum also consumes additional memory logarithmic in the number of digits of precision.
+ 
+ __Usage Examples:__
+ * [The Classic Problem](test/numeric/bignum_addpow2_compare/the_classic_problem/the_classic_problem.cpp)
  
 ## Strings
 

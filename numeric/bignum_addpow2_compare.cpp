@@ -1,94 +1,110 @@
+// {{{ strings/polynomial_hash }}}
+
+#include <vector>
+#include <cassert>
+#include <iostream>
+
 struct bignum_addpow2_compare {
-    /* 'less_than' relies on prefix hashes to find the most significant bit at which
-     * two numbers differ. It can falsely claim x !< y when a collision occurs.
-     * Increasing HASH_COUNT decreases the probability of error while slowing all operations
-     * and increasing memory usage.
-     */
-    static const int HASH_COUNT = 3;
-    using P = polynomial_hash<modnum<int(1e9 + 7)>, HASH_COUNT, 2>;
+    using hash_t = polynomial_hash<modnum<int(1e9 + 7)>, 3, 2>;
 
-    struct fingerprint {
-        P hash;
-        int trailing_ones;
+    struct binary_string {
+        hash_t hash;
+        int ct_trailing_ones;
+        int left, right;
 
-        fingerprint (bool b) : hash(b), trailing_ones(b) { }
-        fingerprint (P hash_, int trailing_ones_) : hash(hash_), trailing_ones(trailing_ones_) { }
+        binary_string(bool bit) : hash(bit), ct_trailing_ones(bit), left(-1), right(-1) {}
 
-        int bit_width() const { return hash.N; }
-        fingerprint operator+(const fingerprint &o) const {
-            return fingerprint {
-                hash + o.hash,
-                (o.trailing_ones == o.bit_width() ? trailing_ones : 0) + o.trailing_ones
-            };
-        }
+        binary_string(hash_t _hash, int _ct_trailing_ones, int _left, int _right)
+            : hash(_hash), ct_trailing_ones(_ct_trailing_ones), left(_left), right(_right) {}
+
+        int length() const { return hash.N; }
+        bool is_all_ones() const { return hash.N == ct_trailing_ones; }
     };
 
-    struct num {
-        fingerprint v;
-        int left = -1, right = -1;
-    };
+    std::vector<binary_string> nums = { binary_string(0), binary_string(1) };
 
-    vector<num> pool = { num{fingerprint(0)}, num{fingerprint(1)} };
-    vi zero = { 0 };
-    int one = 1;
+    const int one = 1;
+    std::vector<int> zero = { 0 };
 
-    int concat(int x, int y) {
-        pool.push_back({ pool[x].v + pool[y].v, x, y });
-        return int(pool.size()) - 1;
+    int concatenate(int x, int y) {
+        nums.emplace_back(
+            hash_t::concatenate(nums[x].hash, nums[y].hash),
+            nums[y].ct_trailing_ones + (nums[y].is_all_ones() ? nums[x].ct_trailing_ones : 0),
+            x,
+            y
+        );
+        return int(nums.size()) - 1;
     }
 
     int get_zero_of_width(int bit_width) {
         int index = __builtin_ctz(bit_width);
         while (index >= int(zero.size()))
-            zero.push_back(concat(zero.back(), zero.back()));
+            zero.push_back(concatenate(zero.back(), zero.back()));
         return zero[index];
     }
 
     int carry_count(int x, int pow) const {
-        const int BITS = pool[x].v.bit_width();
+        const int len = nums[x].length();
 
-        if (BITS <= pow) return 0;
-        if (BITS == 1) return pool[x].v.trailing_ones;
-        if (BITS == pool[x].v.trailing_ones) return BITS - pow;
+        if (len <= pow)
+            return 0;
 
-        int res = carry_count(pool[x].right, pow);
-        if (BITS / 2 <= pow + res)
-            res += carry_count(pool[x].left, pow + res - BITS / 2);
+        if (nums[x].is_all_ones())
+            return len - pow;
+
+        if (len == 1)
+            return nums[x].ct_trailing_ones;
+
+        int res = carry_count(nums[x].right, pow);
+
+        if (pow + res >= len / 2)
+            res += carry_count(nums[x].left, pow + res - len / 2);
+
         return res;
     }
 
     int invert_range(int x, int L, int R) {
-        const int BITS = pool[x].v.bit_width();
-        if (BITS == 1)
-            return x^1;
-        if (L == 0 && BITS == R && pool[x].v.trailing_ones == BITS)
-            return get_zero_of_width(BITS);
+        const int len = nums[x].length();
+        assert(0 <= L && L < R && R <= len);
 
-        int left  = R > BITS / 2 ? invert_range(pool[x].left, max(0, L - BITS / 2), R - BITS / 2) : pool[x].left;
-        int right = L < BITS / 2 ? invert_range(pool[x].right, L, min(R, BITS / 2)) : pool[x].right;
-        return concat(left, right);
+        if (len == 1)
+            return x ^ 1;
+
+        if (0 == L && R == len && nums[x].is_all_ones())
+            return get_zero_of_width(len);
+
+        int right = L < len / 2 ? invert_range(nums[x].right, L, std::min(R, len / 2)) : nums[x].right;
+        int left  = R > len / 2 ? invert_range(nums[x].left, std::max(0, L - len / 2), R - len / 2) : nums[x].left;
+
+        return concatenate(left, right);
     }
 
     int add_pow2(int x, int pow) {
         int carries = carry_count(x, pow);
-        while (pool[x].v.bit_width() <= pow + carries)
-            x = concat(get_zero_of_width(pool[x].v.bit_width()), x);
+        while (nums[x].length() <= pow + carries)
+            x = concatenate(get_zero_of_width(nums[x].length()), x);
         return invert_range(x, pow, pow + carries + 1);
     }
 
     bool less_than(int x, int y) const {
-        if (pool[x].v.bit_width() != pool[y].v.bit_width())
-            return pool[x].v.bit_width() < pool[y].v.bit_width();
-        if (pool[x].v.bit_width() == 1)
-            return pool[x].v.trailing_ones < pool[y].v.trailing_ones;
-        if (pool[pool[x].left].v.hash == pool[pool[y].left].v.hash)
-            return less_than(pool[x].right, pool[y].right);
-        else
-            return less_than(pool[x].left, pool[y].left);
+        if (nums[x].length() != nums[y].length())
+            return nums[x].length() < nums[y].length();
+
+        if (nums[x].length() == 1)
+            return nums[x].ct_trailing_ones < nums[y].ct_trailing_ones;
+
+        if (nums[nums[x].left].hash == nums[nums[y].left].hash)
+            return less_than(nums[x].right, nums[y].right);
+
+        return less_than(nums[x].left, nums[y].left);
     }
 
     void print_bits(int x) const {
-        if (pool[x].v.bit_width() == 1) pr(pool[x].v.trailing_ones);
-        else print_bits(pool[x].left), print_bits(pool[x].right);
+        if (nums[x].length() == 1) {
+            std::cout << nums[x].ct_trailing_ones;
+        } else {
+            print_bits(nums[x].left);
+            print_bits(nums[x].right);
+        }
     }
 };

@@ -89,6 +89,9 @@ jobs:
       - run:
           name: Sqrt Mod (numeric/tonelli-shanks)
           command: python2 .circleci/run_tests.py test/numeric/tonelli-shanks/sqrt_mod
+      - run:
+          name: The Classic Problem (numeric/bignum_addpow2_compare)
+          command: python2 .circleci/run_tests.py test/numeric/bignum_addpow2_compare/the_classic_problem
 
       # STRINGS
       - run:

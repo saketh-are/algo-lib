@@ -32,13 +32,13 @@ struct ShortestPathTree {
         struct Path {
             int destination;
             PathWeight weight;
-
-            bool operator < (const Path &p) const {
-                return weight > p.weight;
-            }
         };
 
-        std::priority_queue<Path> pq;
+        auto path_cmp = [&less_than](const Path &a, const Path &b) {
+            return less_than(b.weight, a.weight);
+        };
+
+        std::priority_queue<Path, std::vector<Path>, decltype(path_cmp)> pq(path_cmp);
 
         parent.assign(g.N, -1);
         shortest_path_wt.assign(g.N, init);

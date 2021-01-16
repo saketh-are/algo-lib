@@ -37,7 +37,7 @@ struct polynomial_hash {
 
     polynomial_hash (int _N, std::array<x_t, EvaluationPoints> _data) : N(_N), data(_data) {}
 
-    friend polynomial_hash concatenate(polynomial_hash a, polynomial_hash b) {
+    static polynomial_hash concatenate(polynomial_hash a, polynomial_hash b) {
         std::array<x_t, EvaluationPoints> res;
         for (int i = 0; i < EvaluationPoints; i++)
             res[i] = a.data[i] * pow(i, b.N) + b.data[i];
