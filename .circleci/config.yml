@@ -42,6 +42,15 @@ jobs:
           name: Static RMQ (data_structures/sparse_table)
           command: python2 .circleci/run_tests.py test/data_structures/sparse_table/static_rmq
       - run:
+          name: Escape Through Leaf (data_structures/line_container)
+          command: python2 .circleci/run_tests.py test/data_structures/line_container/escape_through_leaf
+      - run:
+          name: The Fair Nut and Rectangles (data_structures/line_container_monotonic)
+          command: python2 .circleci/run_tests.py test/data_structures/line_container_monotonic/the_fair_nut_and_rectangles
+      - run:
+          name: Cats Transport (data_structures/line_container_monotonic)
+          command: python2 .circleci/run_tests.py test/data_structures/line_container_monotonic/cats_transport
+      - run:
           name: String Set Queries (data_structures/static_to_dynamic_transformation)
           command: python2 .circleci/run_tests.py test/data_structures/static_to_dynamic_transformation/string_set_queries
 

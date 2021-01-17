@@ -14,6 +14,8 @@
   * [Segment Tree (Searchable)](README.md#segment-tree-searchable)
   * [Binary Indexed Tree](#binary-indexed-tree)
   * [Sparse Table](#sparse-table)
+  * [Line Container](#line-container)
+  * [Line Container (Monotonic)](#line-container-monotonic)
   * [Static to Dynamic Transformation](#static-to-dynamic-transformation)
 * [Graphs](#graphs)
   * [Tree](#tree)
@@ -209,6 +211,27 @@ Precomputation is `O(N log(N))`. Typically used with `f = min<T>` or `f = max<T>
 
  __Usage Examples:__
 * [Static RMQ](test/data_structures/sparse_table/static_rmq/static_rmq.cpp)
+
+### [Line Container](data_structures/line_container.cpp)
+Maintains a collection of lines. Supports:
+ * Insertion of a line `f(x) = a * x + b`
+ * Querying for the maximum value among all inserted lines at a specified value of `x`
+
+Runtime complexity for both operations is `O(log(container size))`.
+
+ __Usage Examples:__
+* [Escape Through Leaf](test/data_structures/line_container/escape_through_leaf/escape_through_leaf.cpp)
+
+### [Line Container (Monotonic)](data_structures/line_container_monotonic.cpp)
+Maintains a collection of lines. Supports:
+ * Insertion of a line `f(x) = a * x + b`, where `a` is non-decreasing across all insertions
+ * Querying for the maximum value among all inserted lines at a specified value of `x`
+
+Runtime complexity for insertion is amortized `O(1)`. Runtime complexity for arbitrary queries is `O(log(container size))`. If `get_maximum_monotonic` is used, total runtime complexity over a sequence of queries made with non-decreasing `x` is linear. 
+
+ __Usage Examples:__
+* [The Fair Nut and Rectangles](test/data_structures/line_container_monotonic/the_fair_nut_and_rectangles/the_fair_nut_and_rectangles.cpp)
+* [Cats Transport](test/data_structures/line_container_monotonic/cats_transport/cats_transport.cpp)
 
 ### [Static to Dynamic Transformation](data_structures/static_to_dynamic_transformation.cpp)
 Adds the ability to insert new elements into a static data structure. Requires that queries to the data structure are decomposable; for any pair of disjoint sets of elements, the answer to a query over their union must be computable from answers to the query over the individual sets.
