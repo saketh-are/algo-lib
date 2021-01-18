@@ -1,27 +1,29 @@
 // Problem: https://codeforces.com/problemset/problem/755/F
 
-#include <cstdio>
+#include <iostream>
 #include <vector>
-#include <algorithm>
 #include <numeric>
 using namespace std;
 
 // {{{ misc/subset_sum.cpp }}}
 
 int main() {
-    int N, K;
-    scanf("%d %d", &N, &K);
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
 
-    std::vector<int> giver(N);
+    int N, K;
+    cin >> N >> K;
+
+    vector<int> giver(N);
 
     for (int i = 0; i < N; i++) {
-        scanf("%d", &giver[i]);
+        cin >> giver[i];
         --giver[i];
     }
 
-    std::vector<int> cycle_lengths;
+    vector<int> cycle_lengths;
 
-    std::vector<bool> visited(N);
+    vector<bool> visited(N);
     for (int i = 0; i < N; i++) {
         if (visited[i])
             continue;
@@ -39,16 +41,14 @@ int main() {
 
     int minimum = K + !sums[K];
 
-    std::vector<int> options;
-    for (int length : cycle_lengths) {
-        for (int i = 0; i < length / 2; i++)
-            options.push_back(2);
-        if (length&1)
-            options.push_back(1);
-    }
-    std::sort(options.begin(), options.end(), greater<int>());
+    int twos = 0, ones = 0;
 
-    int maximum = accumulate(options.begin(), options.begin() + min(K, int(options.size())), 0);
+    for (int length : cycle_lengths) {
+        twos += length / 2;
+        ones += length & 1;
+    }
+
+    int maximum = 2 * min(K, twos) + min(ones, K - min(K, twos));
 
     printf("%d %d\n", minimum, maximum);
 
