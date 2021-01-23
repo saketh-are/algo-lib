@@ -124,7 +124,7 @@ public:
             if (dict_index == -1) return;
 
             if (count[dict_index] == 0) {
-                if (data[loc].depth >= found_with_length.size())
+                if (data[loc].depth >= int(found_with_length.size()))
                     found_with_length.resize(data[loc].depth + 1);
                 found_with_length[data[loc].depth].push_back(loc);
             }
@@ -158,9 +158,8 @@ public:
 
         int loc = 0;
         int index = 0;
-        for (InputIterator iter = first; iter != last; iter++) {
+        for (InputIterator iter = first; iter != last; iter++, index++) {
             int c = *iter;
-            index++;
             assert(MIN_CHAR <= c && c < MIN_CHAR + SIGMA);
 
             loc = child_link(loc, c);
