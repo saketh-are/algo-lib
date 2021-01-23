@@ -14,6 +14,7 @@
   * [Segment Tree (Searchable)](README.md#segment-tree-searchable)
   * [Binary Indexed Tree](#binary-indexed-tree)
   * [Sparse Table](#sparse-table)
+  * [Sqrt Decomposition (Range Update, Point Query)](#sqrt-decomposition-range-update-point-query)
   * [Line Container](#line-container)
   * [Line Container (Monotonic)](#line-container-monotonic)
   * [Static to Dynamic Transformation](#static-to-dynamic-transformation)
@@ -211,6 +212,14 @@ Precomputation is `O(N log(N))`. Typically used with `f = min<T>` or `f = max<T>
 
  __Usage Examples:__
 * [Static RMQ](test/data_structures/sparse_table/static_rmq/static_rmq.cpp)
+
+### [Sqrt Decomposition (Range Update, Point Query)](data_structures/sqrt_decomposition_point_query.cpp)
+Maintains an array of `N` elements supporting:
+* Modification of a range of elements in `O(sqrt(N))`
+* Querying the value of a single element in `O(1)`
+
+ __Usage Examples:__
+* [Duff is Mad](test/data_structures/sqrt_decomposition_point_query/duff_is_mad/duff_is_mad.cpp)
 
 ### [Line Container](data_structures/line_container.cpp)
 Maintains a collection of lines. Supports:

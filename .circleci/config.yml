@@ -42,6 +42,9 @@ jobs:
           name: Static RMQ (data_structures/sparse_table)
           command: python2 .circleci/run_tests.py test/data_structures/sparse_table/static_rmq
       - run:
+          name: Duff is Mad (data_structures/sqrt_decomposition_point_query)
+          command: python2 .circleci/run_tests.py test/data_structures/sqrt_decomposition_point_query/duff_is_mad
+      - run:
           name: Escape Through Leaf (data_structures/line_container)
           command: python2 .circleci/run_tests.py test/data_structures/line_container/escape_through_leaf
       - run:
