@@ -293,6 +293,7 @@ Runs in `O(V + E log(E))` on a graph with `V` vertices and `E` edges.
 
 __Usage Examples:__
 * [Shortest Path](test/graphs/dijkstra/shortest_path/shortest_path.cpp)
+* [Train](test/graphs/dijkstra/train/train.cpp)
 
 ### [Two Sat](graphs/two_sat.cpp)
 Implication graph for boolean two-satisfiability. Constructs a satisfying assignment or detects that none exist. Runtime is linear in the size of the implication graph.

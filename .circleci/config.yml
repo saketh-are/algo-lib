@@ -68,8 +68,11 @@ jobs:
           name: Vertex Add Path Sum (graphs/heavy_path_decomposition, data_structures/binary_indexed_tree)
           command: python2 .circleci/run_tests.py test/graphs/heavy_path_decomposition/vertex_add_path_sum
       - run:
-          name: Shortest Path (graphs)
+          name: Shortest Path (graphs/dijkstra)
           command: python2 .circleci/run_tests.py test/graphs/dijkstra/shortest_path
+      - run:
+          name: Train (graphs/dijkstra)
+          command: python2 .circleci/run_tests.py test/graphs/dijkstra/train
       - run:
           name: Two Sat (graphs/two_sat)
           command: python2 .circleci/run_tests.py test/graphs/two_sat/two_sat
