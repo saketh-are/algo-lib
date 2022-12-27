@@ -1,12 +1,15 @@
 version: 2.1
 
 orbs:
-  python: circleci/python@0.2.1
+  python: circleci/python@2.1.1
 
 jobs:
   build-and-test:
+    docker:
+      - image: cimg/python:2.7.18
     working_directory: ~/clib
     executor: python/default
+    resource_class: large
     steps:
       - checkout
 
@@ -76,6 +79,9 @@ jobs:
       - run:
           name: Two Sat (graphs/two_sat)
           command: python2 .circleci/run_tests.py test/graphs/two_sat/two_sat
+      - run:
+          name: Algebra Flash (graphs/min_cost_vertex_cover)
+          command: python2 .circleci/run_tests.py test/graphs/min_cost_vertex_cover/algebra_flash
 
       # MISC
       - run:

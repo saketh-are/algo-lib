@@ -36,10 +36,10 @@ def run(cmd):
     return subprocess.call(['/bin/bash', '-c', cmd])
 
 def build_with_compiler_warnings(filepath, binary_path):
-    return run("g++-8 -std=c++17 -O2 -fconcepts -Wall -Wextra -pedantic -Wshadow -Wformat=2 -Wfloat-equal -Wconversion -Wlogical-op -Wshift-overflow=2 -Wduplicated-cond -Wcast-qual -Wcast-align " + filepath + " -o " + binary_path)
+    return run("g++ -std=c++17 -O2 -fconcepts -Wall -Wextra -pedantic -Wshadow -Wformat=2 -Wfloat-equal -Wconversion -Wlogical-op -Wshift-overflow=2 -Wduplicated-cond -Wcast-qual -Wcast-align " + filepath + " -o " + binary_path)
 
 def build_with_instrumentation(filepath, binary_path):
-    return run("g++-8 -std=c++17 -O0 -fconcepts -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -D_FORTIFY_SOURCE=2 -fsanitize=address -fsanitize=undefined -fno-sanitize-recover -fstack-protector -g " + filepath + " -o " + binary_path)
+    return run("g++ -std=c++17 -O0 -fconcepts -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -D_FORTIFY_SOURCE=2 -fno-sanitize-recover -fstack-protector -g " + filepath + " -o " + binary_path)
 
 def build_and_run(filepath):
     filepath = canonical_path(filepath)

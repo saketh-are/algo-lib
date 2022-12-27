@@ -24,6 +24,7 @@
   * [Heavy Path Decomposition](#heavy-path-decomposition)
   * [Dijkstra](#dijkstra)
   * [Two Sat](#two-sat)
+  * [Min Cost Vertex Cover](#min-cost-vertex-cover)
 * [Misc](#misc)
   * [Subset Sum](#subset-sum)
   * [Count Distinct In Range](#count-distinct-in-range)
@@ -302,6 +303,14 @@ Classifies each variable as true in all satisfying assignments, false in all sat
 
  __Usage Examples:__
 * [Two Sat](test/graphs/two_sat/two_sat/two_sat.cpp)
+
+### [Min Cost Vertex Cover](graphs/min_cost_vertex_cover.cpp)
+Given a graph on N weighted vertices, computes the minimum total weight among vertex covers of the graph. A vertex cover is a set of vertices that includes at least one endpoint of every edge of the graph.
+
+Runs in `O(V * 2^(V/2))` on a graph with `V` vertices.
+
+ __Usage Examples:__
+* [Algebra Flash](test/graphs/two_sat/min_cost_vertex_cover/algebra_flash.cpp)
 
 ## Misc
 
