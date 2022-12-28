@@ -1,5 +1,25 @@
 [![CircleCI](https://circleci.com/gh/saketh-are/algo-lib.svg?style=shield)](https://circleci.com/gh/saketh-are/algo-lib)
 
+This repo contains algorithms and data structures written for use in online [programming competitions](https://en.wikipedia.org/wiki/Competitive_programming).
+
+These programs have been validated against real competition problems using online judges.
+
+For example, [test/data_structures/segment_tree/distinct_characters_queries/](test/data_structures/segment_tree/distinct_characters_queries/) contains a solution to the problem [Distinct Characters Queries](https://codeforces.com/problemset/problem/1234/D) using [data_structures/segment_tree.cpp](data_structures/segment_tree.cpp):
+
+```c++
+// Problem: https://codeforces.com/problemset/problem/1234/D
+
+#include <iostream>
+using namespace std;
+
+// {{{ data_structures/segment_tree }}}
+
+int main() {
+...
+```
+
+Replacing the comment `// {{{ path/to/source }}}` with the library code produces a complete solution. Sample inputs and outputs for the problem are rehosted in this repo and serve as unit tests.
+
 ## Contents
 * [Usage](#usage)
   * [Passing function objects as arguments](#passing-function-objects-as-arguments)
