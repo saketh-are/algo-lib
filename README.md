@@ -4,7 +4,7 @@ This repo contains algorithms and data structures written for use in online [pro
 
 These programs have been validated against real competition problems using online judges.
 
-For example, [test/data_structures/segment_tree/distinct_characters_queries/](test/data_structures/segment_tree/distinct_characters_queries/) contains a solution to the problem [Distinct Characters Queries](https://codeforces.com/problemset/problem/1234/D) using [data_structures/segment_tree.cpp](data_structures/segment_tree.cpp):
+For example, [`test/data_structures/segment_tree/distinct_characters_queries/`](test/data_structures/segment_tree/distinct_characters_queries/) contains a solution to the problem [Distinct Characters Queries](https://codeforces.com/problemset/problem/1234/D) using [`data_structures/segment_tree.cpp`](data_structures/segment_tree.cpp):
 
 ```c++
 // Problem: https://codeforces.com/problemset/problem/1234/D
