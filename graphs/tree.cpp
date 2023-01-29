@@ -14,6 +14,8 @@ struct edge {
         assert(u_xor_v);
         return u ^ u_xor_v;
     }
+
+    void read_data() {}
 };
 
 template<typename Data>
@@ -23,6 +25,8 @@ struct edge_with_data : edge {
     edge_with_data() : edge() {}
 
     edge_with_data(int _u_xor_v, Data _data) : edge(_u_xor_v), data(_data) {}
+
+    void read_data() { re(data); }
 };
 
 enum TreeInputFormat { EDGE_LIST, PARENT_LIST };
@@ -55,7 +59,9 @@ struct tree {
             fn(neighbors[u][i]);
     }
 
-    static void DefaultEdgeDataReader(__attribute((unused)) Edge &e) {}
+    static void DefaultEdgeDataReader(__attribute((unused)) Edge &e) {
+        e.read_data();
+    }
 
     template<typename EdgeDataReader = void(*)(Edge&)>
     friend void re(tree &t, TreeInputFormat Format, int FirstIndex,
